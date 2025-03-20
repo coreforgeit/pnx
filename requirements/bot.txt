@@ -1,0 +1,9 @@
+aiogram
+APScheduler
+asyncpg
+redis
+SQLAlchemy
+uvloop
+qrcode[pil]
+opencv-python
+

@@ -1,0 +1,11 @@
+APScheduler
+Django
+django-unfold
+djangorestframework
+psycopg2
+pyTelegramBotAPI
+pytz
+redis
+requests
+qrcode[pil]
+opencv-python
