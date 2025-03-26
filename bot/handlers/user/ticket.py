@@ -1,6 +1,6 @@
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
-from aiogram.filters.command import CommandStart
+from aiogram.filters.command import Command
 
 import asyncio
 
@@ -10,11 +10,11 @@ from db import User
 from settings import conf, log_error
 from init import dp, bot
 from data import texts_dict
-from enums import UserCB, UserStatus
+from enums import UserCB, MenuCommand
 
 
 # Команда старт
-@dp.message(CommandStart())
+@dp.message(Command(MenuCommand.TICKET.value))
 async def com_start(msg: Message, state: FSMContext):
     await state.clear()
 
