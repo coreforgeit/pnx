@@ -18,6 +18,7 @@ class User(Base):
     full_name: Mapped[str] = mapped_column(sa.String)
     username: Mapped[str] = mapped_column(sa.String, nullable=True)
     status: Mapped[str] = mapped_column(sa.String(), default=UserStatus.USER.value)
+    mailing: Mapped[bool] = mapped_column(sa.Boolean, default=True)
 
     @classmethod
     async def add(cls, user_id: int, full_name: str, username: str) -> None:
@@ -28,11 +29,11 @@ class User(Base):
             .values(
                 first_visit=now,
                 last_visit=now,
-                user_id=user_id,
+                id=user_id,
                 full_name=full_name,
                 username=username,
             ).on_conflict_do_update(
-                index_elements=[cls.user_id],
+                index_elements=[cls.id],
                 set_={"full_name": full_name, 'username': username, 'last_visit': now}
             )
         )
@@ -45,45 +46,17 @@ class User(Base):
     async def update(
             cls,
             user_id: int,
-            last_check_time: datetime = None,
-            is_sub: bool = None,
-            plugin_hash: str = None
+            mailing: bool = None,
+            status: str = None
     ) -> None:
-        """Обновляет запись в таблице users"""
 
-        query = sa.update(cls).where(cls.user_id == user_id)
+        query = sa.update(cls).where(cls.id == user_id)
 
-        if last_check_time:
-            query = query.values(last_check_time=last_check_time, is_sub=True)
+        if mailing:
+            query = query.values(mailing=mailing)
 
-        if is_sub:
-            query = query.values(is_sub=is_sub)
-
-        if plugin_hash:
-            query = query.values(plugin_hash=plugin_hash)
+        if status:
+            query = query.values(status=status)
 
         async with begin_connection() as conn:
             await conn.execute(query)
-
-    @classmethod
-    async def get_by_id(cls, user_id: int) -> t.Optional[t.Self]:
-        """Возвращает строку по user_id"""
-
-        query = sa.select(cls).where(cls.user_id == user_id)
-
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-
-        return result.first()
-
-    @classmethod
-    async def get_for_check_sub(cls) -> t.Optional[t.Self]:
-        """Последнего проверенного пользователя"""
-
-        query = sa.select(cls).order_by(sa.desc(cls.last_check_time))
-
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-
-        return result.first()
-

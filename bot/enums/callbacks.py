@@ -1,15 +1,20 @@
 from enum import Enum
 
 
-# калбеки
+# калбеки пользователя
 class UserCB(str, Enum):
-    CHECK_SUBSCRIBE = 'check_subscribe'
-    SELECT_PLUGIN = 'select_plugin'
-    CREATE_PAY_URL = 'create_pay_url'
+    BACK_START = 'back_start'
+    BOOK_START = 'user_book_start'
+    TICKET_START = 'user_ticket_start'
+    SETTINGS_START = 'user_settings_start'
+    BOOK_DATE = 'admin_book_time'
+    BOOK_TIME = 'admin_book_time'
+    BOOK_COUNT = 'admin_book_count'
 
 
-# калбеки
+# калбеки админа
 class AdminCB(str, Enum):
-    CHECK_SUBSCRIBE = 'check_subscribe'
-    SELECT_PLUGIN = 'select_plugin'
-    CREATE_PAY_URL = 'create_pay_url'
+    BACK_START = 'back_start'
+    BOOK_START = 'admin_book_start'
+
+

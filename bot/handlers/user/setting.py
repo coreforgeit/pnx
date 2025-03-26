@@ -1,6 +1,6 @@
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
 from aiogram.fsm.context import FSMContext
-from aiogram.filters.command import CommandStart, Command
+from aiogram.filters.command import Command
 
 import asyncio
 
@@ -10,7 +10,7 @@ from db import User
 from settings import conf, log_error
 from init import dp, bot
 from data import texts_dict
-from enums import UserCB, MenuCommand
+from enums import UserCB, UserStatus
 
 
 # Команда старт
@@ -28,14 +28,3 @@ async def com_start(msg: Message, state: FSMContext):
 @dp.callback_query(lambda cb: cb.data.startswith(UserCB.BACK_START.value))
 async def back_com_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
-
-    await ut.get_start_msg(user=cb.from_user)
-
-
-# Команда начать бронировать
-@dp.message(Command(MenuCommand.BOOK.value))
-async def com_book(msg: Message, state: FSMContext):
-    await state.clear()
-
-    await ut.get_start_book_msg(user=msg.from_user)
-

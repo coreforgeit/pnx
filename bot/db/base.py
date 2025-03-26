@@ -35,7 +35,8 @@ class Base(DeclarativeBase):
         async with begin_connection() as conn:
             result = await conn.execute(query)
 
-        return result.all()
+        return result.scalars().all()
+        # return result.all()
 
     @classmethod
     async def get_by_id(cls, entry_id: int) -> t.Optional[t.Self]:

@@ -2,10 +2,15 @@ from enum import Enum
 
 
 # Команды меню
-class MenuCommand(str, Enum):
-    START = 'start'
-    # PAY = 'pay'
-    # SUB = 'sub'
+class MenuCommand(Enum):
+    START = ('start', '🔄 В начало')
+    BOOK = ('book', '🪑 Бронирование столиков')
+    TICKET = ('ticket', '🎫 Билеты')
+    SETTINGS = ('settings', '⚙️ Мои брони')
+
+    def __init__(self, command, label):
+        self.value = command
+        self.label = label
 
 
 # Команды меню
@@ -13,6 +18,13 @@ class UserStatus(str, Enum):
     USER = 'user'
     STAFF = 'staff'
     ADMIN = 'admin'
+
+
+# Ключи к автосообщениям
+class Action(str, Enum):
+    BACK = 'back'
+    ADD = 'add'
+    DEL = 'del'
 
 
 # Ключи к автосообщениям
