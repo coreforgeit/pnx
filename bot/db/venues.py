@@ -12,7 +12,7 @@ from enums import UserStatus
 class Venue(Base):
     __tablename__ = "venues"
 
-    id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True)
+    id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, autoincrement=True)
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(), default=datetime.now())
     updated_at: Mapped[datetime] = mapped_column(sa.DateTime(), default=datetime.now())
     name: Mapped[str] = mapped_column(sa.String)

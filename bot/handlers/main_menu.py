@@ -29,11 +29,11 @@ async def com_start(msg: Message, state: FSMContext):
 async def back_com_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
-    await ut.get_start_msg(user=cb.from_user)
+    await ut.get_start_msg(user=cb.from_user, msg_id=cb.message.message_id)
 
 
 # Команда начать бронировать
-@dp.message(Command(MenuCommand.BOOK.value))
+@dp.message(Command(MenuCommand.BOOK.command))
 async def com_book(msg: Message, state: FSMContext):
     await state.clear()
 

@@ -22,7 +22,7 @@ def get_book_main_kb(venues: list[Venue]) -> InlineKeyboardMarkup:
         kb.button(text=venue.name, callback_data=f'{UserCB.BOOK_DATE.value}:{venue.id}')
 
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.BACK_START.value}')
-    return kb.adjust(2, 1).as_markup()
+    return kb.adjust(1).as_markup()
 
 
 # Кнопки выбора времени
@@ -35,4 +35,4 @@ def get_book_date_kb() -> InlineKeyboardMarkup:
         kb.button(text=day_str, callback_data=f'{UserCB.BOOK_TIME.value}:{day_str}')
 
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_DATE.value}:{Action.BACK.value}')
-    return kb.adjust(2, 1).as_markup()
+    return kb.adjust(2).as_markup()

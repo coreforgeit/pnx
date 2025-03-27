@@ -50,6 +50,6 @@ ENGINE = create_async_engine(url=conf.db_url)
 
 async def set_main_menu():
     await bot.set_my_commands([
-        BotCommand(command=cmd.value, description=cmd.label)
+        BotCommand(command=cmd.command, description=cmd.label)
         for cmd in MenuCommand
     ])

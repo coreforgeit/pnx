@@ -19,7 +19,7 @@ from enums import UserCB, BookData, UserState, BookStep, book_text_dict
 async def book_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
-    await ut.get_start_book_msg(user=cb.from_user, msg_id=cb.message.id)
+    await ut.get_start_book_msg(user=cb.from_user, msg_id=cb.message.message_id)
 
 
 async def get_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup):
@@ -61,7 +61,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 
         # data_obj.times_list = time_list
         data_obj.user_id = cb.from_user.id
-        data_obj.msg_id = cb.message.id
+        data_obj.msg_id = cb.message.message_id
         data_obj.step = BookStep.DATE.value
 
         data_obj.venue_id = venue_id

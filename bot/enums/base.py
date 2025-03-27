@@ -9,7 +9,7 @@ class MenuCommand(Enum):
     SETTINGS = ('settings', '⚙️ Мои брони')
 
     def __init__(self, command, label):
-        self.value = command
+        self.command = command
         self.label = label
 
 

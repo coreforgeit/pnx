@@ -14,7 +14,7 @@ from enums import UserCB, MenuCommand
 
 
 # Команда старт
-@dp.message(Command(MenuCommand.SETTINGS.value))
+@dp.message(Command(MenuCommand.SETTINGS.command))
 async def com_start(msg: Message, state: FSMContext):
     await state.clear()
 
