@@ -23,7 +23,7 @@ class Book(Base):
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), default=True)
 
     @classmethod
-    async def get_top_times(cls, limit: int = 8) -> list[time]:
+    async def get_top_times(cls, limit: int = 8) -> list[str]:
         query = (
             sa.select(cls.time_book, sa.func.count(cls.time_book).label("count"))
             .group_by(cls.time_book)
@@ -33,7 +33,6 @@ class Book(Base):
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
-            popular_times = [row.time_book for row in result.all()]
 
-        return popular_times
+        return [str(row.time_book) for row in result.all()]
 

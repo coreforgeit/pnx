@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram.types import Message, User as AgUser
 
 import keyboards as kb
@@ -40,3 +42,10 @@ async def get_start_book_msg(user: AgUser, msg_id: int = None) -> None:
 
     else:
         await bot.send_message(chat_id=user.id, text=text, reply_markup=markup)
+
+
+# отправляет и удаляет предупреждение
+async def send_text_alert(chat_id: int, text: str) -> None:
+    sent = await bot.send_message(chat_id=chat_id, text=text)
+    await asyncio.sleep(3)
+    await sent.delete()
