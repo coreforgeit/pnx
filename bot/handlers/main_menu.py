@@ -1,4 +1,4 @@
-from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboardRemove
+from aiogram.types import Message, CallbackQuery, InputMediaPhoto, FSInputFile
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import CommandStart, Command
 
@@ -6,7 +6,7 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from db import User
+from db import User, Book
 from settings import conf, log_error
 from init import dp, bot
 from data import texts_dict
@@ -39,3 +39,10 @@ async def com_book(msg: Message, state: FSMContext):
 
     await ut.get_start_book_msg(user=msg.from_user)
 
+
+# показывает кр
+@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_COMMENT.value))
+async def book_comment(cb: CallbackQuery, state: FSMContext):
+    _, photo_id = cb.data.split(':')
+
+    await cb.message.answer_photo(photo=photo_id)

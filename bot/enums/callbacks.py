@@ -4,6 +4,7 @@ from enum import Enum
 # калбеки пользователя
 class UserCB(str, Enum):
     BACK_START = 'back_start'
+    VIEW_QR = 'view_qr'
 
     BOOK_START = 'user_book_start'
     BOOK_DATE = 'admin_book_date'

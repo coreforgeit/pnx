@@ -76,3 +76,10 @@ def get_book_check_kb() -> InlineKeyboardMarkup:
     kb.button(text='Забронировать', callback_data=f'{UserCB.BOOK_END.value}')
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_COMMENT.value}:{Action.BACK.value}')
     return kb.adjust(1).as_markup()
+
+
+# Показать кр-код
+def get_view_qr_kb(file_id: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Показать QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{file_id}')
+    return kb.adjust(1).as_markup()

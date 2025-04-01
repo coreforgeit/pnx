@@ -27,9 +27,17 @@ class Action(str, Enum):
     DEL = 'del'
 
 
-# Ключи к автосообщениям
-class RedisKey(str, Enum):
-    END_SUB = 'end_sub'
+# Ключи к редису
+class Key(str, Enum):
+    QR_BOOK = 'book'
+
+
+# Ключи к редису
+class NoticeKey(str, Enum):
+    BOOK_DAY = 'book_day'
+    BOOK_2_HOUR = 'book_2_hour'
+    BOOK_NOW = 'book_now'
+    BOOK_CLOSE = 'book_close'
 
 
 # Ключи планировщика

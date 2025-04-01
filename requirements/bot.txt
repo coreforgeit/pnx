@@ -4,6 +4,7 @@ asyncpg
 redis
 SQLAlchemy
 uvloop
-qrcode[pil]
-opencv-python
-
+segno
+pyzbar
+pillow
+gspread
