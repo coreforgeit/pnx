@@ -20,13 +20,13 @@ class Book(Base):
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())
+    comment: Mapped[str] = mapped_column(sa.String())
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), default=2)
     is_come: Mapped[bool] = mapped_column(sa.Boolean(), default=False)
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), default=True)
 
     venue: Mapped["Venue"] = relationship("Venue", backref="bookings")
-
 
     def time_book_str(self) -> str:
         return self.time_book.strftime(conf.time_format)
@@ -35,7 +35,7 @@ class Book(Base):
         return self.date_book.strftime(conf.date_format)
 
     @classmethod
-    async def add(cls, user_id: int, venue_id: int, time_book: time, date_book: date) -> int:
+    async def add(cls, user_id: int, venue_id: int, time_book: time, date_book: date, comment: str) -> int:
         now = datetime.now()
         query = sa.insert(cls).values(
             created_at=now,
@@ -44,6 +44,7 @@ class Book(Base):
             venue_id=venue_id,
             time_book=time_book,
             date_book=date_book,
+            comment=comment,
         )
 
         async with begin_connection() as conn:
@@ -96,6 +97,7 @@ class Book(Base):
             cls,
             book_id: int,
             qr_id: str = None,
+            gs_row: int = None,
             is_come: bool = None,
             is_active: bool = None,
     ) -> None:
@@ -105,6 +107,9 @@ class Book(Base):
         if qr_id:
             query = query.values(qr_id=qr_id)
 
+        if gs_row:
+            query = query.values(gs_row=gs_row)
+
         if is_come is not None:
             query = query.values(is_come=is_come)
 
@@ -113,7 +118,6 @@ class Book(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
-
 
     @classmethod
     async def get_booking_count(cls, venue_id: int, date_book: date, time_book: time) -> int:

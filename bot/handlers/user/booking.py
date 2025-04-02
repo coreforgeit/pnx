@@ -243,6 +243,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         venue_id=data_obj.venue_id,
         date_book=date_book,
         time_book=time_book,
+        comment=data_obj.comment,
     )
 
     print(f'book_id {book_id}')
@@ -255,27 +256,31 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         caption=text
     )
 
-    await Book.update(book_id, qr_id=qr_id)
-
     # создаём уведомления
     ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book)
     # пишем админу
+    comment = f'\n\n<i>{data_obj.comment}</i>' if data_obj.comment else ''
     text = (f'<b>Новая бронь!</b>\n\n'
-            f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел.')
+            f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
+            f'{comment}')
     await bot.send_message(chat_id=conf.admin_chat, text=text)
 
 #     отправляем в таблицу
     venue = await Venue.get_by_id(data_obj.venue_id)
     last_day_book = await Book.get_last_book_day(date_book=date_book)
-    await add_book_gs(
+    gs_row = await add_book_gs(
         spreadsheet_id=venue.gs_id,
-        sheet_name=data_obj.date_str[:-5],
+        sheet_name=data_obj.date_str,
         booking_time=data_obj.time_str,
         full_name=cb.from_user.full_name,
         count_place=data_obj.people_count,
+        comment=data_obj.comment,
         attended=False,
         start_row=last_day_book.gs_row + 1 if last_day_book else 2
     )
+
+    await Book.update(book_id, qr_id=qr_id, gs_row=gs_row)
+
 
 
 

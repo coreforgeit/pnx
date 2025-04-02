@@ -13,6 +13,7 @@ async def add_book_gs(
     full_name: str,
     booking_time: str,
     count_place: int,
+    comment: str,
     attended: Union[bool, str],
     start_row: int = 2,
     max_attempts: int = 1000,
@@ -22,14 +23,14 @@ async def add_book_gs(
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    attended_str = "✅" if attended is True else ("❌" if attended is False else str(attended))
-    new_values = [[full_name, booking_time, count_place, attended_str]]
+    attended_str = "✅" if attended is True else ("◽️" if attended is False else str(attended))
+    new_values = [[full_name, booking_time, count_place, comment, attended_str]]
 
     row = start_row
     attempts = 0
 
     while attempts < max_attempts:
-        cell_range = f"C{row}:F{row}"
+        cell_range = f"C{row}:G{row}"
         try:
             existing = await worksheet.get(cell_range)
             if not any(cell.strip() for cell in existing[0] if cell):
