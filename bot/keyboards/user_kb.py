@@ -45,10 +45,11 @@ def get_book_time_kb(popular_time: list[str]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
 
     for time_book in popular_time:
-        kb.button(text=time_book, callback_data=f'{UserCB.BOOK_PEOPLE.value}:{time_book}')
+        kb.button(text=time_book, callback_data=f'{UserCB.BOOK_PEOPLE.value}:{time_book.replace(":", " ")}')
 
-    kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_DATE.value}:{Action.BACK.value}')
-    return kb.adjust(2).as_markup()
+    bc_bt = InlineKeyboardBuilder()
+    bc_bt.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_DATE.value}:{Action.BACK.value}')
+    return kb.adjust(2).attach(bc_bt).as_markup()
 
 
 # Кнопки выбора времени

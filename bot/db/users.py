@@ -13,12 +13,12 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True)
-    first_visit: Mapped[datetime] = mapped_column(sa.DateTime(), default=datetime.now())
-    last_visit: Mapped[datetime] = mapped_column(sa.DateTime(), default=datetime.now())
+    first_visit: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
+    last_visit: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
     full_name: Mapped[str] = mapped_column(sa.String)
     username: Mapped[str] = mapped_column(sa.String, nullable=True)
     status: Mapped[str] = mapped_column(sa.String(), default=UserStatus.USER.value)
-    mailing: Mapped[bool] = mapped_column(sa.Boolean, default=True)
+    mailing: Mapped[bool] = mapped_column(sa.Boolean, default=sa.true())
 
     @classmethod
     async def add(cls, user_id: int, full_name: str, username: str) -> None:

@@ -11,8 +11,14 @@ async def error_handler(ex: ErrorEvent):
     user_id = ex.update.message.from_user.id if ex.update.message else None
 
 
-
 @dp.callback_query()
 async def in_dev(cb: CallbackQuery):
     log_error(f'>>> {cb.data}', wt=False)
     await cb.answer(f'🛠 Функция в разработке', show_alert=True)
+
+
+# принимает комментарий
+@dp.message()
+async def lost_msg(msg: Message):
+    print(msg.chat.id)
+    print(msg.chat.full_name)

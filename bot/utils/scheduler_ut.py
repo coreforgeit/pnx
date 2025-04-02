@@ -59,12 +59,13 @@ async def notice_book_for_close(book_id: int):
 
 # создаём уведомления для каждого напоминания
 def create_book_notice(book_id: int, book_date: date, book_time: time):  # не удалять end_date
-    # end_date = datetime.now() + timedelta(minutes=6)
-
+    print('1')
     now = datetime.now()
+    print(now)
     book_dt = datetime.combine(book_date, book_time)
-
+    print('2')
     book_dt_for_day = book_dt - timedelta(days=1)
+    print(book_dt_for_day)
     if book_dt_for_day < now:
         scheduler.add_job(
             func=notice_book_for_day,
@@ -74,8 +75,9 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
             args=[book_id],
             replace_existing=True,
         )
-
+    print('3')
     book_dt_for_2_hours = book_dt - timedelta(hours=2)
+    print(book_dt_for_2_hours)
     if book_dt_for_2_hours < now:
         scheduler.add_job(
             func=notice_book_for_2_hours,
@@ -85,7 +87,8 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
             args=[book_id],
             replace_existing=True,
         )
-
+    print('4')
+    print(book_dt)
     scheduler.add_job(
         func=notice_book_for_now,
         trigger='date',
@@ -94,8 +97,9 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
         args=[book_id],
         replace_existing=True,
     )
-
+    print('5')
     book_dt_for_close = book_dt + timedelta(minutes=30)
+    print(book_dt_for_close)
     scheduler.add_job(
         func=notice_book_for_close,
         trigger='date',

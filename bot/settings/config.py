@@ -8,11 +8,11 @@ class Config:
 
     if debug:
         token = os.getenv("TEST_TOKEN")
-        admin_chat = 123
+        admin_chat = -4658767585
 
     else:
         token = os.getenv("TEST_TOKEN")
-        admin_chat = 123
+        admin_chat = -4658767585
 
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')
@@ -27,6 +27,7 @@ class Config:
     tz = ZoneInfo('Asia/Tashkent')
 
     path_temp = 'temp'
+    google_key_path = os.path.join('data', 'cred.json')
 
     date_format = '%d.%m.%Y'
     time_format = '%H:%M'

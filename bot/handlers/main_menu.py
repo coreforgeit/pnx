@@ -12,6 +12,8 @@ from init import dp, bot
 from data import texts_dict
 from enums import UserCB, MenuCommand
 
+from google_api import add_book_gs
+
 
 # Команда старт
 @dp.message(CommandStart())
@@ -41,7 +43,7 @@ async def com_book(msg: Message, state: FSMContext):
 
 
 # показывает кр
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_COMMENT.value))
+@dp.callback_query(lambda cb: cb.data.startswith(UserCB.VIEW_QR.value))
 async def book_comment(cb: CallbackQuery, state: FSMContext):
     _, photo_id = cb.data.split(':')
 

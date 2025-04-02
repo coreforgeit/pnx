@@ -9,6 +9,7 @@ import asyncio
 import db
 import keyboards as kb
 import utils as ut
+from google_api import add_book_gs
 from db import User, Book, Venue
 from settings import conf, log_error
 from init import dp, bot
@@ -112,7 +113,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
         print(f'>>>>>>>>>> {type(exist_book)}')
         print(exist_book)
 
-        if exist_book:
+        if exist_book and not conf.debug:
             text = (
                 f'❗️ Вы можете создать только одну бронь\n\n'
                 f'У вас уже забронирован столик на {exist_book.date_book_str()} в '
@@ -136,6 +137,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 async def book_people(cb: CallbackQuery, state: FSMContext):
     _, time_str = cb.data.split(':')
 
+    time_str = time_str.replace(' ', ':')
     data = await state.get_data()
     data_obj = BookData(**data)
 
@@ -233,6 +235,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         return
 
     # сохраняем бронь
+    print('# сохраняем бронь')
     date_book = datetime.strptime(data_obj.date_str, conf.date_format).date()
     time_book = datetime.strptime(data_obj.time_str, conf.time_format).time()
     book_id = await Book.add(
@@ -241,6 +244,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         date_book=date_book,
         time_book=time_book,
     )
+
+    print(f'book_id {book_id}')
 
     #     создаём и отправляем кр-код
     text = f'Ждём вас {data_obj.date_str} в {data_obj.time_str} в {data_obj.venue_name}'
@@ -253,13 +258,24 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     await Book.update(book_id, qr_id=qr_id)
 
     # создаём уведомления
-    await ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book)
+    ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book)
     # пишем админу
     text = (f'<b>Новая бронь!</b>\n\n'
             f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел.')
     await bot.send_message(chat_id=conf.admin_chat, text=text)
 
 #     отправляем в таблицу
+    venue = await Venue.get_by_id(data_obj.venue_id)
+    last_day_book = await Book.get_last_book_day(date_book=date_book)
+    await add_book_gs(
+        spreadsheet_id=venue.gs_id,
+        sheet_name=data_obj.date_str[:-5],
+        booking_time=data_obj.time_str,
+        full_name=cb.from_user.full_name,
+        count_place=data_obj.people_count,
+        attended=False,
+        start_row=last_day_book.gs_row + 1 if last_day_book else 2
+    )
 
 
 

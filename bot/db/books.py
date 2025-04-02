@@ -20,7 +20,8 @@ class Book(Base):
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())
-    qr_id: Mapped[str] = mapped_column(sa.String())
+    qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
+    gs_row: Mapped[int] = mapped_column(sa.Integer(), default=2)
     is_come: Mapped[bool] = mapped_column(sa.Boolean(), default=False)
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), default=True)
 
@@ -47,6 +48,7 @@ class Book(Base):
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
+            await conn.commit()
 
         return result.inserted_primary_key[0]
 
@@ -62,7 +64,7 @@ class Book(Base):
         async with begin_connection() as conn:
             result = await conn.execute(query)
 
-        return [str(row.time_book) for row in result.all()]
+        return [str(row.time_book)[:-3] for row in result.all()]
 
     @classmethod
     async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
@@ -80,6 +82,16 @@ class Book(Base):
         return booking
 
     @classmethod
+    async def get_last_book_day(cls, date_book: date) -> t.Optional[t.Self]:
+        """Находим бронь пользователя"""
+
+        query = sa.select(cls).where(cls.date_book == date_book).order_by(sa.desc(cls.gs_row))
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+        return result.scalars().first()
+
+    @classmethod
     async def update(
             cls,
             book_id: int,
@@ -88,7 +100,7 @@ class Book(Base):
             is_active: bool = None,
     ) -> None:
         now = datetime.now()
-        query = sa.update(cls).where(cls.id == book_id).values(update_at=now)
+        query = sa.update(cls).where(cls.id == book_id).values(updated_at=now)
 
         if qr_id:
             query = query.values(qr_id=qr_id)
@@ -127,7 +139,7 @@ class Book(Base):
         return result.scalar() or 0  # Если нет броней, возвращаем 0
 
     @classmethod
-    async def get_booking_with_venue(cls, book_id: int) -> t.Optional["Book"]:
+    async def get_booking_with_venue(cls, book_id: int) -> t.Optional[t.Self]:
         """Получает бронь по ID вместе с данными о заведении"""
 
         query = (

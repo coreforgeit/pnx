@@ -10,7 +10,12 @@ from enums import UserStatus
 
 # команда старт
 async def get_start_msg(user: AgUser, msg_id: int = None) -> None:
-    user_info: User = await User.get_by_id(user.id)
+    user_info = await User.get_by_id(user.id)
+
+    print(user.id)
+    print(user_info)
+    print(type(user_info))
+    print(user_info.status)
 
     if user_info.status == UserStatus.USER.value:
         text = (
