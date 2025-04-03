@@ -51,23 +51,20 @@ async def add_book_gs(
 async def update_book_gs(
     spreadsheet_id: str,
     sheet_name: str,
-    full_name: str,
-    booking_time: str,
-    count_place: str,
-    attended: Union[bool, str],
+    attended: bool,
     row: int,
 ) -> int:
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    attended_str = "✅" if attended is True else ("❌" if attended is False else str(attended))
-    new_values = [[full_name, booking_time, count_place, attended_str]]
+    attended_str = "✅" if attended else "◽️"
+    new_values = [[attended_str]]
 
     attempts = 0
 
     while attempts < 30:
-        cell_range = f"C{row}:F{row}"
+        cell_range = f"G{row}"
         try:
             await worksheet.update(cell_range, new_values)
             return row
@@ -76,7 +73,6 @@ async def update_book_gs(
             attempts += 1
             if "Quota exceeded" in str(e):
                 pause_on_quota_sec = 3
-                print(f"[{row}] Превышена квота. Пауза {pause_on_quota_sec} сек...")
                 await asyncio.sleep(pause_on_quota_sec)
             else:
                 raise  # пробрасываем другие ошибки

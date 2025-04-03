@@ -17,8 +17,8 @@ class User(Base):
     last_visit: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
     full_name: Mapped[str] = mapped_column(sa.String)
     username: Mapped[str] = mapped_column(sa.String, nullable=True)
-    status: Mapped[str] = mapped_column(sa.String(), default=UserStatus.USER.value)
-    mailing: Mapped[bool] = mapped_column(sa.Boolean, default=sa.true())
+    status: Mapped[str] = mapped_column(sa.String(), server_default=UserStatus.USER.value)
+    mailing: Mapped[bool] = mapped_column(sa.Boolean, server_default=sa.true())
 
     @classmethod
     async def add(cls, user_id: int, full_name: str, username: str) -> None:
@@ -40,7 +40,8 @@ class User(Base):
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
-            return result.inserted_primary_key[0]
+            await conn.commit()
+        return result.inserted_primary_key[0]
 
     @classmethod
     async def update(

@@ -20,6 +20,7 @@ class Book(Base):
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())
+    people_count: Mapped[int] = mapped_column(sa.Integer())
     comment: Mapped[str] = mapped_column(sa.String())
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), default=2)
@@ -35,7 +36,15 @@ class Book(Base):
         return self.date_book.strftime(conf.date_format)
 
     @classmethod
-    async def add(cls, user_id: int, venue_id: int, time_book: time, date_book: date, comment: str) -> int:
+    async def add(
+            cls,
+            user_id: int,
+            venue_id: int,
+            time_book: time,
+            date_book: date,
+            comment: str,
+            people_count: int
+    ) -> int:
         now = datetime.now()
         query = sa.insert(cls).values(
             created_at=now,
@@ -45,6 +54,7 @@ class Book(Base):
             time_book=time_book,
             date_book=date_book,
             comment=comment,
+            people_count=people_count
         )
 
         async with begin_connection() as conn:

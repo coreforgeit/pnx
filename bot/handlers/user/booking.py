@@ -235,7 +235,6 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         return
 
     # сохраняем бронь
-    print('# сохраняем бронь')
     date_book = datetime.strptime(data_obj.date_str, conf.date_format).date()
     time_book = datetime.strptime(data_obj.time_str, conf.time_format).time()
     book_id = await Book.add(
@@ -244,9 +243,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         date_book=date_book,
         time_book=time_book,
         comment=data_obj.comment,
+        people_count=data_obj.people_count
     )
-
-    print(f'book_id {book_id}')
 
     #     создаём и отправляем кр-код
     text = f'Ждём вас {data_obj.date_str} в {data_obj.time_str} в {data_obj.venue_name}'
