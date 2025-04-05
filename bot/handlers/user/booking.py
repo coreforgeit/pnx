@@ -12,13 +12,13 @@ import utils as ut
 from google_api import add_book_gs
 from db import User, Book, Venue
 from settings import conf, log_error
-from init import dp, bot
+from init import user_router, bot
 from data import texts_dict
 from enums import UserCB, BookData, UserState, BookStep, book_text_dict, Action, Key
 
 
 # старт брони столиков
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_START.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_START.value))
 async def book_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
@@ -71,8 +71,8 @@ async def check_available_tables(chat_id: int, data_obj: BookData):
         return False
 
 
-    # записывет заведение, запрашивает время
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_DATE.value))
+# записывет заведение, запрашивает время
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_DATE.value))
 async def book_date(cb: CallbackQuery, state: FSMContext):
     _, venue_id_str = cb.data.split(':')
 
@@ -98,7 +98,7 @@ async def book_date(cb: CallbackQuery, state: FSMContext):
 
 
 # записывает дату, запрашивает время
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_TIME.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_TIME.value))
 async def book_time(cb: CallbackQuery, state: FSMContext):
     _, date_str = cb.data.split(':')
 
@@ -110,8 +110,8 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
             venue_id=data_obj.venue_id, user_id=cb.from_user.id, date_book=datetime.strptime(date_str, conf.date_format).date()
         )
 
-        print(f'>>>>>>>>>> {type(exist_book)}')
-        print(exist_book)
+        # print(f'>>>>>>>>>> {type(exist_book)}')
+        # print(exist_book)
 
         if exist_book and not conf.debug:
             text = (
@@ -133,7 +133,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 
 
 # записывает время, запрашивает количество мест
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_PEOPLE.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_PEOPLE.value))
 async def book_people(cb: CallbackQuery, state: FSMContext):
     _, time_str = cb.data.split(':')
 
@@ -155,7 +155,7 @@ async def book_people(cb: CallbackQuery, state: FSMContext):
 
 
 # записывает количество мест, запрашивает коммент
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_COMMENT.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_COMMENT.value))
 async def book_comment(cb: CallbackQuery, state: FSMContext):
     _, people_str = cb.data.split(':')
 
@@ -172,7 +172,7 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
 
 
 # пропустить коммент
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_CHECK.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_CHECK.value))
 async def book_skip_comment(cb: CallbackQuery, state: FSMContext):
 
     data = await state.get_data()
@@ -185,7 +185,7 @@ async def book_skip_comment(cb: CallbackQuery, state: FSMContext):
 
 
 # принимает комментарий
-@dp.message(StateFilter(UserState.BOOK.value))
+@user_router.message(StateFilter(UserState.BOOK.value))
 async def book_comment(msg: Message, state: FSMContext):
     await msg.delete()
 
@@ -224,7 +224,7 @@ async def book_comment(msg: Message, state: FSMContext):
 
 
 # заканчиваем бронирование
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_END.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_END.value))
 async def book_end(cb: CallbackQuery, state: FSMContext):
     data = await state.get_data()
     data_obj = BookData(**data)
@@ -267,7 +267,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     venue = await Venue.get_by_id(data_obj.venue_id)
     last_day_book = await Book.get_last_book_day(date_book=date_book)
     gs_row = await add_book_gs(
-        spreadsheet_id=venue.gs_id,
+        spreadsheet_id=venue.book_gs_id,
         sheet_name=data_obj.date_str,
         booking_time=data_obj.time_str,
         full_name=cb.from_user.full_name,

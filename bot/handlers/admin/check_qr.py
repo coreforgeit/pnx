@@ -10,15 +10,22 @@ import keyboards as kb
 import utils as ut
 from db import User, Book
 from settings import conf, log_error
-from init import dp, bot
+from init import bot, admin_router
 from data import texts_dict
 from enums import UserCB, UserStatus, Key
 
 from google_api import update_book_gs
 
+from aiogram.filters.command import CommandStart
+
+# @dp.message(CommandStart())
+# async def com_start(msg: Message, state: FSMContext):
+#     # await state.clear()
+#     print(__name__)
+
 
 # Команда старт
-@dp.message(lambda msg: msg.content_type == ContentType.PHOTO.value)
+@admin_router.message(lambda msg: msg.content_type == ContentType.PHOTO.value)
 async def qr_check(msg: Message, state: FSMContext):
     user = await User.get_by_id(msg.from_user.id)
     if user.status == UserStatus.USER.value and not conf.debug:

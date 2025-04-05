@@ -33,7 +33,7 @@ def get_book_date_kb() -> InlineKeyboardMarkup:
     for i in range(0, 10):
         day = today + timedelta(days=i)
         day_str = day.strftime(conf.date_format)
-        kb.button(text=day_str[:-5], callback_data=f'{UserCB.BOOK_TIME.value}:{day_str}')
+        kb.button(text=day_str[:-5], callback_data=f'{UserCB.BOOK_DATE.value}:{day_str}')
 
     # kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_START.value}:{Action.BACK.value}')
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_START.value}')

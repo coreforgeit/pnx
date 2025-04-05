@@ -1,4 +1,4 @@
-from aiogram import Dispatcher
+from aiogram import Dispatcher, Router
 from aiogram.types.bot_command import BotCommand
 from aiogram import Bot
 from aiogram.enums import ParseMode
@@ -19,12 +19,16 @@ from enums import MenuCommand
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 loop = asyncio.get_event_loop()
-dp = Dispatcher()
+# dp = Dispatcher()
 bot = Bot(
     token=conf.token,
     loop=loop,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
+
+main_router = Router()
+user_router = Router()
+admin_router = Router()
 
 # Настройка Redis
 redis_client = redis.StrictRedis(host=conf.redis_host, port=conf.redis_port, db=0)

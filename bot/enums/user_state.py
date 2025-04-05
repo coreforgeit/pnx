@@ -4,16 +4,7 @@ from enum import Enum
 
 class UserState(str, Enum):
     BOOK = 'book'
-
-
-class BookStep(str, Enum):
-    VENUE = 'venue'
-    DATE = 'date'
-    TIME = 'time'
-    PEOPLE = 'people'
-    COMMENT = 'comment'
-    CHECK = 'check'
-    END = 'end'
+    EVENT = 'event'
 
 
 @dataclass
@@ -30,6 +21,16 @@ class BaseData:
         print('---')
 
 
+class BookStep(str, Enum):
+    VENUE = 'venue'
+    DATE = 'date'
+    TIME = 'time'
+    PEOPLE = 'people'
+    COMMENT = 'comment'
+    CHECK = 'check'
+    END = 'end'
+
+
 @dataclass
 class BookData(BaseData):
     venue_id: int = None
@@ -39,7 +40,6 @@ class BookData(BaseData):
     times_list: list[str] = None
     people_count: int = None
     comment: str = None
-    name_id: int = None
 
 
 book_text_dict = {
@@ -52,3 +52,61 @@ book_text_dict = {
     BookStep.CHECK.value: '<b>Проверьте данные брони, если всё верно нажмите "Забронировать"</b>',
     BookStep.END.value: '<b>Бронь подтверждена</b>',
 }
+
+
+class EventStep(str, Enum):
+    VENUE = 'venue'
+    NAME = 'name'
+    COVER = 'cover'
+    DATE = 'date'
+    TIME = 'time'
+    OPTION_NAME = 'option_name'
+    OPTION_PLACE = 'option_place'
+    OPTION_PRICE = 'option_price'
+    OPTION_DEL = 'option_del'
+    END = 'end'
+
+
+event_text_dict = {
+    EventStep.VENUE.value: 'Выберите заведение',
+    EventStep.NAME.value: 'Отправьте название мероприятия (до 50 символов)',
+    EventStep.COVER.value: 'Отправьте обложку мероприятия с текстом и описанием',
+    EventStep.DATE.value: 'День проведения\nВыберите из кнопок или отправьте в формате ДД:ММ:ГГГГ',
+    EventStep.TIME.value: 'Время проведения\nВыберите из кнопок или отправьте в формате ЧЧ:ММ',
+    EventStep.OPTION_NAME.value: 'Название опции',
+    EventStep.OPTION_PLACE.value: 'Количество мест',
+    EventStep.OPTION_PRICE.value: 'Стоимость',
+    EventStep.END.value: 'Создать мероприятие?',
+}
+
+
+@dataclass
+class EventData(BaseData):
+    venue_id: int = None
+    venue_name: str = None
+    sheet_id: str = None
+    name: str = None
+    content_type: str = None
+    text: str = None
+    photo_id: str = None
+    entities: str = None
+    date_str: str = None
+    time_str: str = None
+    times_list: list[str] = None
+    options: list[dict] = None
+    current_option: dict = None
+    top_name: list[str] = None
+    top_place: list[int] = None
+    top_price: list[int] = None
+    end: int = 0
+
+
+@dataclass
+class OptionData:
+    id: int = None
+    name: str = None
+    place: int = None
+    price: int = None
+
+
+

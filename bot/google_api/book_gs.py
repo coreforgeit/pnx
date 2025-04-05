@@ -1,6 +1,7 @@
 import asyncio
 from gspread_asyncio import AsyncioGspreadClientManager
-from gspread.exceptions import APIError
+from gspread.exceptions import APIError, WorksheetNotFound
+
 from typing import Union
 
 
@@ -79,4 +80,55 @@ async def update_book_gs(
 
     raise Exception(f"Не удалось найти пустую строку за 30 попыток")
 
+
+# --- Обёртка для безопасного update ---
+async def safe_update(worksheet, cell_range, values):
+    max_retries = 5
+    pause_sec = 2
+
+    for attempt in range(max_retries):
+        try:
+            return await worksheet.update(cell_range, values)
+        except APIError as e:
+            if "Quota exceeded" in str(e):
+                print(f"Превышена квота, попытка {attempt+1}/{max_retries}, жду {pause_sec} сек...")
+                await asyncio.sleep(pause_sec)
+            else:
+                raise  # другие ошибки не глотаем
+    raise Exception("Превышен лимит попыток записи в Google Sheets")
+
+
+# --- Основная функция ---
+async def create_event_sheet(
+    spreadsheet_id: str,
+    sheet_name: str,
+    options: list[dict]
+) -> int:
+    agc = await agcm.authorize()
+    spreadsheet = await agc.open_by_key(spreadsheet_id)
+
+    # Удаляем старый лист (если есть)
+    try:
+        existing = await spreadsheet.worksheet(sheet_name)
+        await spreadsheet.del_worksheet(existing)
+    except Exception:
+        pass
+
+    worksheet = await spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=10)
+
+    # Заголовки опций
+    await safe_update(worksheet, "A1:D1", [["ID", "Название", "Места", "Стоимость"]])
+
+    option_rows = [
+        [opt["id"], opt["name"], opt["seats"], opt["price"]]
+        for opt in options
+    ]
+    await safe_update(worksheet, f"A2:D{len(option_rows)+1}", option_rows)
+
+    # Таблица регистрации
+    await safe_update(worksheet, "F1:I1", [["ID", "Ивент", "Имя", "Пришёл"]])
+    empty_rows = [[i+1, "", "", "⬜"] for i in range(20)]
+    await safe_update(worksheet, "F2:I21", empty_rows)
+
+    return worksheet.id
 

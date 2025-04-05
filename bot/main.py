@@ -2,13 +2,20 @@ import asyncio
 import logging
 import sys
 
+from aiogram import Dispatcher
 from datetime import datetime
 
-from handlers import dp
+# from handlers import dp
 from init import set_main_menu, bot
 from settings import conf, log_error
 from db.base import init_models
 # from utils.scheduler_utils import start_schedulers, shutdown_schedulers
+from handlers import main_router
+from handlers.admin import admin_router
+
+
+dp = Dispatcher()
+
 
 
 async def main() -> None:
@@ -19,6 +26,10 @@ async def main() -> None:
     # else:
     #     pass
     #     await start_schedulers()
+    # print(dp.sub_routers)
+    dp.include_router(mm)
+    dp.include_router(admin_router)
+    print(dp.sub_routers)
     await dp.start_polling(bot)
     # await shutdown_schedulers()
     await bot.session.close()

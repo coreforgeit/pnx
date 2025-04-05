@@ -12,11 +12,6 @@ from enums import UserStatus
 async def get_start_msg(user: AgUser, msg_id: int = None) -> None:
     user_info = await User.get_by_id(user.id)
 
-    print(user.id)
-    print(user_info)
-    print(type(user_info))
-    print(user_info.status)
-
     if user_info.status == UserStatus.USER.value:
         text = (
             f'<b>Привет, {user.full_name}!</b>\n\n'
@@ -24,10 +19,8 @@ async def get_start_msg(user: AgUser, msg_id: int = None) -> None:
         )
         markup = kb.get_user_main_kb()
     else:
-        text = (
-            f'<b>Действия администратора:</b>\n\n'
-        )
-        markup = kb.get_user_main_kb()
+        text = f'<b>Действия администратора:</b>'
+        markup = kb.get_admin_main_kb(user_info.status)
 
     if msg_id:
         await bot.edit_message_text(chat_id=user.id, message_id=msg_id, text=text, reply_markup=markup)

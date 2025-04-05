@@ -20,6 +20,7 @@ class Venue(Base):
     time_close: Mapped[time] = mapped_column(sa.Time, server_default='23:59')
     table_count: Mapped[int] = mapped_column(sa.Integer)
     book_len: Mapped[int] = mapped_column(sa.Integer, server_default='180')
-    gs_id: Mapped[str] = mapped_column(sa.String, nullable=True)
+    book_gs_id: Mapped[str] = mapped_column(sa.String, nullable=True)
+    event_gs_id: Mapped[str] = mapped_column(sa.String, nullable=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=True)
 

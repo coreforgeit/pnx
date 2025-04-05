@@ -1,6 +1,4 @@
-from .main_menu import dp
-from .user import dp
-from .admin import dp
-from .exceptions import dp
+from .main_menu import main_router
+from .exceptions import main_router
 
-__all__ = ['dp']
+__all__ = ['main_router']

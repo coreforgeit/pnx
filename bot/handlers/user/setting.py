@@ -8,13 +8,22 @@ import keyboards as kb
 import utils as ut
 from db import User
 from settings import conf, log_error
-from init import dp, bot
+from init import user_router, bot
 from data import texts_dict
 from enums import UserCB, MenuCommand
 
 
+from aiogram.filters.command import CommandStart
+
+
+@user_router.message(CommandStart())
+async def com_start(msg: Message, state: FSMContext):
+    # await state.clear()
+    print(__name__)
+
+
 # Команда старт
-@dp.message(Command(MenuCommand.SETTINGS.command))
+@user_router.message(Command(MenuCommand.SETTINGS.command))
 async def com_start(msg: Message, state: FSMContext):
     await state.clear()
 
@@ -25,6 +34,6 @@ async def com_start(msg: Message, state: FSMContext):
 
 
 # проверяет подписку, в случае удачи пропускает
-@dp.callback_query(lambda cb: cb.data.startswith(UserCB.BACK_START.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BACK_START.value))
 async def back_com_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
