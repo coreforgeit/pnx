@@ -9,7 +9,7 @@ from datetime import datetime
 
 import asyncio
 
-import db
+from .utils import get_main_manage_event_msg
 import keyboards as kb
 import utils as ut
 from google_api import add_book_gs
@@ -19,12 +19,6 @@ from init import bot, admin_router
 from data import texts_dict
 from google_api import create_event_sheet
 from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict
-
-
-# @admin_route.message(CommandStart())
-# async def com_start(msg: Message, state: FSMContext):
-#     # await state.clear()
-#     print(__name__)
 
 
 # старт брони столиков
@@ -43,111 +37,6 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
     venues = await Venue.get_all()
     await state.update_data(data=asdict(data_obj))
     await get_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
-
-
-async def get_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
-    data = await state.get_data()
-    data_obj = EventData(**data)
-
-    data_obj.print_all()
-
-    if data_obj.end == 1:
-        data_obj.end = 2
-
-    elif data_obj.end == 2:
-        markup = kb.get_event_end_kb()
-        data_obj.end = 0
-
-    await state.update_data(data=asdict(data_obj))
-
-    if data_obj.options:
-        option_text = '\nОпции:\n'
-        options: list[dict] = data_obj.options
-        for option in options:
-            option_obj = OptionData(**option)
-            option_text += f'{option_obj.name} {option_obj.place} мест {option_obj.price} UZS\n'
-
-    else:
-        option_text = ''
-
-    if data_obj.current_option:
-        option_obj = OptionData(**data_obj.current_option)
-        option_text += f'\n{option_obj.name} {option_obj.place} мест {option_obj.price} UZS\n'.replace('None', ' ')
-
-    row_list = [
-        f'{data_obj.venue_name}\n\n',
-        f'{data_obj.name}\n',
-        f'Дата: {data_obj.date_str}\n',
-        f'Время: {data_obj.time_str}\n',
-    ]
-    bottom_text = ''.join(row for row in row_list if 'None' not in row).strip()
-
-    text = f'{data_obj.text}\n\n--------\n{bottom_text}{option_text}\n\n{event_text_dict.get(data_obj.step)}'
-    entities = ut.recover_entities(data_obj.entities)
-
-    if data_obj.content_type == ContentType.TEXT.value and not data_obj.photo_id:
-        await bot.edit_message_text(
-            chat_id=data_obj.user_id,
-            message_id=data_obj.msg_id,
-            text=text,
-            entities=entities,
-            parse_mode=None,
-            reply_markup=markup
-        )
-
-    elif data_obj.content_type == ContentType.TEXT.value and data_obj.photo_id:
-        await bot.delete_message(chat_id=data_obj.user_id, message_id=data_obj.msg_id)
-
-        sent = await bot.send_photo(
-            chat_id=data_obj.user_id,
-            photo=data_obj.photo_id,
-            caption=text,
-            caption_entities=entities,
-            parse_mode=None,
-            reply_markup=markup
-        )
-
-        data_obj.msg_id = sent.message_id
-        data_obj.content_type = sent.content_type
-        await state.update_data(data=asdict(data_obj))
-
-    elif data_obj.content_type == ContentType.PHOTO.value and not data_obj.photo_id:
-        await bot.delete_message(chat_id=data_obj.user_id, message_id=data_obj.msg_id)
-
-        sent = await bot.send_message(
-            chat_id=data_obj.user_id,
-            text=text,
-            entities=entities,
-            parse_mode=None,
-            reply_markup=markup
-        )
-
-        data_obj.msg_id = sent.message_id
-        data_obj.content_type = sent.content_type
-        await state.update_data(data=asdict(data_obj))
-
-    elif data_obj.content_type == ContentType.PHOTO.value and data_obj.photo_id:
-
-        media = InputMediaPhoto(
-            media=data_obj.photo_id,
-            caption=text,
-            caption_entities=entities,
-            parse_mode=None
-        )
-        await bot.edit_message_media(
-            chat_id=data_obj.user_id,
-            message_id=data_obj.msg_id,
-            media=media,
-            reply_markup=markup
-        )
-
-
-# принимает текстовые поля
-@admin_router.message()
-async def event_msg_data(msg: Message, state: FSMContext):
-    await msg.delete()
-
-    print('tttttttttttttttttttttttttttttttttttttttttt')
 
 
 # принимает текстовые поля
@@ -195,10 +84,10 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.time_str = book_time
         data_obj.step = EventStep.OPTION_NAME.value
 
-        if data_obj.top_name:
+        if not data_obj.top_name:
             data_obj.top_name = await EventOption.get_top_names()
 
-        markup = kb.get_event_option_name_kb(data_obj.top_name)
+        markup = kb.get_event_option_select_kb(data_obj.top_name)
 
     elif data_obj.step == EventStep.OPTION_NAME.value:
         if data_obj.current_option:
@@ -213,7 +102,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         if data_obj.top_place:
             data_obj.top_place = await EventOption.get_top_place()
 
-        markup = kb.get_event_option_name_kb(data_obj.top_place)
+        markup = kb.get_event_option_select_kb(data_obj.top_place)
 
     elif data_obj.step == EventStep.OPTION_PLACE.value:
         if not msg.text.isdigit():
@@ -229,7 +118,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         if data_obj.top_price:
             data_obj.top_price = await EventOption.get_top_price()
 
-        markup = kb.get_event_option_name_kb(data_obj.top_place)
+        markup = kb.get_event_option_select_kb(data_obj.top_price)
 
     elif data_obj.step == EventStep.OPTION_PRICE.value:
         if not msg.text.isdigit():
@@ -246,7 +135,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
             data_obj.options = [asdict(option_obj)]
         data_obj.current_option = {}
 
-        markup = kb.get_event_end_kb()
+        markup = kb.get_event_end_kb(data_obj.event_id)
 
     else:
         await ut.send_text_alert(chat_id=msg.from_user.id, text='❗️ Выберите из предложенных вариантов')
@@ -297,7 +186,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
     await get_main_manage_event_msg(state, markup=kb.get_event_time_kb(data_obj.times_list))
 
 
-# записывает дату
+# записывает время
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_TIME.value))
 async def event_time(cb: CallbackQuery, state: FSMContext):
     _, time_str = cb.data.split(':')
@@ -309,12 +198,12 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
     if time_str != Action.BACK.value:
         data_obj.time_str = time_str
 
-    if data_obj.top_name:
+    if not data_obj.top_name:
         data_obj.top_name = await EventOption.get_top_names()
 
     data_obj.step = EventStep.OPTION_NAME.value
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=kb.get_event_option_name_kb(data_obj.top_name))
+    await get_main_manage_event_msg(state, markup=kb.get_event_option_select_kb(data_obj.top_name))
 
 
 # обновляет данные
@@ -350,17 +239,20 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
     elif step == EventStep.OPTION_NAME.value:
         if not data_obj.top_name:
             data_obj.top_name = await EventOption.get_top_names()
-        markup = kb.get_event_option_name_kb(data_obj.top_name)
+        markup = kb.get_event_option_select_kb(data_obj.top_name)
 
-    elif step == EventStep.OPTION_PLACE.value:
-        if not data_obj.top_place:
-            data_obj.top_place = await EventOption.get_top_place()
-        markup = kb.get_event_option_name_kb(data_obj.top_place)
+    # elif step == EventStep.OPTION_PLACE.value:
+    #     if not data_obj.top_place:
+    #         data_obj.top_place = await EventOption.get_top_place()
+    #     markup = kb.get_event_option_select_kb(data_obj.top_place)
+    #
+    # elif step == EventStep.OPTION_PRICE.value:
+    #     if not data_obj.top_price:
+    #         data_obj.top_price = await EventOption.get_top_price()
+    #     markup = kb.get_event_option_select_kb(data_obj.top_price)
 
-    elif step == EventStep.OPTION_PRICE.value:
-        if not data_obj.top_price:
-            data_obj.top_price = await EventOption.get_top_price()
-        markup = kb.get_event_option_name_kb(data_obj.top_price)
+    elif step == EventStep.OPTION_DEL.value:
+        markup = kb.get_event_option_del_kb(data_obj.options)
 
     else:
         markup = None
@@ -370,7 +262,7 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
 
 # записывает опции
-@admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_TIME.value))
+@admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_OPTION.value))
 async def event_time(cb: CallbackQuery, state: FSMContext):
     _, cb_value = cb.data.split(':')
 
@@ -387,20 +279,20 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.step = EventStep.OPTION_PLACE.value
         data_obj.current_option = asdict(option_obj)
 
-        if data_obj.top_place:
+        if not data_obj.top_place:
             data_obj.top_place = await EventOption.get_top_place()
 
-        markup = kb.get_event_option_name_kb(data_obj.top_place)
+        markup = kb.get_event_option_select_kb(data_obj.top_place)
 
     elif data_obj.step == EventStep.OPTION_PLACE.value:
         option_obj.place = int(cb_value)
         data_obj.step = EventStep.OPTION_PRICE.value
         data_obj.current_option = asdict(option_obj)
 
-        if data_obj.top_price:
+        if not data_obj.top_price:
             data_obj.top_price = await EventOption.get_top_price()
 
-        markup = kb.get_event_option_name_kb(data_obj.top_place)
+        markup = kb.get_event_option_select_kb(data_obj.top_price)
 
     elif data_obj.step == EventStep.OPTION_PRICE.value:
         option_obj.price = int(cb_value)
@@ -411,7 +303,13 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
             data_obj.options = [asdict(option_obj)]
         data_obj.current_option = {}
 
-        markup = kb.get_event_end_kb()
+        markup = kb.get_event_end_kb(data_obj.event_id)
+
+    elif data_obj.step == EventStep.OPTION_DEL.value:
+        opt_index = int(cb_value)
+        data_obj.options.pop(opt_index)
+
+        markup = kb.get_event_end_kb(data_obj.event_id)
 
     else:
         data_obj.current_option = {}
@@ -425,41 +323,58 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
 # сохраняет ивент
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_END.value))
 async def event_end(cb: CallbackQuery, state: FSMContext):
+    sent = await cb.message.answer('⏳')
 
     data = await state.get_data()
-    await state.clear()
     data_obj = EventData(**data)
 
-    #     сохраняем ивент
-    event_id = await Event.add(
-        creator_id=cb.from_user.id,  # например, из Telegram user.id
-        venue_id=data_obj.venue_id,  # передаётся отдельно
-        time_event=datetime.strptime(data_obj.time_str, conf.time_format).time(),
-        date_event=datetime.strptime(data_obj.date_str, conf.date_format).date(),
-        name=data_obj.name,
-        text=data_obj.text,
-        entities=data_obj.entities,
-        photo_id=data_obj.photo_id
-    )
-    #     сохраняем опции
-    for option_dict in data_obj.options or []:
-        option = OptionData(**option_dict)  # преобразуем словарь в dataclass
+    try:
+        #     сохраняем ивент
+        event_id = await Event.add(
+            creator_id=cb.from_user.id,  # например, из Telegram user.id
+            venue_id=data_obj.venue_id,  # передаётся отдельно
+            time_event=datetime.strptime(data_obj.time_str, conf.time_format).time(),
+            date_event=datetime.strptime(data_obj.date_str, conf.date_format).date(),
+            name=data_obj.name,
+            text=data_obj.text,
+            entities=data_obj.entities,
+            photo_id=data_obj.photo_id,
+            event_id=data_obj.event_id
+        )
+        #     сохраняем опции
+        updated_options = []
 
-        await EventOption.add(
-            event_id=event_id,
-            name=option.name,
-            all_place=option.place,
-            price=option.price if option.price is not None else 0
+        for option_dict in data_obj.options or []:
+            option = OptionData(**option_dict)  # преобразуем словарь в dataclass
+
+            option_id = await EventOption.add(
+                event_id=event_id,
+                name=option.name,
+                all_place=option.place,
+                price=option.price if option.price is not None else 0,
+                option_id=option.id
+            )
+
+            option.id = option_id
+            updated_options.append(asdict(option))
+
+    #     сохраняем записывем в таблицу
+        page_name = f'{data_obj.date_str[:-5]} {data_obj.name}'[:100]
+        page_id = await create_event_sheet(
+            spreadsheet_id=data_obj.sheet_id,
+            sheet_name=page_name,
+            options=updated_options,
+            page_id=data_obj.pade_id
         )
 
-#     сохраняем записывем в таблицу
-    page_name = f'{data_obj.date_str[:-5]} {data_obj.name}'[:100]
-    await create_event_sheet(
-        spreadsheet_id=data_obj.sheet_id,
-        sheet_name=page_name,
-        options=data_obj.options
-    )
-    #     Отчитываемся об успехе
-    await cb.message.edit_reply_markup(reply_markup=None)
-    await cb.message.answer(text='✅ Мероприятие успешно создано')
+        await Event.update(event_id=event_id, page_id=page_id)
+        #     Отчитываемся об успехе
+        await cb.message.edit_reply_markup(reply_markup=None)
+        await state.clear()
+
+        await sent.edit_text(text='✅ Мероприятие успешно создано')
+
+    except Exception as e:
+        log_error(e)
+        await sent.edit_text(text=f'❌ Не удалось сохранить мероприятие\n\nОшибка:\n{e}')
 

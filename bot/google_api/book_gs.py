@@ -4,8 +4,8 @@ from gspread.exceptions import APIError, WorksheetNotFound
 
 from typing import Union
 
-
 from .base import agcm
+from enums import OptionData
 
 
 async def add_book_gs(
@@ -100,35 +100,40 @@ async def safe_update(worksheet, cell_range, values):
 
 # --- Основная функция ---
 async def create_event_sheet(
-    spreadsheet_id: str,
-    sheet_name: str,
-    options: list[dict]
+        spreadsheet_id: str,
+        sheet_name: str,
+        options: list[dict],
+        page_id: int = None
 ) -> int:
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
 
     # Удаляем старый лист (если есть)
-    try:
-        existing = await spreadsheet.worksheet(sheet_name)
-        await spreadsheet.del_worksheet(existing)
-    except Exception:
-        pass
+    # try:
+    #     existing = await spreadsheet.worksheet(sheet_name)
+    #     # await spreadsheet.del_worksheet(existing)
+    # except Exception:
+    #     pass
 
-    worksheet = await spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=10)
+    if page_id:
+        worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+        # await worksheet.update_title(sheet_name)
+    else:
+        worksheet = await spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=10)
 
     # Заголовки опций
     await safe_update(worksheet, "A1:D1", [["ID", "Название", "Места", "Стоимость"]])
 
-    option_rows = [
-        [opt["id"], opt["name"], opt["seats"], opt["price"]]
-        for opt in options
-    ]
+    option_rows = []
+    for option in options:
+        opt_obj = OptionData(**option)
+        option_rows.append([opt_obj.id, opt_obj.name, opt_obj.place, opt_obj.price])
     await safe_update(worksheet, f"A2:D{len(option_rows)+1}", option_rows)
 
     # Таблица регистрации
-    await safe_update(worksheet, "F1:I1", [["ID", "Ивент", "Имя", "Пришёл"]])
-    empty_rows = [[i+1, "", "", "⬜"] for i in range(20)]
-    await safe_update(worksheet, "F2:I21", empty_rows)
+    await safe_update(worksheet, "F1:J1", [["ID", "Ивент", "Имя", "Пришёл", "В базе"]])
+    # empty_rows = [[i+1, "", "", "⬜"] for i in range(20)]
+    # await safe_update(worksheet, "F2:I21", empty_rows)
 
     return worksheet.id
 

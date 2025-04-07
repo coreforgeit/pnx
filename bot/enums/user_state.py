@@ -98,7 +98,9 @@ class EventData(BaseData):
     top_name: list[str] = None
     top_place: list[int] = None
     top_price: list[int] = None
+    event_id: int = None
     end: int = 0
+    pade_id: int = 0
 
 
 @dataclass

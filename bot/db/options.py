@@ -34,13 +34,13 @@ class EventOption(Base):
             all_place: int,
             price: int,
             is_active: bool = True,
-            id: int | None = None
+            option_id: int | None = None
     ) -> int:
         """Добавляет или обновляет опцию (категорию мест) к событию"""
         now = datetime.now()
 
         insert_data = {
-            "id": id,
+            "id": option_id,
             "event_id": event_id,
             "name": name,
             "all_place": all_place,
@@ -50,7 +50,7 @@ class EventOption(Base):
             "updated_at": now,
         }
 
-        if id is None:
+        if option_id is None:
             insert_data.pop("id")
 
         query = (
@@ -59,13 +59,11 @@ class EventOption(Base):
             .on_conflict_do_update(
                 index_elements=[cls.id],
                 set_={
-                    "event_id": event_id,
                     "name": name,
                     "all_place": all_place,
                     "price": price,
                     "is_active": is_active,
                     "updated_at": now,
-                    # empty_place не трогаем при update
                 }
             )
         )
@@ -104,7 +102,7 @@ class EventOption(Base):
         async with begin_connection() as conn:
             result = await conn.execute(query)
 
-        return [row.name for row in result.all()]
+        return [row.all_place for row in result.all()]
 
     @classmethod
     async def get_top_price(cls, limit: int = 8) -> list[int]:
@@ -119,35 +117,17 @@ class EventOption(Base):
         async with begin_connection() as conn:
             result = await conn.execute(query)
 
-        return [row.name for row in result.all()]
-
-
-
-
-    # @classmethod
-    # async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
-    #     """Находим бронь пользователя"""
-    #
-    #     query = sa.select(cls).where(
-    #         cls.venue_id == venue_id,
-    #         cls.user_id == user_id,
-    #         cls.date_book == date_book,
-    #     )
-    #
-    #     async with begin_connection() as conn:
-    #         result = await conn.execute(query)
-    #         booking = result.scalars().first()
-    #     return booking
+        return [row.price for row in result.all()]
 
     @classmethod
-    async def get_last__day(cls, date_book: date) -> t.Optional[t.Self]:
-        """Находим бронь пользователя"""
-
-        query = sa.select(cls).where(cls.date_book == date_book).order_by(sa.desc(cls.gs_row))
+    async def get_all(cls, event_id: int = None) -> t.Optional[list[t.Self]]:
+        query = sa.select(cls)
+        if event_id:
+            query = query.where(cls.event_id == event_id)
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
-        return result.scalars().first()
+        return result.scalars().all()
 
     @classmethod
     async def update(

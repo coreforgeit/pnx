@@ -29,6 +29,7 @@ bot = Bot(
 main_router = Router()
 user_router = Router()
 admin_router = Router()
+error_router = Router()
 
 # Настройка Redis
 redis_client = redis.StrictRedis(host=conf.redis_host, port=conf.redis_port, db=0)

@@ -26,7 +26,8 @@ class AdminCB(str, Enum):
 
     BOOK_START = 'admin_book_start'
     TICKET_START = 'admin_ticket_start'
-    EVENT_UPDATE = 'admin_event_update'
+    EVENT_UPDATE_1 = 'admin_event_update_1'
+    EVENT_UPDATE_2 = 'admin_event_update_2'
     MAILING_START = 'admin_mailing_start'
     ADD_START = 'admin_add_start'
 
@@ -37,7 +38,8 @@ class AdminCB(str, Enum):
     EVENT_DATE = 'admin_event_date'
     EVENT_TIME = 'admin_event_time'
     EVENT_OPTION = 'admin_options'
-    EVENT_DEL_OPTION = 'admin_options'
+    EVENT_DEL_OPTION_1 = 'admin_options_del_1'
+    EVENT_DEL_OPTION_2 = 'admin_options_del_2'
     EVENT_BACK = 'admin_event_back'
     EVENT_EDIT = 'admin_event_edit'
     EVENT_END = 'admin_event_end'

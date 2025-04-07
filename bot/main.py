@@ -11,7 +11,9 @@ from settings import conf, log_error
 from db.base import init_models
 # from utils.scheduler_utils import start_schedulers, shutdown_schedulers
 from handlers import main_router
-from handlers.admin import admin_router
+from handlers.admin.manage_event import admin_router
+from handlers.user import user_router
+from handlers.exceptions import error_router
 
 
 dp = Dispatcher()
@@ -27,9 +29,10 @@ async def main() -> None:
     #     pass
     #     await start_schedulers()
     # print(dp.sub_routers)
-    dp.include_router(mm)
+    dp.include_router(main_router)
     dp.include_router(admin_router)
-    print(dp.sub_routers)
+    dp.include_router(user_router)
+    dp.include_router(error_router)
     await dp.start_polling(bot)
     # await shutdown_schedulers()
     await bot.session.close()
