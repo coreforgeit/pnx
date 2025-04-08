@@ -1,10 +1,13 @@
 from dataclasses import dataclass, asdict
 from enum import Enum
 
+import typing as t
+
 
 class UserState(str, Enum):
     BOOK = 'book'
     EVENT = 'event'
+    TICKET = 'ticket'
 
 
 @dataclass
@@ -111,4 +114,34 @@ class OptionData:
     price: int = None
 
 
+# Шаги покупки
+class TicketStep(str, Enum):
+    EVENT = 'event'
+    OPTION = 'option'
+    COUNT = 'count'
+    CONFIRM = 'confirm'
 
+
+ticket_text_dict = {
+    TicketStep.EVENT.value: 'Выберите заведение',
+    TicketStep.OPTION.value: 'Выберите тип билета',
+    TicketStep.COUNT.value: 'Количество билетов',
+    TicketStep.CONFIRM.value: 'Ваш заказ верен?',
+}
+
+
+@dataclass
+class TicketData(BaseData):
+    event: "Event" = None  # строка вместо прямого импорта
+    option: "EventOption" = None
+    count_place: int = None
+
+    # event: dict = None
+    # option: dict = None
+
+    # event_id: int = None
+    # event_name: str = None
+    # sheet_id: str = None
+    # page_id: int = None
+    # option_id: int = None
+    # option_name: int = None

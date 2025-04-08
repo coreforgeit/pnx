@@ -24,7 +24,9 @@ class Book(Base):
     comment: Mapped[str] = mapped_column(sa.String())
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), default=2)
-    is_come: Mapped[bool] = mapped_column(sa.Boolean(), default=False)
+    status: Mapped[str] = mapped_column(sa.String())
+
+    # is_come: Mapped[bool] = mapped_column(sa.Boolean(), default=False)
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), default=True)
 
     venue: Mapped["Venue"] = relationship("Venue", backref="bookings")
@@ -43,6 +45,7 @@ class Book(Base):
             time_book: time,
             date_book: date,
             comment: str,
+            status: str,
             people_count: int
     ) -> int:
         now = datetime.now()
@@ -54,6 +57,7 @@ class Book(Base):
             time_book=time_book,
             date_book=date_book,
             comment=comment,
+            status=status,
             people_count=people_count
         )
 
@@ -108,8 +112,8 @@ class Book(Base):
             book_id: int,
             qr_id: str = None,
             gs_row: int = None,
-            is_come: bool = None,
-            is_active: bool = None,
+            status: str = None,
+            is_active: bool = None
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == book_id).values(updated_at=now)
@@ -120,8 +124,8 @@ class Book(Base):
         if gs_row:
             query = query.values(gs_row=gs_row)
 
-        if is_come is not None:
-            query = query.values(is_come=is_come)
+        if status:
+            query = query.values(status=status)
 
         if is_active is not None:
             query = query.values(is_active=is_active)

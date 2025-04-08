@@ -131,9 +131,44 @@ async def create_event_sheet(
     await safe_update(worksheet, f"A2:D{len(option_rows)+1}", option_rows)
 
     # Таблица регистрации
-    await safe_update(worksheet, "F1:J1", [["ID", "Ивент", "Имя", "Пришёл", "В базе"]])
+    await safe_update(worksheet, "F1:J1", [["ID", "Опция", "Имя", "Пришёл", "В базе"]])
     # empty_rows = [[i+1, "", "", "⬜"] for i in range(20)]
     # await safe_update(worksheet, "F2:I21", empty_rows)
 
     return worksheet.id
 
+
+# --- Добавить билет в первую свободную строку таблицы регистрации ---
+async def add_ticket_row_to_registration(
+    spreadsheet_id: str,
+    page_id: str,
+    ticket_id: int,
+    option_name: str,
+    user_name: str,
+    start_row: int = 2,
+) -> int:
+    max_rows: int = 500
+
+    agc = await agcm.authorize()
+    spreadsheet = await agc.open_by_key(spreadsheet_id)
+    worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+
+    for row in range(start_row, start_row + max_rows):
+        cell_range = f"F{row}:I{row}"
+        try:
+            existing = await worksheet.get(cell_range)
+        except APIError as e:
+            if "Quota exceeded" in str(e):
+                print(f"Quota hit on row {row}, sleeping...")
+                await asyncio.sleep(2)
+                continue
+            else:
+                raise
+
+        # если все ячейки пусты
+        if not any(cell.strip() for cell in existing[0] if cell):
+            new_row = [[ticket_id, option_name, user_name, "⬜"]]
+            await safe_update(worksheet, cell_range, new_row)
+            return row
+
+    raise Exception("Не удалось найти пустую строку в диапазоне регистрации")

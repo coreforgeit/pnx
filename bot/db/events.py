@@ -30,10 +30,10 @@ class Event(Base):
 
     venue: Mapped["Venue"] = relationship("Venue", backref="event")
 
-    def time_book_str(self) -> str:
+    def time_str(self) -> str:
         return self.time_event.strftime(conf.time_format)
 
-    def date_book_str(self) -> str:
+    def date_str(self) -> str:
         return self.date_event.strftime(conf.date_format)
 
     @classmethod

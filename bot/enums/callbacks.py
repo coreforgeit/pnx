@@ -16,6 +16,12 @@ class UserCB(str, Enum):
     BOOK_END = 'user_book_end'
 
     TICKET_START = 'user_ticket_start'
+    TICKET_EVENT = 'user_ticket_event'
+    TICKET_OPTION = 'user_ticket_option'
+    TICKET_PLACE = 'user_ticket_place'
+    TICKET_CONFIRM = 'user_ticket_confirm'
+    TICKET_END = 'user_ticket_end'
+
     SETTINGS_START = 'user_settings_start'
     BOOK_COUNT = 'user_book_count'
 

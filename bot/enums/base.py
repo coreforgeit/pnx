@@ -20,9 +20,18 @@ class UserStatus(str, Enum):
     ADMIN = 'admin'
 
 
+# Команды меню
+class BookStatus(str, Enum):
+    NEW = 'new'
+    CONFIRMED = 'confirmed'
+    VISITED = 'visited'
+    CANCELED = 'canceled'
+
+
 # Ключи к автосообщениям
 class Action(str, Enum):
     BACK = 'back'
+    VIEW = 'view'
     ADD = 'add'
     DEL = 'del'
 
@@ -30,6 +39,7 @@ class Action(str, Enum):
 # Ключи к редису
 class Key(str, Enum):
     QR_BOOK = 'book'
+    QR_TICKET = 'ticket'
 
 
 # Ключи к редису

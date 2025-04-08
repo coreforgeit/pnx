@@ -14,19 +14,8 @@ from db import User, Book
 from settings import conf, log_error
 from init import main_router, bot
 from data import texts_dict
-from handlers.admin.manage_event import manage_event_start
+from handlers.user.user_utils import send_start_ticket_msg
 from enums import UserCB, MenuCommand, UserState
-
-from google_api import add_book_gs
-
-
-class MagicStartFilter(BaseFilter):
-    async def __call__(self, message: Message, state: FSMContext) -> bool:
-
-        cs = await state.get_state()
-        print(f'>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> {message.text} {cs}')
-        # Проверяем, что текст присутствует и начинается с команды /start
-        return bool(message.text) and message.text.startswith("/start")
 
 
 # Команда старт
@@ -62,3 +51,12 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
     _, photo_id = cb.data.split(':')
 
     await cb.message.answer_photo(photo=photo_id)
+
+
+# Команда старт
+@main_router.message(Command(MenuCommand.TICKET.command))
+async def com_start(msg: Message, state: FSMContext):
+    await state.clear()
+
+    await send_start_ticket_msg(chat_id=msg.from_user.id)
+

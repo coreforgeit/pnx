@@ -14,7 +14,7 @@ from db import User, Book, Venue
 from settings import conf, log_error
 from init import user_router, bot
 from data import texts_dict
-from enums import UserCB, BookData, UserState, BookStep, book_text_dict, Action, Key
+from enums import UserCB, BookData, UserState, BookStep, book_text_dict, Action, Key, BookStatus
 
 
 # старт брони столиков
@@ -243,6 +243,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         date_book=date_book,
         time_book=time_book,
         comment=data_obj.comment,
+        status=BookStatus.NEW.value,
         people_count=data_obj.people_count
     )
 
@@ -263,7 +264,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
             f'{comment}')
     await bot.send_message(chat_id=conf.admin_chat, text=text)
 
-#     отправляем в таблицу
+    #     отправляем в таблицу
     venue = await Venue.get_by_id(data_obj.venue_id)
     last_day_book = await Book.get_last_book_day(date_book=date_book)
     gs_row = await add_book_gs(
@@ -277,7 +278,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         start_row=last_day_book.gs_row + 1 if last_day_book else 2
     )
 
-    await Book.update(book_id, qr_id=qr_id, gs_row=gs_row)
+    await Book.update(book_id, qr_id=qr_id, gs_row=gs_row, status=BookStatus.CONFIRMED.value)
 
 
 

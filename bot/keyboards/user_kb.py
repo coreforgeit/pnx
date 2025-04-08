@@ -1,8 +1,10 @@
 from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 from datetime import datetime, timedelta
 
+import math
+
 from settings import conf
-from db import Venue
+from db import Venue, Event, EventOption
 from enums import UserCB, Action
 
 
@@ -10,7 +12,7 @@ from enums import UserCB, Action
 def get_user_main_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text='Бронь столика', callback_data=f'{UserCB.BOOK_START.value}')
-    kb.button(text='Билеты', callback_data=f'{UserCB.TICKET_START.value}')
+    kb.button(text='Билеты', callback_data=f'{UserCB.TICKET_START.value}:{Action.VIEW.value}')
     kb.button(text='Мои брони', callback_data=f'{UserCB.SETTINGS_START.value}')
     return kb.adjust(2, 1).as_markup()
 
@@ -83,4 +85,53 @@ def get_book_check_kb() -> InlineKeyboardMarkup:
 def get_view_qr_kb(file_id: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text='Показать QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{file_id}')
+    return kb.adjust(1).as_markup()
+
+
+# Кнопки выбора заведения
+def get_ticket_event_kb(events: list[Event]) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for event in events:
+        kb.button(text=event.name, callback_data=f'{UserCB.TICKET_EVENT.value}:{event.id}')
+
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
+# Кнопки выбора заведения
+def get_ticket_options_kb(options: list[EventOption]) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for option in options:
+        if option.empty_place == 0:
+            continue
+
+        kb.button(
+            text=f'{option.name} ({option.empty_place})',
+            callback_data=f'{UserCB.TICKET_PLACE.value}:{option.id}'
+        )
+
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_START.value}:{Action.BACK.value}')
+    return kb.adjust(1).as_markup()
+
+
+# Кнопки выбора количества мест
+def get_ticket_place_kb(empty_pace: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    row_len = 4
+    for i in range(1, 9):
+        if i > empty_pace:
+            row_len = i / 2 if i % 2 == 0 else math.ceil(i / 2)
+            break
+        kb.button(text=f'{i}', callback_data=f'{UserCB.TICKET_CONFIRM.value}:{i}')
+
+    kb_back = InlineKeyboardBuilder()
+    kb_back.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_OPTION.value}')
+    return kb.adjust(row_len).attach(kb_back).as_markup()
+
+
+# Кнопки выбора количества мест
+def get_ticket_confirm_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='✅ Подтвердить', callback_data=f'{UserCB.TICKET_END.value}')
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_PLACE.value}')
     return kb.adjust(1).as_markup()

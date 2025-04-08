@@ -22,5 +22,6 @@ class Venue(Base):
     book_len: Mapped[int] = mapped_column(sa.Integer, server_default='180')
     book_gs_id: Mapped[str] = mapped_column(sa.String, nullable=True)
     event_gs_id: Mapped[str] = mapped_column(sa.String, nullable=True)
+    # admin_chat_id: Mapped[int] = mapped_column(sa.Integer, nullable=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=True)
 
