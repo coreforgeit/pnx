@@ -10,14 +10,14 @@ import db
 import keyboards as kb
 import utils as ut
 from google_api import add_book_gs
-from db import User, Book, Event
+from db import User, Book, Event, Ticket
 from settings import conf, log_error
 from init import user_router, bot
 from data import texts_dict
-from enums import UserCB, BookData, TicketData, TicketStep, book_text_dict, ticket_text_dict
+from enums import UserCB, BookData, TicketData, TicketStep, book_text_dict, ticket_text_dict, Key
 
 
-async def get_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
+async def send_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
     data = await state.get_data()
     data_obj = BookData(**data)
 
@@ -59,7 +59,7 @@ async def send_start_ticket_msg(chat_id: int, msg_id: int = None):
     await bot.send_message(chat_id=chat_id, text=text, reply_markup=kb.get_ticket_event_kb(events))
 
 
-async def get_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
+async def send_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
     data = await state.get_data()
     data_obj = TicketData(**data)
 
@@ -95,4 +95,37 @@ async def get_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup = 
             text=text,
             reply_markup=markup
         )
+
+
+# Основное сообщение по настройкам
+async def send_main_settings_msg(user_id: int):
+    books = await Book.get_all_user_booking(user_id=user_id)
+    tickets = await Ticket.get_all_user_tickets(user_id=user_id)
+
+    all_book_count = len(books) + len(tickets)
+
+    if all_book_count == 0:
+        await bot.send_message(
+            chat_id=user_id, text=f'🤷‍♂️ У вас нет активных броней', reply_markup=kb.get_back_start_kb()
+        )
+        return
+
+    for book in books:
+        await bot.send_message(
+            chat_id=user_id,
+            text=ut.get_book_text(book),
+            reply_markup=kb.get_user_manage_book_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
+        )
+
+    for ticket in tickets:
+        await bot.send_message(
+            chat_id=user_id,
+            text=ut.get_ticket_text(ticket),
+            reply_markup=kb.get_user_manage_book_kb(book_type=Key.QR_TICKET.value, entry_id=ticket.id)
+        )
+
+
+
+
+
 

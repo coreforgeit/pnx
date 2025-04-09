@@ -103,3 +103,51 @@ class Ticket(Base):
             max_row = result.scalar()
 
         return max_row + 1 if max_row else 2
+
+    @classmethod
+    async def _get_full_ticket_query(cls,) -> sa.select:
+        return (
+            sa.select(cls)
+            .options(
+                joinedload(cls.event).joinedload("venue"),
+                joinedload(cls.option)
+            )
+        )
+
+    @classmethod
+    async def get_all_user_tickets(cls, user_id: int) -> t.Optional[list[t.Self]]:
+        """Получает все билеты пользователя с подгрузкой event, venue и option"""
+
+        query = cls._get_full_ticket_query().where(cls.user_id == user_id)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+            return result.scalars().all()
+
+    @classmethod
+    async def get_full_ticket(cls, ticket_id: int) -> t.Optional[t.Self]:
+        """Получает один билет с подгрузкой event, venue и option"""
+        query = cls._get_full_ticket_query().where(cls.id == ticket_id)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+            return result.scalars().first()
+
+    # @classmethod
+    # async def get_all_user_tickets(cls, user_id: int) -> t.Optional[list[t.Self]]:
+    #     """Получает бронь по ID вместе с данными о заведении"""
+    #
+    #     query = (
+    #         sa.select(cls)
+    #         .options(joinedload(cls.event))  # подтягиваем связанную модель
+    #         .where(cls.user_id == user_id)
+    #     )
+    #
+    #     async with begin_connection() as conn:
+    #         result = await conn.execute(query)
+    #         return result.scalars().all()
+
+
+
+
+

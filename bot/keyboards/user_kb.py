@@ -17,6 +17,13 @@ def get_user_main_kb() -> InlineKeyboardMarkup:
     return kb.adjust(2, 1).as_markup()
 
 
+# Кнопки вернуться в начало
+def get_back_start_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
 # Кнопки выбора заведения
 def get_book_main_kb(venues: list[Venue]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
@@ -81,13 +88,6 @@ def get_book_check_kb() -> InlineKeyboardMarkup:
     return kb.adjust(1).as_markup()
 
 
-# Показать кр-код
-def get_view_qr_kb(file_id: str) -> InlineKeyboardMarkup:
-    kb = InlineKeyboardBuilder()
-    kb.button(text='Показать QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{file_id}')
-    return kb.adjust(1).as_markup()
-
-
 # Кнопки выбора заведения
 def get_ticket_event_kb(events: list[Event]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
@@ -134,4 +134,20 @@ def get_ticket_confirm_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Подтвердить', callback_data=f'{UserCB.TICKET_END.value}')
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_PLACE.value}')
+    return kb.adjust(1).as_markup()
+
+
+# Показать кр-код
+def get_view_qr_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
+    return kb.adjust(1).as_markup()
+
+
+# Кнопки основного меню
+def get_user_manage_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
+    kb.button(text='Отменить бронь', callback_data=f'{UserCB.SETTINGS_REMOVE.value}:{book_type}:{entry_id}')
+    kb.button(text='Перенести бронь', callback_data=f'{UserCB.SETTINGS_EDIT.value}:{book_type}:{entry_id}')
     return kb.adjust(1).as_markup()

@@ -6,7 +6,7 @@ from init import scheduler, bot
 from settings import log_error
 from db import User, Book
 from data import texts_dict
-from enums import NoticeKey
+from enums import NoticeKey, BookStatus, Key
 
 
 # запускает планировщики
@@ -32,25 +32,33 @@ async def notice_book_for_day(book_id: int):
 async def notice_book_for_2_hours(book_id):
     book = await Book.get_booking_with_venue(book_id)
 
-    if book and book.is_active and not book.is_come:
+    if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
         text = f'Ждём вас через 2 часа в {book.venue.name}'
-        await bot.send_message(chat_id=book.user_id, text=text, reply_markup=kb.get_view_qr_kb(book.qr_id))
+        await bot.send_message(
+            chat_id=book.user_id,
+            text=text,
+            reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
+        )
 
 
 # предупреждаем об опоздании
 async def notice_book_for_now(book_id: int):
     book = await Book.get_booking_with_venue(book_id)
 
-    if book and book.is_active and not book.is_come:
+    if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
         text = f'Ваша бронь активна, мы будем ждать вас ещё 30 минут в {book.venue.name}'
-        await bot.send_message(chat_id=book.user_id, text=text, reply_markup=kb.get_view_qr_kb(book.qr_id))
+        await bot.send_message(
+            chat_id=book.user_id,
+            text=text,
+            reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
+        )
 
 
 # предупреждаем об опоздании
 async def notice_book_for_close(book_id: int):
     book = await Book.get_booking_with_venue(book_id)
 
-    if book and book.is_active and not book.is_come:
+    if book and book.is_active and not book.status == BookStatus.CONFIRMED.value:
         text = f'Мы не дождались вас 😔 Простите, но бронь была снята.'
         await bot.send_message(chat_id=book.user_id, text=text)
 

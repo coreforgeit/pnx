@@ -82,31 +82,6 @@ class Book(Base):
         return [str(row.time_book)[:-3] for row in result.all()]
 
     @classmethod
-    async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
-        """Находим бронь пользователя"""
-
-        query = sa.select(cls).where(
-            cls.venue_id == venue_id,
-            cls.user_id == user_id,
-            cls.date_book == date_book,
-        )
-
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            booking = result.scalars().first()
-        return booking
-
-    @classmethod
-    async def get_last_book_day(cls, date_book: date) -> t.Optional[t.Self]:
-        """Находим бронь пользователя"""
-
-        query = sa.select(cls).where(cls.date_book == date_book).order_by(sa.desc(cls.gs_row))
-
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-        return result.scalars().first()
-
-    @classmethod
     async def update(
             cls,
             book_id: int,
@@ -132,6 +107,31 @@ class Book(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
+
+    @classmethod
+    async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
+        """Находим бронь пользователя"""
+
+        query = sa.select(cls).where(
+            cls.venue_id == venue_id,
+            cls.user_id == user_id,
+            cls.date_book == date_book,
+        )
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+            booking = result.scalars().first()
+        return booking
+
+    @classmethod
+    async def get_last_book_day(cls, date_book: date) -> t.Optional[t.Self]:
+        """Находим бронь пользователя"""
+
+        query = sa.select(cls).where(cls.date_book == date_book).order_by(sa.desc(cls.gs_row))
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+        return result.scalars().first()
 
     @classmethod
     async def get_booking_count(cls, venue_id: int, date_book: date, time_book: time) -> int:
@@ -169,3 +169,17 @@ class Book(Base):
         async with begin_connection() as conn:
             result = await conn.execute(query)
             return result.scalars().first()
+
+    @classmethod
+    async def get_all_user_booking(cls, user_id: int) -> t.Optional[list[t.Self]]:
+        """Получает бронь по ID вместе с данными о заведении"""
+
+        query = (
+            sa.select(cls)
+            .options(joinedload(cls.venue))  # подтягиваем связанную модель
+            .where(cls.user_id == user_id)
+        )
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+            return result.scalars().all()

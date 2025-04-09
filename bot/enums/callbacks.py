@@ -23,6 +23,9 @@ class UserCB(str, Enum):
     TICKET_END = 'user_ticket_end'
 
     SETTINGS_START = 'user_settings_start'
+    SETTINGS_EDIT = 'user_settings_edit'
+    SETTINGS_REMOVE = 'user_settings_remove'
+
     BOOK_COUNT = 'user_book_count'
 
 

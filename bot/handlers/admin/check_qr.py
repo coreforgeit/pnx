@@ -12,7 +12,7 @@ from db import User, Book
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
-from enums import UserCB, UserStatus, Key
+from enums import UserCB, UserStatus, Key, BookStatus
 
 from google_api import update_book_gs
 
@@ -55,7 +55,7 @@ async def qr_check(msg: Message, state: FSMContext):
             await msg.answer("❌ Бронь не найдена")
             return
 
-        if book.is_come:
+        if book.status == BookStatus.VISITED.value:
             await msg.answer("❌ Уже была использована")
             return
 
@@ -70,7 +70,7 @@ async def qr_check(msg: Message, state: FSMContext):
             chat_id=book.user_id, text=f'✅ Ваша бронь подтверждена\n\n{book_text}\n\nДобро пожаловать!'
         )
 
-        await Book.update(book_id=book.id, is_come=True)
+        await Book.update(book_id=book.id, status=BookStatus.VISITED.value)
 
         await update_book_gs(
             spreadsheet_id=book.venue.gs_id,

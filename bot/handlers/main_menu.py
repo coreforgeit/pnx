@@ -10,12 +10,12 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from db import User, Book
+from db import User, Book, Ticket
 from settings import conf, log_error
 from init import main_router, bot
 from data import texts_dict
 from handlers.user.user_utils import send_start_ticket_msg
-from enums import UserCB, MenuCommand, UserState
+from enums import UserCB, MenuCommand, Key
 
 
 # Команда старт
@@ -48,9 +48,16 @@ async def com_book(msg: Message, state: FSMContext):
 # показывает кр
 @main_router.callback_query(lambda cb: cb.data.startswith(UserCB.VIEW_QR.value))
 async def book_comment(cb: CallbackQuery, state: FSMContext):
-    _, photo_id = cb.data.split(':')
+    _, type_qr, entry_id_str = cb.data.split(':')
+    entry_id = int(entry_id_str)
 
-    await cb.message.answer_photo(photo=photo_id)
+    if type_qr == Key.QR_BOOK.value:
+        book = await Book.get_booking_with_venue(entry_id)
+        await cb.message.answer_photo(photo=book.qr_id, caption=ut.get_book_text(book))
+
+    elif type_qr == Key.QR_TICKET.value:
+        ticket = await Ticket.get_full_ticket(entry_id)
+        await cb.message.answer_photo(photo=ticket.qr_id, caption=ut.get_ticket_text(ticket))
 
 
 # Команда старт

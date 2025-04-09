@@ -7,7 +7,7 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from .user_utils import get_main_ticket_msg, send_start_ticket_msg
+from .user_utils import send_main_ticket_msg, send_start_ticket_msg
 from db import Ticket, Event, EventOption, Venue
 from settings import conf, log_error
 from init import user_router, bot
@@ -107,7 +107,7 @@ async def ticket_place(cb: CallbackQuery, state: FSMContext):
     data_obj.step = TicketStep.COUNT.value
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_ticket_msg(state, markup=kb.get_ticket_place_kb(option.empty_place))
+    await send_main_ticket_msg(state, markup=kb.get_ticket_place_kb(option.empty_place))
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_CONFIRM.value))
@@ -125,7 +125,7 @@ async def ticket_check(cb: CallbackQuery, state: FSMContext):
     data_obj.step = TicketStep.CONFIRM.value
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_ticket_msg(state, markup=kb.get_ticket_confirm_kb())
+    await send_main_ticket_msg(state, markup=kb.get_ticket_confirm_kb())
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_END.value))
@@ -184,7 +184,7 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
         # уменьшить количество мест
         await EventOption.update(option_id=option.id, add_place=0 - data_obj.count_place)
 
-        text = f'❗️ Продано {data_obj.count_place} билета на {event.name}'
+        text = f'<b>Продано {data_obj.count_place} билета на {event.name}</b>'
 
         await bot.send_message(chat_id=conf.admin_chat, text=text)
         # await bot.send_message(chat_id=venue.admin_chat_id, text=text)
