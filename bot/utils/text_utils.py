@@ -4,7 +4,7 @@ from db import Book, Ticket
 def get_book_text(book: Book) -> str:
     return (
         f'<b>{book.venue.name}</b>\n'
-        f'{book.date_book_str()} {book.time_book_str()} на {book.people_count} чел.\n'
+        f'{book.date_str()} {book.time_str()} на {book.people_count} чел.\n'
         f'<i>{book.comment}</i>'
     )
 

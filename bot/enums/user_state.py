@@ -36,6 +36,8 @@ class BookStep(str, Enum):
 
 @dataclass
 class BookData(BaseData):
+    book_id: int = None
+    book_row: int = None
     venue_id: int = None
     venue_name: str = None
     date_str: str = None

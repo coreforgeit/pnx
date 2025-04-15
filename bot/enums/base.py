@@ -28,6 +28,14 @@ class BookStatus(str, Enum):
     CANCELED = 'canceled'
 
 
+book_status_dict = {
+    BookStatus.NEW.value: 'Новая',
+    BookStatus.CONFIRMED.value: 'Подтверждена',
+    BookStatus.VISITED.value: 'Пришёл',
+    BookStatus.CANCELED.value: 'Отменена',
+}
+
+
 # Ключи к автосообщениям
 class Action(str, Enum):
     BACK = 'back'

@@ -5,7 +5,7 @@ import math
 
 from settings import conf
 from db import Venue, Event, EventOption
-from enums import UserCB, Action
+from enums import UserCB, Action, Key
 
 
 # Кнопки основного меню
@@ -28,7 +28,7 @@ def get_back_start_kb() -> InlineKeyboardMarkup:
 def get_book_main_kb(venues: list[Venue]) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for venue in venues:
-        kb.button(text=venue.name, callback_data=f'{UserCB.BOOK_DATE.value}:{venue.id}')
+        kb.button(text=venue.name, callback_data=f'{UserCB.BOOK_VENUE.value}:{venue.id}')
 
     kb.button(text='🔙 Назад', callback_data=f'{UserCB.BACK_START.value}')
     return kb.adjust(1).as_markup()
@@ -120,7 +120,8 @@ def get_ticket_place_kb(empty_pace: int) -> InlineKeyboardMarkup:
     row_len = 4
     for i in range(1, 9):
         if i > empty_pace:
-            row_len = i / 2 if i % 2 == 0 else math.ceil(i / 2)
+            # row_len = i / 2 if i % 2 == 0 else math.ceil(i / 2)
+            row_len = (i + 1) // 2
             break
         kb.button(text=f'{i}', callback_data=f'{UserCB.TICKET_CONFIRM.value}:{i}')
 
@@ -144,10 +145,20 @@ def get_view_qr_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
     return kb.adjust(1).as_markup()
 
 
-# Кнопки основного меню
+# Кнопки управления бронью
 def get_user_manage_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text='Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
-    kb.button(text='Отменить бронь', callback_data=f'{UserCB.SETTINGS_REMOVE.value}:{book_type}:{entry_id}')
-    kb.button(text='Перенести бронь', callback_data=f'{UserCB.SETTINGS_EDIT.value}:{book_type}:{entry_id}')
+    kb.button(text='Отменить бронь', callback_data=f'{UserCB.SETTINGS_REMOVE_1.value}:{book_type}:{entry_id}')
+    if book_type == Key.QR_BOOK.value:
+        kb.button(text='Перенести бронь', callback_data=f'{UserCB.SETTINGS_EDIT.value}:{book_type}:{entry_id}')
+    return kb.adjust(1).as_markup()
+
+
+# Кнопка отмена брони
+def get_cancel_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🗑 Отменить', callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{book_type}:{entry_id}')
+    kb.button(text='🔙 Сохранить', callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{Action.DEL.value}:{entry_id}')
+
     return kb.adjust(1).as_markup()

@@ -12,7 +12,6 @@ import asyncio
 from .utils import get_main_manage_event_msg
 import keyboards as kb
 import utils as ut
-from google_api import add_book_gs
 from db import User, Book, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
@@ -308,6 +307,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
     elif data_obj.step == EventStep.OPTION_DEL.value:
         opt_index = int(cb_value)
         data_obj.options.pop(opt_index)
+        data_obj.step = EventStep.END.value
 
         markup = kb.get_event_end_kb(data_obj.event_id)
 

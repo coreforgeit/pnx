@@ -9,7 +9,6 @@ import asyncio
 import db
 import keyboards as kb
 import utils as ut
-from google_api import add_book_gs
 from db import User, Book, Event, Ticket
 from settings import conf, log_error
 from init import user_router, bot

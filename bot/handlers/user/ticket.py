@@ -23,7 +23,8 @@ async def ticket_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
     await send_start_ticket_msg(
         chat_id=cb.from_user.id,
-        msg_id=cb.message.message_id if action == Action.BACK.value else None,
+        # msg_id=cb.message.message_id if action == Action.BACK.value else None,
+        msg_id=cb.message.message_id,
     )
 
 
@@ -168,17 +169,27 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
                 f'⏰ {event.date_str()} {event.time_str()}\n'
                 f'🪑 {option.name}</b>'
             )
-            await ut.generate_and_sand_qr(chat_id=cb.from_user.id, qr_data=qr_data, caption=text)
+            # сохраняем кр
+            qr_photo_id = await ut.generate_and_sand_qr(chat_id=cb.from_user.id, qr_data=qr_data, caption=text)
+
             last_row = await Ticket.get_max_event_row(event.id)
 
             #     записать в таблицу
-            await add_ticket_row_to_registration(
+            row = await add_ticket_row_to_registration(
                 spreadsheet_id=venue.event_gs_id,
                 page_id=event.gs_page,
                 ticket_id=ticket_id,
                 option_name=option.name,
                 user_name=cb.from_user.full_name,
                 start_row=last_row
+            )
+
+            await Ticket.update(
+                ticket_id=ticket_id,
+                qr_id=qr_photo_id,
+                gs_sheet=venue.event_gs_id,
+                gs_page=event.gs_page,
+                gs_row=row,
             )
 
         # уменьшить количество мест

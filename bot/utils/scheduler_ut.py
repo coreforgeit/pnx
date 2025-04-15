@@ -24,7 +24,7 @@ async def notice_book_for_day(book_id: int):
     book = await Book.get_booking_with_venue(book_id)
 
     if book and book.is_active:
-        text = f'Напоминаем о брони {book.date_book_str()} в {book.time_book_str()} в {book.venue.name}'
+        text = f'Напоминаем о брони {book.date_str()} в {book.time_str()} в {book.venue.name}'
         await bot.send_message(chat_id=book.user_id, text=text)
 
 

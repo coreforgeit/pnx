@@ -61,3 +61,4 @@ class User(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
+            await conn.commit()

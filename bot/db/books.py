@@ -31,11 +31,12 @@ class Book(Base):
 
     venue: Mapped["Venue"] = relationship("Venue", backref="bookings")
 
-    def time_book_str(self) -> str:
+    def time_str(self) -> str:
         return self.time_book.strftime(conf.time_format)
 
-    def date_book_str(self) -> str:
+    def date_str(self) -> str:
         return self.date_book.strftime(conf.date_format)
+
 
     @classmethod
     async def add(
@@ -46,19 +47,44 @@ class Book(Base):
             date_book: date,
             comment: str,
             status: str,
-            people_count: int
+            people_count: int,
+            book_id: int | None = None
     ) -> int:
+        """Добавляет или обновляет бронь столика"""
         now = datetime.now()
-        query = sa.insert(cls).values(
-            created_at=now,
-            updated_at=now,
-            user_id=user_id,
-            venue_id=venue_id,
-            time_book=time_book,
-            date_book=date_book,
-            comment=comment,
-            status=status,
-            people_count=people_count
+
+        insert_data = {
+            "id": book_id,
+            "user_id": user_id,
+            "venue_id": venue_id,
+            "time_book": time_book,
+            "date_book": date_book,
+            "comment": comment,
+            "status": status,
+            "people_count": people_count,
+            "created_at": now,
+            "updated_at": now,
+        }
+
+        if not book_id:
+            insert_data.pop("id")
+
+        query = (
+            psql.insert(cls)
+            .values(insert_data)
+            .on_conflict_do_update(
+                index_elements=[cls.id],
+                set_={
+                    "user_id": user_id,
+                    "venue_id": venue_id,
+                    "time_book": time_book,
+                    "date_book": date_book,
+                    "comment": comment,
+                    "status": status,
+                    "people_count": people_count,
+                    "updated_at": now,
+                }
+            )
         )
 
         async with begin_connection() as conn:
@@ -107,6 +133,7 @@ class Book(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
+            await conn.commit()
 
     @classmethod
     async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
@@ -183,3 +210,13 @@ class Book(Base):
         async with begin_connection() as conn:
             result = await conn.execute(query)
             return result.scalars().all()
+
+    @classmethod
+    async def del_booking(cls, book_id: int) -> None:
+        """Получает бронь по ID вместе с данными о заведении"""
+
+        query = sa.delete(cls).where(cls.id == book_id)
+
+        async with begin_connection() as conn:
+            await conn.execute(query)
+            await conn.commit()

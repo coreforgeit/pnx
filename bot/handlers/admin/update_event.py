@@ -12,7 +12,6 @@ import asyncio
 from .utils import get_main_manage_event_msg
 import keyboards as kb
 import utils as ut
-from google_api import add_book_gs
 from db import User, Book, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router

@@ -8,6 +8,7 @@ class UserCB(str, Enum):
     VIEW_QR = 'view_qr'
 
     BOOK_START = 'user_book_start'
+    BOOK_VENUE = 'user_book_venue'
     BOOK_DATE = 'user_book_date'
     BOOK_TIME = 'user_book_time'
     BOOK_PEOPLE = 'user_book_people'
@@ -24,7 +25,8 @@ class UserCB(str, Enum):
 
     SETTINGS_START = 'user_settings_start'
     SETTINGS_EDIT = 'user_settings_edit'
-    SETTINGS_REMOVE = 'user_settings_remove'
+    SETTINGS_REMOVE_1 = 'user_settings_remove_1'
+    SETTINGS_REMOVE_2 = 'user_settings_remove_2'
 
     BOOK_COUNT = 'user_book_count'
 

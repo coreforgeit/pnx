@@ -74,8 +74,8 @@ async def qr_check(msg: Message, state: FSMContext):
 
         await update_book_gs(
             spreadsheet_id=book.venue.gs_id,
-            sheet_name=book.date_book_str(),
-            attended=True,
+            sheet_name=book.date_str(),
+            status=BookStatus.VISITED.value,
             row=book.gs_row
         )
 

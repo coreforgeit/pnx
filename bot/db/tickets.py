@@ -6,6 +6,7 @@ import sqlalchemy as sa
 import typing as t
 
 from .base import Base, begin_connection
+from .events import Event
 
 
 class Ticket(Base):
@@ -22,6 +23,8 @@ class Ticket(Base):
     pay_id: Mapped[int] = mapped_column(sa.Integer(), nullable=True)
 
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
+    gs_sheet: Mapped[int] = mapped_column(sa.String(), nullable=True)
+    gs_page: Mapped[int] = mapped_column(sa.BigInteger(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), nullable=True)
     status: Mapped[str] = mapped_column(sa.String())
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), server_default=sa.true())
@@ -69,6 +72,8 @@ class Ticket(Base):
             cls,
             ticket_id: int,
             qr_id: str = None,
+            gs_sheet: str = None,
+            gs_page: int = None,
             gs_row: int = None,
             status: str = None,
             pay_id: bool = None,
@@ -78,6 +83,12 @@ class Ticket(Base):
 
         if qr_id:
             query = query.values(qr_id=qr_id)
+
+        if gs_sheet:
+            query = query.values(gs_sheet=gs_sheet)
+
+        if gs_page:
+            query = query.values(gs_page=gs_page)
 
         if gs_row:
             query = query.values(gs_row=gs_row)
@@ -90,6 +101,7 @@ class Ticket(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
+            await conn.commit()
 
     @classmethod
     async def get_max_event_row(cls, event_id: int) -> int:
@@ -105,11 +117,10 @@ class Ticket(Base):
         return max_row + 1 if max_row else 2
 
     @classmethod
-    async def _get_full_ticket_query(cls,) -> sa.select:
+    def _get_full_ticket_query(cls,) -> sa.select:
         return (
-            sa.select(cls)
-            .options(
-                joinedload(cls.event).joinedload("venue"),
+            sa.select(cls).options(
+                joinedload(cls.event).joinedload(Event.venue),
                 joinedload(cls.option)
             )
         )
@@ -119,6 +130,10 @@ class Ticket(Base):
         """Получает все билеты пользователя с подгрузкой event, venue и option"""
 
         query = cls._get_full_ticket_query().where(cls.user_id == user_id)
+        # query = sa.select(cls).options(
+        #         joinedload(cls.event).joinedload(Event.venue),
+        #         joinedload(cls.option)
+        #     ).where(cls.user_id == user_id)
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
@@ -146,8 +161,4 @@ class Ticket(Base):
     #     async with begin_connection() as conn:
     #         result = await conn.execute(query)
     #         return result.scalars().all()
-
-
-
-
 

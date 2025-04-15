@@ -14,7 +14,7 @@ from db import User, Book, Ticket
 from settings import conf, log_error
 from init import main_router, bot
 from data import texts_dict
-from handlers.user.user_utils import send_start_ticket_msg
+from handlers.user.user_utils import send_start_ticket_msg, send_main_settings_msg
 from enums import UserCB, MenuCommand, Key
 
 
@@ -66,4 +66,12 @@ async def com_start(msg: Message, state: FSMContext):
     await state.clear()
 
     await send_start_ticket_msg(chat_id=msg.from_user.id)
+
+
+# Команда мои брони
+@main_router.message(Command(MenuCommand.SETTINGS.command))
+async def com_start(msg: Message, state: FSMContext):
+    await state.clear()
+
+    await send_main_settings_msg(msg.from_user.id)
 

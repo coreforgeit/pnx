@@ -9,7 +9,8 @@ import asyncio
 import db
 import keyboards as kb
 import utils as ut
-from google_api import add_book_gs
+from .user_utils import send_main_book_msg
+from google_api import add_or_update_book_gs
 from db import User, Book, Venue
 from settings import conf, log_error
 from init import user_router, bot
@@ -23,35 +24,6 @@ async def book_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
     await ut.get_start_book_msg(user=cb.from_user, msg_id=cb.message.message_id)
-
-
-async def get_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
-    data = await state.get_data()
-    data_obj = BookData(**data)
-
-    data_obj.print_all()
-
-    people_count = data_obj.people_count
-    if data_obj.people_count and data_obj.people_count >= 5:
-        people_count = 'компания'
-
-    row_list = [
-        f'<b>{data_obj.venue_name}</b>\n\n',
-        f'Дата: {data_obj.date_str}\n',
-        f'Время: {data_obj.time_str}\n',
-        f'Количество персон: {people_count}\n',
-        f'Комментарий: {data_obj.comment}\n',
-    ]
-    text = ''.join(row for row in row_list if 'None' not in row).strip()
-
-    text += f'\n\n{book_text_dict.get(data_obj.step)}'
-
-    await bot.edit_message_text(
-        chat_id=data_obj.user_id,
-        message_id=data_obj.msg_id,
-        text=text,
-        reply_markup=markup
-    )
 
 
 # проверяем наличие столиков
@@ -72,7 +44,7 @@ async def check_available_tables(chat_id: int, data_obj: BookData):
 
 
 # записывет заведение, запрашивает время
-@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_DATE.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_VENUE.value))
 async def book_date(cb: CallbackQuery, state: FSMContext):
     _, venue_id_str = cb.data.split(':')
 
@@ -92,13 +64,18 @@ async def book_date(cb: CallbackQuery, state: FSMContext):
         data_obj.venue_id = venue_id
         data_obj.venue_name = venue.name
 
-        await state.update_data(data=asdict(data_obj))
+    else:
+        data = await state.get_data()
+        data_obj = BookData(**data)
 
-    await get_main_book_msg(state, markup=kb.get_book_date_kb())
+    data_obj.step = BookStep.DATE.value
+    await state.update_data(data=asdict(data_obj))
+
+    await send_main_book_msg(state, markup=kb.get_book_date_kb())
 
 
 # записывает дату, запрашивает время
-@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_TIME.value))
+@user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_DATE.value))
 async def book_time(cb: CallbackQuery, state: FSMContext):
     _, date_str = cb.data.split(':')
 
@@ -116,8 +93,8 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
         if exist_book and not conf.debug:
             text = (
                 f'❗️ Вы можете создать только одну бронь\n\n'
-                f'У вас уже забронирован столик на {exist_book.date_book_str()} в '
-                f'{exist_book.time_book_str()}'
+                f'У вас уже забронирован столик на {exist_book.date_str()} в '
+                f'{exist_book.time_str()}'
             )
             await ut.send_text_alert(chat_id=cb.from_user.id, text=text)
             return
@@ -129,7 +106,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
     data_obj.step = BookStep.TIME.value
     await state.update_data(data=asdict(data_obj))
 
-    await get_main_book_msg(state, markup=kb.get_book_time_kb(data_obj.times_list))
+    await send_main_book_msg(state, markup=kb.get_book_time_kb(data_obj.times_list))
 
 
 # записывает время, запрашивает количество мест
@@ -151,7 +128,7 @@ async def book_people(cb: CallbackQuery, state: FSMContext):
     data_obj.step = BookStep.PEOPLE.value
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_book_msg(state, markup=kb.get_book_people_kb())
+    await send_main_book_msg(state, markup=kb.get_book_people_kb())
 
 
 # записывает количество мест, запрашивает коммент
@@ -168,7 +145,7 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
     data_obj.step = BookStep.COMMENT.value
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_book_msg(state, markup=kb.get_book_comment_kb())
+    await send_main_book_msg(state, markup=kb.get_book_comment_kb())
 
 
 # пропустить коммент
@@ -181,7 +158,7 @@ async def book_skip_comment(cb: CallbackQuery, state: FSMContext):
     data_obj.step = BookStep.CHECK.value
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_book_msg(state, markup=kb.get_book_check_kb())
+    await send_main_book_msg(state, markup=kb.get_book_check_kb())
 
 
 # принимает комментарий
@@ -220,7 +197,7 @@ async def book_comment(msg: Message, state: FSMContext):
         return
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_book_msg(state, markup=markup)
+    await send_main_book_msg(state, markup=markup)
 
 
 # заканчиваем бронирование
@@ -244,7 +221,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         time_book=time_book,
         comment=data_obj.comment,
         status=BookStatus.NEW.value,
-        people_count=data_obj.people_count
+        people_count=data_obj.people_count,
+        book_id=data_obj.book_id
     )
 
     #     создаём и отправляем кр-код
@@ -259,7 +237,12 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book)
     # пишем админу
     comment = f'\n\n<i>{data_obj.comment}</i>' if data_obj.comment else ''
-    text = (f'<b>Новая бронь!</b>\n\n'
+    if data_obj.book_id:
+        pre_text = f'<b>Бронь обновлена пользователем {cb.from_user.full_name}</b>\n\n'
+    else:
+        pre_text = f'<b>Новая бронь!</b>\n\n'
+
+    text = (f'{pre_text}'
             f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
             f'{comment}')
     await bot.send_message(chat_id=conf.admin_chat, text=text)
@@ -267,19 +250,16 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     #     отправляем в таблицу
     venue = await Venue.get_by_id(data_obj.venue_id)
     last_day_book = await Book.get_last_book_day(date_book=date_book)
-    gs_row = await add_book_gs(
+    gs_row = await add_or_update_book_gs(
         spreadsheet_id=venue.book_gs_id,
         sheet_name=data_obj.date_str,
         booking_time=data_obj.time_str,
         full_name=cb.from_user.full_name,
         count_place=data_obj.people_count,
         comment=data_obj.comment,
-        attended=False,
-        start_row=last_day_book.gs_row + 1 if last_day_book else 2
+        status=BookStatus.CONFIRMED.value,
+        start_row=last_day_book.gs_row + 1 if last_day_book else 2,
+        row_num=data_obj.book_row
     )
 
     await Book.update(book_id, qr_id=qr_id, gs_row=gs_row, status=BookStatus.CONFIRMED.value)
-
-
-
-

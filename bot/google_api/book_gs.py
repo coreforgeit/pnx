@@ -5,30 +5,35 @@ from gspread.exceptions import APIError, WorksheetNotFound
 from typing import Union
 
 from .base import agcm
-from enums import OptionData
+from enums import OptionData, Key, book_status_dict
 
 
-async def add_book_gs(
-    spreadsheet_id: str,
-    sheet_name: str,
-    full_name: str,
-    booking_time: str,
-    count_place: int,
-    comment: str,
-    attended: Union[bool, str],
-    start_row: int = 2,
-    max_attempts: int = 1000,
-    pause_on_quota_sec: int = 3
+async def add_or_update_book_gs(
+        spreadsheet_id: str,
+        sheet_name: str,
+        full_name: str,
+        booking_time: str,
+        count_place: int,
+        comment: str,
+        status: str,
+        start_row: int = 2,
+        max_attempts: int = 1000,
+        pause_on_quota_sec: int = 3,
+        row_num: int = None
 ) -> int:
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    attended_str = "✅" if attended is True else ("◽️" if attended is False else str(attended))
-    new_values = [[full_name, booking_time, count_place, comment, attended_str]]
+    new_values = [[full_name, booking_time, count_place, comment, book_status_dict.get(status)]]
 
     row = start_row
     attempts = 0
+
+    if row_num:
+        cell_range = f"C{row_num}:G{row_num}"
+        await worksheet.update(cell_range, new_values)
+        return row_num
 
     while attempts < max_attempts:
         cell_range = f"C{row}:G{row}"
@@ -52,15 +57,14 @@ async def add_book_gs(
 async def update_book_gs(
     spreadsheet_id: str,
     sheet_name: str,
-    attended: bool,
+    status: str,
     row: int,
 ) -> int:
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    attended_str = "✅" if attended else "◽️"
-    new_values = [[attended_str]]
+    new_values = [[book_status_dict.get(status)]]
 
     attempts = 0
 
@@ -148,13 +152,12 @@ async def add_ticket_row_to_registration(
     start_row: int = 2,
 ) -> int:
     max_rows: int = 500
-
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.get_worksheet_by_id(page_id)
 
     for row in range(start_row, start_row + max_rows):
-        cell_range = f"F{row}:I{row}"
+        cell_range = f"F{row}:J{row}"
         try:
             existing = await worksheet.get(cell_range)
         except APIError as e:
@@ -167,8 +170,34 @@ async def add_ticket_row_to_registration(
 
         # если все ячейки пусты
         if not any(cell.strip() for cell in existing[0] if cell):
-            new_row = [[ticket_id, option_name, user_name, "⬜"]]
+            new_row = [[ticket_id, option_name, user_name, "⬜", "✅"]]
             await safe_update(worksheet, cell_range, new_row)
             return row
 
     raise Exception("Не удалось найти пустую строку в диапазоне регистрации")
+
+
+# отмечает отменённым
+async def mark_booking_cancelled(
+        spreadsheet_id: str,
+        row: int,
+        book_type: str,
+        page_id: int = None,
+        page_name: str = None,
+):
+    agc = await agcm.authorize()
+    spreadsheet = await agc.open_by_key(spreadsheet_id)
+
+    # Если не указан диапазон — используем F:I в строке
+    if book_type == Key.QR_BOOK.value:
+        worksheet = await spreadsheet.worksheet(page_name)
+        cancel_cell = f"F{row}"
+        cancel_message = ["❌ Отменено"]
+
+    else:
+        worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+        cancel_cell = f"I{row}:J{row}"
+        cancel_message = ["❌ Отменено", "❌ Отменено"]
+
+    await safe_update(worksheet, cancel_cell, [cancel_message])
+

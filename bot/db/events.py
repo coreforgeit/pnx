@@ -127,6 +127,7 @@ class Event(Base):
 
         async with begin_connection() as conn:
             await conn.execute(query)
+            await conn.commit()
 
     @classmethod
     async def get_event_with_venue(cls, event_id: int) -> t.Optional[t.Self]:
