@@ -9,7 +9,7 @@ from datetime import datetime
 
 import asyncio
 
-from .utils import get_main_manage_event_msg
+from .utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
 from db import User, Book, EventOption, Event, Venue
@@ -79,4 +79,4 @@ async def update_event_start(cb: CallbackQuery, state: FSMContext):
     )
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state)
+    await send_main_manage_event_msg(state)

@@ -99,7 +99,7 @@ async def send_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup =
 # Основное сообщение по настройкам
 async def send_main_settings_msg(user_id: int):
     books = await Book.get_all_user_booking(user_id=user_id)
-    tickets = await Ticket.get_all_user_tickets(user_id=user_id)
+    tickets = await Ticket.get_all_tickets(user_id=user_id)
 
     all_book_count = len(books) + len(tickets)
 

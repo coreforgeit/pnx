@@ -2,15 +2,15 @@ from aiogram.utils.keyboard import InlineKeyboardBuilder, InlineKeyboardMarkup
 from datetime import datetime, timedelta
 
 from settings import conf
-from db import Venue, Event
-from enums import AdminCB, Action, UserStatus, EventStep, OptionData
+from db import Venue, Event, TicketStatRow, BookStatRow
+from enums import AdminCB, Action, UserStatus, EventStep, OptionData, Key
 
 
 # Кнопки подписаться на канал
 def get_admin_main_kb(user_status: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='🪑 Брони', callback_data=f'{AdminCB.BOOK_START.value}')
-    kb.button(text='🎫  Билеты', callback_data=f'{AdminCB.TICKET_START.value}')
+    kb.button(text='🪑 Брони', callback_data=f'{AdminCB.VIEW_START.value}:{Key.QR_BOOK.value}')
+    kb.button(text='🎫  Билеты', callback_data=f'{AdminCB.VIEW_START.value}:{Key.QR_TICKET.value}')
     if user_status == UserStatus.ADMIN.value:
         kb.button(text='➕ Добавить ивент', callback_data=f'{AdminCB.EVENT_START.value}')
         kb.button(text='🖍 Редактировать ивент', callback_data=f'{AdminCB.EVENT_UPDATE_1.value}')
@@ -111,4 +111,52 @@ def get_update_event_kb(events: list[Event]) -> InlineKeyboardMarkup:
         kb.button(text=event.name, callback_data=f'{AdminCB.EVENT_UPDATE_2.value}:{event.id}')
 
     kb.button(text='🔙 Назад', callback_data=f'{AdminCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
+# список ивентов
+def get_ticket_state_kb(ticket_stat: list[TicketStatRow]) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for event in ticket_stat:
+        kb.button(
+            text=f'({event.ticket_count}) {event.event_name}',
+            callback_data=f'{AdminCB.VIEW_BOOK.value}:{Key.QR_TICKET.value}:{event.event_id}'
+        )
+
+    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
+# список броней
+def get_book_state_kb(book_stat: list[BookStatRow]) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    for book_date in book_stat:
+        date_str = book_date.date.strftime(conf.date_format)
+        kb.button(
+            text=f'{date_str[:-5]} ({book_date.book_count})',
+            callback_data=f'{AdminCB.VIEW_BOOK.value}:{Key.QR_BOOK.value}:{date_str}'
+        )
+
+    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
+# изменение для каждой брони
+def get_book_manage_kb(book_id: int, book_type: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='💬 Написать пользователю', callback_data=f'{AdminCB.SEND_MESSAGE_START.value}:{book_type}:{book_id}')
+    kb.button(text='🗑 Отменить бронь', callback_data=f'{AdminCB.SETTINGS_REMOVE_1.value}:{book_type}:{book_id}')
+
+    return kb.adjust(1).as_markup()
+
+
+# изменение для каждой брони
+def get_mailing_send_kb(second: bool = False) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    if second:
+        kb.button(text='📲 Подтвердить отправку', callback_data=f'{AdminCB.MAILING_2.value}:{Action.SEND.value}')
+    else:
+        kb.button(text='📲 Отправить сообщение', callback_data=f'{AdminCB.MAILING_1.value}')
+
+    kb.button(text='🗑 Удалить', callback_data=f'{AdminCB.MAILING_2.value}:{Action.DEL.value}')
     return kb.adjust(1).as_markup()

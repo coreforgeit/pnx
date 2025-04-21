@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, date, time
 from sqlalchemy.dialects import postgresql as psql
 
@@ -19,6 +19,9 @@ class User(Base):
     username: Mapped[str] = mapped_column(sa.String, nullable=True)
     status: Mapped[str] = mapped_column(sa.String(), server_default=UserStatus.USER.value)
     mailing: Mapped[bool] = mapped_column(sa.Boolean, server_default=sa.true())
+    venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"), nullable=True)
+
+    venue: Mapped["Venue"] = relationship("Venue", backref="user")
 
     @classmethod
     async def add(cls, user_id: int, full_name: str, username: str) -> None:
@@ -62,3 +65,28 @@ class User(Base):
         async with begin_connection() as conn:
             await conn.execute(query)
             await conn.commit()
+
+    @classmethod
+    async def get_admin(cls, user_id: int) -> t.Optional[t.Self]:
+
+        query = (
+            sa.select(cls)
+            .options(joinedload(cls.venue))  # подтягиваем связанную модель
+            .where(cls.id == user_id)
+        )
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+            return result.scalars().first()
+
+    @classmethod
+    async def get_all_users(cls, for_mailing: bool = False) -> list[t.Self]:
+
+        query = sa.select(cls).where(cls.status == UserStatus.USER.value)
+
+        if for_mailing:
+            query = query.where(cls.mailing == True)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+        return result.scalars().all()

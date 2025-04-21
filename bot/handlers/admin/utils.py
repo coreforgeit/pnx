@@ -1,4 +1,4 @@
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InputMediaPhoto
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InputMediaPhoto, MessageEntity
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
 from aiogram.filters.command import CommandStart
@@ -17,11 +17,11 @@ from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
 from google_api import create_event_sheet
-from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict
+from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict, MailingData
 
 
 # сообщение для изменения ивента
-async def get_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
+async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMarkup = None):
     data = await state.get_data()
     data_obj = EventData(**data)
 
@@ -118,3 +118,29 @@ async def get_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMar
             media=media,
             reply_markup=markup
         )
+
+
+async def sent_mailing_preview(
+        chat_id: int,
+        state: FSMContext,
+        msg: Message = None,
+        markup: kb.InlineKeyboardMarkup = None
+):
+    data = await state.get_data()
+    data_obj = MailingData(**data)
+
+    if msg:
+        sent = await bot.copy_message(
+            chat_id=chat_id,
+            from_chat_id=msg.chat.id,
+            message_id=msg.message_id,
+            parse_mode=None,
+            reply_markup=markup
+        )
+        await bot.delete_message(chat_id=msg.chat.id, message_id=msg.message_id)
+    else:
+        text = f'<b>Отправьте сообщение для рассылки</b>'
+        sent = await bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)
+
+    data_obj.del_msg_id = sent.message_id
+    await state.update_data(data=asdict(data_obj))

@@ -9,6 +9,12 @@ from .base import Base, begin_connection
 from .events import Event
 
 
+class TicketStatRow(t.Protocol):
+    event_id: int
+    event_name: str
+    ticket_count: int
+
+
 class Ticket(Base):
     __tablename__ = "tickets"
 
@@ -126,14 +132,16 @@ class Ticket(Base):
         )
 
     @classmethod
-    async def get_all_user_tickets(cls, user_id: int) -> t.Optional[list[t.Self]]:
+    async def get_all_tickets(cls, user_id: int = None, event_id: int = None) -> t.Optional[list[t.Self]]:
         """Получает все билеты пользователя с подгрузкой event, venue и option"""
 
-        query = cls._get_full_ticket_query().where(cls.user_id == user_id)
-        # query = sa.select(cls).options(
-        #         joinedload(cls.event).joinedload(Event.venue),
-        #         joinedload(cls.option)
-        #     ).where(cls.user_id == user_id)
+        query = cls._get_full_ticket_query()
+
+        if user_id:
+            query = query.where(cls.user_id == user_id)
+
+        if event_id:
+            query = query.where(cls.event_id == event_id)
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
@@ -148,17 +156,27 @@ class Ticket(Base):
             result = await conn.execute(query)
             return result.scalars().first()
 
-    # @classmethod
-    # async def get_all_user_tickets(cls, user_id: int) -> t.Optional[list[t.Self]]:
-    #     """Получает бронь по ID вместе с данными о заведении"""
-    #
-    #     query = (
-    #         sa.select(cls)
-    #         .options(joinedload(cls.event))  # подтягиваем связанную модель
-    #         .where(cls.user_id == user_id)
-    #     )
-    #
-    #     async with begin_connection() as conn:
-    #         result = await conn.execute(query)
-    #         return result.scalars().all()
+    @classmethod
+    async def get_active_event_ticket_stats(cls, venue_id: int | None = None) -> list[TicketStatRow]:
+        query = (
+            sa.select(
+                cls.event_id,
+                Event.name.label("event_name"),
+                sa.func.count(cls.id).label("ticket_count")
+            )
+            .join(Event, cls.event_id == Event.id)
+            .where(cls.is_active.is_(True), Event.is_active.is_(True))
+            .group_by(cls.event_id, Event.name)
+            .order_by(Event.name)
+        )
+
+        # Фильтрация по venue_id (если передан)
+        if venue_id:
+            query = query.where(Event.venue_id == venue_id)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+
+        return result.all()
+
 

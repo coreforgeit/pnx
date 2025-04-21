@@ -10,6 +10,11 @@ from settings import conf
 from enums import UserStatus
 
 
+class BookStatRow(t.Protocol):
+    date: date
+    book_count: int
+
+
 class Book(Base):
     __tablename__ = "books"
 
@@ -31,12 +36,15 @@ class Book(Base):
 
     venue: Mapped["Venue"] = relationship("Venue", backref="bookings")
 
+    @classmethod
+    def _get_query_with_venue(cls):
+        return sa.select(cls).options(joinedload(cls.venue))
+
     def time_str(self) -> str:
         return self.time_book.strftime(conf.time_format)
 
     def date_str(self) -> str:
         return self.date_book.strftime(conf.date_format)
-
 
     @classmethod
     async def add(
@@ -147,8 +155,20 @@ class Book(Base):
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
-            booking = result.scalars().first()
-        return booking
+        return result.scalars().first()
+
+    @classmethod
+    async def get_books_by_date(cls, date_book: date) -> list[t.Self]:
+        """Находим брони на дату"""
+
+        # query = sa.select(cls).where(cls.date_book == date_book)
+
+        query = cls._get_query_with_venue()
+        query = query.where(cls.date_book == date_book, cls.is_active == True)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+        return result.scalars().all()
 
     @classmethod
     async def get_last_book_day(cls, date_book: date) -> t.Optional[t.Self]:
@@ -187,11 +207,13 @@ class Book(Base):
     async def get_booking_with_venue(cls, book_id: int) -> t.Optional[t.Self]:
         """Получает бронь по ID вместе с данными о заведении"""
 
-        query = (
-            sa.select(cls)
-            .options(joinedload(cls.venue))  # подтягиваем связанную модель
-            .where(cls.id == book_id)
-        )
+        query = cls._get_query_with_venue()
+        query = query.where(cls.id == book_id)
+        # query = (
+        #     sa.select(cls)
+        #     .options(joinedload(cls.venue))  # подтягиваем связанную модель
+        #     .where(cls.id == book_id)
+        # )
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
@@ -212,11 +234,34 @@ class Book(Base):
             return result.scalars().all()
 
     @classmethod
-    async def del_booking(cls, book_id: int) -> None:
-        """Получает бронь по ID вместе с данными о заведении"""
+    async def get_book_stats_by_date(cls, venue_id: int | None = None) -> list[BookStatRow]:
 
-        query = sa.delete(cls).where(cls.id == book_id)
+        query = (
+            sa.select(
+                cls.date_book.label("date"),
+                sa.func.count(cls.id).label("book_count")
+            )
+            .where(cls.is_active.is_(True))
+            .group_by(cls.date_book)
+            .order_by(cls.date_book)
+        )
+
+        if venue_id is not None:
+            query = query.where(cls.venue_id == venue_id)
 
         async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+            result = await conn.execute(query)
+
+        return result.all()
+
+    # @classmethod
+    # async def del_booking(cls, book_id: int) -> None:
+    #     """Получает бронь по ID вместе с данными о заведении"""
+    #
+    #     query = sa.delete(cls).where(cls.id == book_id)
+    #
+    #     async with begin_connection() as conn:
+    #         await conn.execute(query)
+    #         await conn.commit()
+
+

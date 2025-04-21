@@ -8,6 +8,7 @@ class UserState(str, Enum):
     BOOK = 'book'
     EVENT = 'event'
     TICKET = 'ticket'
+    MAILING = 'mailing'
 
 
 @dataclass
@@ -138,12 +139,23 @@ class TicketData(BaseData):
     option: "EventOption" = None
     count_place: int = None
 
-    # event: dict = None
-    # option: dict = None
 
-    # event_id: int = None
-    # event_name: str = None
-    # sheet_id: str = None
-    # page_id: int = None
-    # option_id: int = None
-    # option_name: int = None
+# Шаги рассылки
+# class MailingStep(str, Enum):
+#     EVENT = 'event'
+#     OPTION = 'option'
+#     COUNT = 'count'
+#     CONFIRM = 'confirm'
+#
+#
+# ticket_text_dict = {
+#     TicketStep.EVENT.value: 'Выберите заведение',
+#     TicketStep.OPTION.value: 'Выберите тип билета',
+#     TicketStep.COUNT.value: 'Количество билетов',
+#     TicketStep.CONFIRM.value: 'Ваш заказ верен?',
+# }
+
+
+@dataclass
+class MailingData(BaseData):
+    del_msg_id: int = None  # строка вместо прямого импорта

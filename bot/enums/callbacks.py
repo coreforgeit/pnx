@@ -34,13 +34,24 @@ class UserCB(str, Enum):
 # калбеки админа
 class AdminCB(str, Enum):
     BACK_START = 'back_start'
+    SETTINGS_REMOVE_1 = 'user_settings_remove_1'
 
-    BOOK_START = 'admin_book_start'
-    TICKET_START = 'admin_ticket_start'
+    # BOOK_START = 'admin_book_start'
+    # TICKET_START = 'admin_ticket_start'
     EVENT_UPDATE_1 = 'admin_event_update_1'
     EVENT_UPDATE_2 = 'admin_event_update_2'
+
     MAILING_START = 'admin_mailing_start'
+    MAILING_1 = 'admin_mailing_1'
+    MAILING_2 = 'admin_mailing_2'
+
     ADD_START = 'admin_add_start'
+
+    VIEW_START = 'admin_view_start'
+    VIEW_TICKETS = 'admin_view_tickets'
+    VIEW_BOOK = 'admin_view_book'
+
+    SEND_MESSAGE_START = 'admin_send_message_start'
 
     EVENT_START = 'admin_event_start'
     EVENT_VENUE = 'admin_event_venue'

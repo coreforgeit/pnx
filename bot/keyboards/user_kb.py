@@ -141,17 +141,17 @@ def get_ticket_confirm_kb() -> InlineKeyboardMarkup:
 # Показать кр-код
 def get_view_qr_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
+    kb.button(text='🎫 Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
     return kb.adjust(1).as_markup()
 
 
 # Кнопки управления бронью
 def get_user_manage_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
-    kb.button(text='Отменить бронь', callback_data=f'{UserCB.SETTINGS_REMOVE_1.value}:{book_type}:{entry_id}')
+    kb.button(text='🎫 Посмотреть QR-код', callback_data=f'{UserCB.VIEW_QR.value}:{book_type}:{entry_id}')
+    kb.button(text='🗑 Отменить бронь', callback_data=f'{UserCB.SETTINGS_REMOVE_1.value}:{book_type}:{entry_id}')
     if book_type == Key.QR_BOOK.value:
-        kb.button(text='Перенести бронь', callback_data=f'{UserCB.SETTINGS_EDIT.value}:{book_type}:{entry_id}')
+        kb.button(text='🖍 Перенести бронь', callback_data=f'{UserCB.SETTINGS_EDIT.value}:{book_type}:{entry_id}')
     return kb.adjust(1).as_markup()
 
 

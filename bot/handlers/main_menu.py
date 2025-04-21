@@ -62,7 +62,7 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
 
 # Команда старт
 @main_router.message(Command(MenuCommand.TICKET.command))
-async def com_start(msg: Message, state: FSMContext):
+async def com_ticket(msg: Message, state: FSMContext):
     await state.clear()
 
     await send_start_ticket_msg(chat_id=msg.from_user.id)
@@ -70,7 +70,7 @@ async def com_start(msg: Message, state: FSMContext):
 
 # Команда мои брони
 @main_router.message(Command(MenuCommand.SETTINGS.command))
-async def com_start(msg: Message, state: FSMContext):
+async def com_settings(msg: Message, state: FSMContext):
     await state.clear()
 
     await send_main_settings_msg(msg.from_user.id)

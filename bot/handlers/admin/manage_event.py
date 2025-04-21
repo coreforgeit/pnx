@@ -9,7 +9,7 @@ from datetime import datetime
 
 import asyncio
 
-from .utils import get_main_manage_event_msg
+from .utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
 from db import User, Book, EventOption, Event, Venue
@@ -35,7 +35,7 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
 
     venues = await Venue.get_all()
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
+    await send_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
 
 
 # принимает текстовые поля
@@ -141,7 +141,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         return
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=markup)
+    await send_main_manage_event_msg(state, markup=markup)
 
 
 # записывает дату
@@ -163,7 +163,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
     data_obj.step = EventStep.NAME.value
     await state.update_data(data=asdict(data_obj))
 
-    await get_main_manage_event_msg(state)
+    await send_main_manage_event_msg(state)
 
 
 # записывает дату
@@ -182,7 +182,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
 
     data_obj.step = EventStep.TIME.value
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=kb.get_event_time_kb(data_obj.times_list))
+    await send_main_manage_event_msg(state, markup=kb.get_event_time_kb(data_obj.times_list))
 
 
 # записывает время
@@ -202,7 +202,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
 
     data_obj.step = EventStep.OPTION_NAME.value
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=kb.get_event_option_select_kb(data_obj.top_name))
+    await send_main_manage_event_msg(state, markup=kb.get_event_option_select_kb(data_obj.top_name))
 
 
 # обновляет данные
@@ -257,7 +257,7 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
         markup = None
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=markup)
+    await send_main_manage_event_msg(state, markup=markup)
 
 
 # записывает опции
@@ -317,7 +317,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         markup = None
 
     await state.update_data(data=asdict(data_obj))
-    await get_main_manage_event_msg(state, markup=markup)
+    await send_main_manage_event_msg(state, markup=markup)
 
 
 # сохраняет ивент

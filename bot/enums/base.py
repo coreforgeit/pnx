@@ -42,6 +42,7 @@ class Action(str, Enum):
     VIEW = 'view'
     ADD = 'add'
     DEL = 'del'
+    SEND = 'send'
 
 
 # Ключи к редису
