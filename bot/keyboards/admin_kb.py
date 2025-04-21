@@ -20,12 +20,19 @@ def get_admin_main_kb(user_status: str) -> InlineKeyboardMarkup:
 
 
 # Кнопки выбора заведения
-def get_event_venue_kb(venues: list[Venue]) -> InlineKeyboardMarkup:
+def get_event_venue_kb(venues: list[Venue], cb: str = AdminCB.EVENT_VENUE.value) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     for venue in venues:
-        kb.button(text=venue.name, callback_data=f'{AdminCB.EVENT_VENUE.value}:{venue.id}')
+        kb.button(text=venue.name, callback_data=f'{cb}:{venue.id}')
 
     kb.button(text='🔙 Назад', callback_data=f'{AdminCB.BACK_START.value}')
+    return kb.adjust(1).as_markup()
+
+
+# удаляет сообщение
+def get_cancel_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='❌ Отмена', callback_data=f'{AdminCB.DEL_MSG.value}')
     return kb.adjust(1).as_markup()
 
 
@@ -144,7 +151,9 @@ def get_book_state_kb(book_stat: list[BookStatRow]) -> InlineKeyboardMarkup:
 # изменение для каждой брони
 def get_book_manage_kb(book_id: int, book_type: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='💬 Написать пользователю', callback_data=f'{AdminCB.SEND_MESSAGE_START.value}:{book_type}:{book_id}')
+    kb.button(
+        text='📲 Написать пользователю', callback_data=f'{AdminCB.SEND_MESSAGE_START.value}:{book_type}:{book_id}:0'
+    )
     kb.button(text='🗑 Отменить бронь', callback_data=f'{AdminCB.SETTINGS_REMOVE_1.value}:{book_type}:{book_id}')
 
     return kb.adjust(1).as_markup()
@@ -159,4 +168,20 @@ def get_mailing_send_kb(second: bool = False) -> InlineKeyboardMarkup:
         kb.button(text='📲 Отправить сообщение', callback_data=f'{AdminCB.MAILING_1.value}')
 
     kb.button(text='🗑 Удалить', callback_data=f'{AdminCB.MAILING_2.value}:{Action.DEL.value}')
+    return kb.adjust(1).as_markup()
+
+
+# ответить админу
+def get_send_answer_kb(user_id: int, book_id: int, book_type: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='📲 Ответить', callback_data=f'{AdminCB.SEND_MESSAGE_START.value}:{book_type}:{book_id}:{user_id}')
+    return kb.adjust(1).as_markup()
+
+
+# ответить админу
+def get_add_admin_status_kb(venue_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Админ', callback_data=f'{AdminCB.ADD_STATUS.value}:{venue_id}:{UserStatus.ADMIN.value}')
+    kb.button(text='Персонал', callback_data=f'{AdminCB.ADD_STATUS.value}:{venue_id}:{UserStatus.STAFF.value}')
+    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.ADD_START.value}')
     return kb.adjust(1).as_markup()

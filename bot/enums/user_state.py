@@ -9,6 +9,8 @@ class UserState(str, Enum):
     EVENT = 'event'
     TICKET = 'ticket'
     MAILING = 'mailing'
+    SEND_MSG = 'send_msg'
+    # MAILING = 'send_admin'
 
 
 @dataclass
@@ -135,27 +137,21 @@ ticket_text_dict = {
 
 @dataclass
 class TicketData(BaseData):
-    event: "Event" = None  # строка вместо прямого импорта
+    event: "Event" = None
     option: "EventOption" = None
     count_place: int = None
 
 
-# Шаги рассылки
-# class MailingStep(str, Enum):
-#     EVENT = 'event'
-#     OPTION = 'option'
-#     COUNT = 'count'
-#     CONFIRM = 'confirm'
-#
-#
-# ticket_text_dict = {
-#     TicketStep.EVENT.value: 'Выберите заведение',
-#     TicketStep.OPTION.value: 'Выберите тип билета',
-#     TicketStep.COUNT.value: 'Количество билетов',
-#     TicketStep.CONFIRM.value: 'Ваш заказ верен?',
-# }
+@dataclass
+class MailingData(BaseData):
+    del_msg_id: int = None
 
 
 @dataclass
-class MailingData(BaseData):
-    del_msg_id: int = None  # строка вместо прямого импорта
+class SendData(BaseData):
+    for_user_id: int = None
+    from_user_id: int = None
+    book_text: str = None
+    sender_status: str = None
+    book_type: str = None
+    entry_id: int = None

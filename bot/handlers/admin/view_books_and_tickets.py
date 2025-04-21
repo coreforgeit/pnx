@@ -14,7 +14,7 @@ import utils as ut
 from db import User, Ticket, Book, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
-from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict, UserStatus
+from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, MailingData
 
 
 # старт просмотра броней
@@ -71,6 +71,3 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
     else:
         text = f'<b>❗️ Ошибка</b>'
         await cb.message.edit_text(text=text, reply_markup=kb.get_back_start_kb())
-
-
-

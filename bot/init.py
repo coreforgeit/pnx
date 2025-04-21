@@ -10,6 +10,7 @@ from apscheduler.schedulers.asyncio import AsyncIOScheduler
 
 import asyncio
 import redis
+from redis.asyncio import Redis
 import uvloop
 
 from sqlalchemy.ext.asyncio import create_async_engine

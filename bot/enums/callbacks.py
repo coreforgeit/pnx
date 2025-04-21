@@ -4,6 +4,7 @@ from enum import Enum
 # калбеки пользователя
 class UserCB(str, Enum):
     BACK_START = 'back_start'
+    DEL_MSG = 'del_msg'
 
     VIEW_QR = 'view_qr'
 
@@ -35,6 +36,7 @@ class UserCB(str, Enum):
 class AdminCB(str, Enum):
     BACK_START = 'back_start'
     SETTINGS_REMOVE_1 = 'user_settings_remove_1'
+    DEL_MSG = 'del_msg'
 
     # BOOK_START = 'admin_book_start'
     # TICKET_START = 'admin_ticket_start'
@@ -46,6 +48,8 @@ class AdminCB(str, Enum):
     MAILING_2 = 'admin_mailing_2'
 
     ADD_START = 'admin_add_start'
+    ADD_VENUE = 'admin_add_venue'
+    ADD_STATUS = 'admin_add_status'
 
     VIEW_START = 'admin_view_start'
     VIEW_TICKETS = 'admin_view_tickets'

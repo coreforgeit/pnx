@@ -40,6 +40,15 @@ class Ticket(Base):
     option: Mapped["EventOption"] = relationship("EventOption", backref="ticket")
 
     @classmethod
+    def _get_full_ticket_query(cls,) -> sa.select:
+        return (
+            sa.select(cls).options(
+                joinedload(cls.event).joinedload(Event.venue),
+                joinedload(cls.option)
+            )
+        )
+
+    @classmethod
     async def add(
             cls,
             event_id: int,
@@ -121,15 +130,6 @@ class Ticket(Base):
             max_row = result.scalar()
 
         return max_row + 1 if max_row else 2
-
-    @classmethod
-    def _get_full_ticket_query(cls,) -> sa.select:
-        return (
-            sa.select(cls).options(
-                joinedload(cls.event).joinedload(Event.venue),
-                joinedload(cls.option)
-            )
-        )
 
     @classmethod
     async def get_all_tickets(cls, user_id: int = None, event_id: int = None) -> t.Optional[list[t.Self]]:
