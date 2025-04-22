@@ -24,7 +24,7 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
     admin = await User.get_admin(cb.from_user.id)
-    if not admin or not admin.venue_id or admin.status != UserStatus.ADMIN.value:
+    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
         await cb.message.answer(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
         return
 
@@ -49,7 +49,7 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
     _, book_type, value = cb.data.split(':')
 
     admin = await User.get_admin(cb.from_user.id)
-    if not admin or not admin.venue_id or admin.status != UserStatus.ADMIN.value:
+    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
         await cb.message.answer(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
         return
 

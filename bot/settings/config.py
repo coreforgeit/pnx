@@ -9,10 +9,12 @@ class Config:
     if debug:
         token = os.getenv("TEST_TOKEN")
         admin_chat = -4658767585
+        bot_username = 'tushchkan_test_3_bot'
 
     else:
         token = os.getenv("TEST_TOKEN")
         admin_chat = -4658767585
+        bot_username = 'tushchkan_test_3_bot'
 
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')

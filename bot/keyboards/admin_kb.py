@@ -184,4 +184,4 @@ def get_add_admin_status_kb(venue_id: int) -> InlineKeyboardMarkup:
     kb.button(text='Админ', callback_data=f'{AdminCB.ADD_STATUS.value}:{venue_id}:{UserStatus.ADMIN.value}')
     kb.button(text='Персонал', callback_data=f'{AdminCB.ADD_STATUS.value}:{venue_id}:{UserStatus.STAFF.value}')
     kb.button(text='🔙 Назад', callback_data=f'{AdminCB.ADD_START.value}')
-    return kb.adjust(1).as_markup()
+    return kb.adjust(2, 1).as_markup()

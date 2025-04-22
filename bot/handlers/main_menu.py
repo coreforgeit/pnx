@@ -6,13 +6,13 @@ from aiogram.filters.state import StateFilter
 from aiogram.filters import BaseFilter
 from aiogram import Router
 
-import asyncio
+import json
 
 import keyboards as kb
 import utils as ut
 from db import User, Book, Ticket
 from settings import conf, log_error
-from init import main_router, bot
+from init import main_router, bot, redis_client
 from data import texts_dict
 from handlers.user.user_utils import send_start_ticket_msg, send_main_settings_msg
 from enums import UserCB, MenuCommand, Key
@@ -25,6 +25,26 @@ async def com_start(msg: Message, state: FSMContext):
 
     # добавляем или обновляем данные пользователя
     await User.add(user_id=msg.from_user.id, full_name=msg.from_user.full_name, username=msg.from_user.username)
+
+    access_id = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else None
+    print(msg.text)
+    print(access_id)
+
+    if access_id:
+        key = f"{Key.ADD_ADMIN.value}{access_id}"
+        admin_data = ut.get_redis_data(key)
+
+        if not admin_data:
+            await msg.answer('⚠️ Ссылка устарела или уже была использована')
+
+        else:
+            print(type(admin_data))
+            await User.update(
+                user_id=msg.from_user.id,
+                status=admin_data['user_status'],
+                venue_id=admin_data['venue_id'],
+            )
+            await msg.answer('✅ Статус обновлён')
 
     await ut.get_start_msg(user=msg.from_user)
 

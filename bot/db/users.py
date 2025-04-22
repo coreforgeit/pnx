@@ -51,7 +51,8 @@ class User(Base):
             cls,
             user_id: int,
             mailing: bool = None,
-            status: str = None
+            status: str = None,
+            venue_id: int = None,
     ) -> None:
 
         query = sa.update(cls).where(cls.id == user_id)
@@ -61,6 +62,9 @@ class User(Base):
 
         if status:
             query = query.values(status=status)
+
+        if venue_id:
+            query = query.values(venue_id=venue_id)
 
         async with begin_connection() as conn:
             await conn.execute(query)
