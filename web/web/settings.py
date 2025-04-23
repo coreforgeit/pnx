@@ -36,6 +36,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'bot_admin',
 ]
 
 MIDDLEWARE = [
@@ -118,7 +119,7 @@ AUTH_PASSWORD_VALIDATORS = [
 
 LANGUAGE_CODE = 'ru-ru'
 
-MOSCOW_TZ = ZoneInfo('Asia/Tashkent')
+LOCAL_TZ = ZoneInfo('Asia/Tashkent')
 
 TIME_ZONE = 'UTC'
 

@@ -9,7 +9,7 @@ import asyncio
 import db
 import keyboards as kb
 import utils as ut
-from db import User, Book, Event, Ticket
+from db import EventOption, Book, Event, Ticket
 from settings import conf, log_error
 from init import user_router, bot
 from data import texts_dict
@@ -45,6 +45,35 @@ async def send_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = N
     )
 
 
+# показываем ивент
+async def send_selected_event_msg(chat_id: int, event_id: int):
+    event = await Event.get_by_id(event_id)
+    options = await EventOption.get_all(event_id=event_id)
+
+    markup = kb.get_ticket_options_kb(options)
+    entities = ut.recover_entities(event.entities)
+
+    if event.photo_id:
+        await bot.send_photo(
+            chat_id=chat_id,
+            photo=event.photo_id,
+            caption=event.text,
+            caption_entities=entities,
+            parse_mode=None,
+            reply_markup=markup
+        )
+
+    else:
+        await bot.send_message(
+            chat_id=chat_id,
+            text=event.text,
+            entities=entities,
+            parse_mode=None,
+            disable_web_page_preview=True,
+            reply_markup=markup
+        )
+
+
 async def send_start_ticket_msg(chat_id: int, msg_id: int = None):
     if msg_id:
         await bot.delete_message(chat_id=chat_id, message_id=msg_id)
@@ -63,7 +92,6 @@ async def send_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup =
     data_obj = TicketData(**data)
 
     data_obj.print_all()
-    print(type(data_obj.event))
 
     # event = Event(**data_obj.event) if data_obj.event else Event()
     event = data_obj.event if data_obj.event else Event()

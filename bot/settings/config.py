@@ -16,6 +16,7 @@ class Config:
         admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
 
+    bot_link = f'https://t.me/{bot_username}?start='
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')
     db_name = os.getenv('POSTGRES_DB')

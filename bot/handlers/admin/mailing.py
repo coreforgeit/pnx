@@ -10,15 +10,15 @@ from datetime import datetime
 import asyncio
 import random
 
-from .utils import sent_mailing_preview
+from .admin_utils import sent_mailing_preview
 import keyboards as kb
 import utils as ut
-from db import User, Book, EventOption, Event, Venue
+from db import User, AdminLog, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
 from google_api import create_event_sheet
-from enums import AdminCB, UserState, Action, Key, MailingData
+from enums import AdminCB, UserState, Action, AdminAction, MailingData
 
 
 # старт рассылки
@@ -108,3 +108,11 @@ async def mailing_2(cb: CallbackQuery, state: FSMContext):
     )
     await sent.edit_text(text)
     await cb.message.edit_reply_markup(reply_markup=None)
+
+    # запись в журнал
+    text = cb.message.text or cb.message.caption
+    if not text:
+        text = cb.message.content_type
+    await AdminLog.add(
+        admin_id=cb.from_user.id, action=AdminAction.MAILING.value, comment=text
+    )

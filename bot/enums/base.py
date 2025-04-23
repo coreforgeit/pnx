@@ -35,6 +35,8 @@ book_status_dict = {
     BookStatus.CANCELED.value: 'Отменена',
 }
 
+book_status_choice = tuple(book_status_dict.items())
+
 
 # Ключи к автосообщениям
 class Action(str, Enum):
@@ -64,3 +66,25 @@ class NoticeKey(str, Enum):
 class SchedulerId(str, Enum):
     CHECK_SUB = 'check_sub'
 
+
+# Ключи к автосообщениям
+class AdminAction(str, Enum):
+    ADMIN_SEND = 'admin_send'
+    USER_SEND = 'user_send'
+    MAILING = 'mailing'
+    LINK = 'link'
+    BOOK = 'book'
+    TICKET = 'ticket'
+    ADD = 'add'
+    DEL = 'del'
+    EDIT = 'edit'
+
+
+admin_action_choice = (
+    (AdminAction.ADMIN_SEND.value, 'Написал пользователю'),
+    (AdminAction.USER_SEND.value, 'Получил сообщение'),
+    (AdminAction.MAILING.value, 'Сделал рассылку'),
+    (AdminAction.ADD.value, 'Добавил'),
+    (AdminAction.DEL.value, 'Удалил'),
+    (AdminAction.EDIT.value, 'Изменил'),
+)

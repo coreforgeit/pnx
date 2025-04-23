@@ -6,7 +6,6 @@ __pycache__/
 # C extensions
 *.so
 
-*/migrations/
 
 # Distribution / packaging
 .Python
@@ -141,3 +140,4 @@ cython_debug/
 .pypirc
 *.json
 /temp
+*/migrations/

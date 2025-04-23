@@ -1,6 +1,7 @@
 from aiogram.types import ErrorEvent, Message, CallbackQuery
 
 from init import error_router
+from db import LogsError
 from settings import log_error, conf
 
 
@@ -9,6 +10,8 @@ from settings import log_error, conf
 async def error_handler(ex: ErrorEvent):
     tb, msg = log_error (ex)
     user_id = ex.update.message.from_user.id if ex.update.message else None
+
+    await LogsError.add(user_id=user_id, traceback=tb, message=msg)
 
 
 @error_router.callback_query()

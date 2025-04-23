@@ -12,12 +12,12 @@ import asyncio
 import db
 import keyboards as kb
 import utils as ut
-from db import User, Book, EventOption, Event, Venue
+from db import User, Book, Ticket, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
 from google_api import create_event_sheet
-from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict, MailingData
+from enums import AdminCB, UserStatus, Action, Key, EventData, EventStep, OptionData, event_text_dict, MailingData
 
 
 # сообщение для изменения ивента
@@ -144,3 +144,31 @@ async def sent_mailing_preview(
 
     data_obj.del_msg_id = sent.message_id
     await state.update_data(data=asdict(data_obj))
+
+
+async def send_start_view_msg(chat_id: int, book_type: str, admin: User, msg_id: int = None):
+    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
+        await bot.send_message(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
+        return
+
+    if book_type == Key.QR_TICKET.value:
+        ticket_stat = await Ticket.get_active_event_ticket_stats(admin.venue_id)
+        text = f'<b>Выберите мероприятие:</b>'
+        markup = kb.get_ticket_state_kb(ticket_stat)
+        # await cb.message.edit_text(text=text, reply_markup=kb.get_ticket_state_kb(ticket_stat))
+
+    elif book_type == Key.QR_BOOK.value:
+        book_stat = await Book.get_book_stats_by_date(admin.venue_id)
+        text = f'<b>Выберите дату:</b>'
+        markup = kb.get_book_state_kb(book_stat)
+        # await cb.message.edit_text(text=text, reply_markup=kb.get_book_state_kb(book_stat))
+
+    else:
+        text = f'<b>❗️ Ошибка</b>'
+        markup = kb.get_back_start_kb()
+        # await cb.message.edit_text(text=text, reply_markup=kb.get_back_start_kb())
+
+    if msg_id:
+        await bot.edit_message_text(chat_id=chat_id, message_id=msg_id, text=text, reply_markup=markup)
+    else:
+        await bot.send_message(chat_id=chat_id, text=text, reply_markup=markup)

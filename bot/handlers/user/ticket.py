@@ -7,7 +7,7 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from .user_utils import send_main_ticket_msg, send_start_ticket_msg
+from .user_utils import send_main_ticket_msg, send_start_ticket_msg, send_selected_event_msg
 from db import Ticket, Event, EventOption, Venue
 from settings import conf, log_error
 from init import user_router, bot
@@ -35,48 +35,7 @@ async def ticket_event(cb: CallbackQuery, state: FSMContext):
     event_id = int(event_id_str)
 
     await cb.message.delete()
-
-    event = await Event.get_by_id(event_id)
-    options = await EventOption.get_all(event_id=event_id)
-
-    markup = kb.get_ticket_options_kb(options)
-    entities = ut.recover_entities(event.entities)
-
-    if event.photo_id:
-        await cb.message.answer_photo(
-            photo=event.photo_id,
-            caption=event.text,
-            caption_entities=entities,
-            parse_mode=None,
-            reply_markup=markup
-        )
-
-    else:
-        await cb.message.answer(
-            text=event.text,
-            entities=entities,
-            parse_mode=None,
-            disable_web_page_preview=True,
-            reply_markup=markup
-        )
-
-
-    # if event_id_str != Action.BACK.value:
-    #     event_id = int(event_id_str)
-    #
-    #     data_obj = TicketData()
-    #     event = await Event.get_by_id(event_id)
-    #
-    #     data_obj.event = event
-    #
-    # else:
-    #     data = await state.get_data()
-    #     data_obj = TicketData(**data)
-    #     event = Event(**data_obj.event)
-    #
-    # data_obj.step = TicketStep.OPTION.value
-    # await state.update_data(data=asdict(data_obj))
-    # await get_main_ticket_msg(state, markup=kb.get_ticket_options_kb(options))
+    await send_selected_event_msg(chat_id=cb.from_user.id, event_id=event_id)
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_PLACE.value))
@@ -154,6 +113,7 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
         await cb.message.answer('Тут идём к оплате')
 
     else:
+        ticket_id = 0
         venue = await Venue.get_by_id(event.venue_id)
         for i in range(0, data_obj.count_place):
             ticket_id = await Ticket.add(
@@ -198,4 +158,13 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
         text = f'<b>Продано {data_obj.count_place} билета на {event.name}</b>'
 
         await bot.send_message(chat_id=conf.admin_chat, text=text)
+
+        if ticket_id:
+            ut.create_book_notice(
+                book_id=ticket_id,
+                book_date=event.date_event,
+                book_time=event.time_event,
+                book_type=Key.QR_TICKET.value
+            )
+
         # await bot.send_message(chat_id=venue.admin_chat_id, text=text)

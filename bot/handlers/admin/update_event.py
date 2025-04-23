@@ -9,7 +9,7 @@ from datetime import datetime
 
 import asyncio
 
-from .utils import send_main_manage_event_msg
+from .admin_utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
 from db import User, Book, EventOption, Event, Venue

@@ -3,19 +3,31 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state, Any
 from aiogram.filters.command import CommandStart, Command
 from aiogram.filters.state import StateFilter
-from aiogram.filters import BaseFilter
+from aiogram.enums.chat_type import ChatType
 from aiogram import Router
 
 import json
 
 import keyboards as kb
 import utils as ut
-from db import User, Book, Ticket
+from db import User, Book, Ticket, Venue
 from settings import conf, log_error
 from init import main_router, bot, redis_client
 from data import texts_dict
-from handlers.user.user_utils import send_start_ticket_msg, send_main_settings_msg
-from enums import UserCB, MenuCommand, Key
+from handlers.user.user_utils import send_start_ticket_msg, send_main_settings_msg, send_selected_event_msg
+from .admin.admin_utils import send_start_view_msg
+from enums import UserCB, MenuCommand, Key, UserStatus
+
+
+# Команда старт
+@main_router.message(lambda msg: msg.chat.type == ChatType.GROUP.value)
+async def group_msg(msg: Message):
+    if msg.text.isdigit() and len(msg.text) == 5:
+        venue = await Venue.get_by_admin_chat(chat_id=int(msg.text))
+        if venue:
+            await Venue.update(venue_id=venue.id, chat_id=msg.chat.id)
+            text = f'✅ Чат успешно добавлен как группа для заведения {venue.name}'
+            await msg.answer(text)
 
 
 # Команда старт
@@ -26,25 +38,36 @@ async def com_start(msg: Message, state: FSMContext):
     # добавляем или обновляем данные пользователя
     await User.add(user_id=msg.from_user.id, full_name=msg.from_user.full_name, username=msg.from_user.username)
 
-    access_id = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else None
-    print(msg.text)
-    print(access_id)
+    payloads = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else None
+    # print(msg.text)
+    # print(access_id)
 
-    if access_id:
-        key = f"{Key.ADD_ADMIN.value}{access_id}"
-        admin_data = ut.get_redis_data(key)
+    if payloads:
+        try:
+            key, value = payloads.split(':') if payloads.split(':') == 2 else None, 0
 
-        if not admin_data:
-            await msg.answer('⚠️ Ссылка устарела или уже была использована')
+            if key == Key.ADD_ADMIN.value:
+                key = f"{Key.ADD_ADMIN.value}{value}"
+                admin_data = ut.get_redis_data(key)
 
-        else:
-            print(type(admin_data))
-            await User.update(
-                user_id=msg.from_user.id,
-                status=admin_data['user_status'],
-                venue_id=admin_data['venue_id'],
-            )
-            await msg.answer('✅ Статус обновлён')
+                if not admin_data:
+                    await msg.answer('⚠️ Ссылка устарела или уже была использована')
+
+                else:
+                    await User.update(
+                        user_id=msg.from_user.id,
+                        status=admin_data['user_status'],
+                        venue_id=admin_data['venue_id'],
+                    )
+                    await msg.answer('✅ Статус обновлён')
+
+            elif key == Key.QR_TICKET.value:
+                event_id = int(value)
+                await send_selected_event_msg(chat_id=msg.from_user.id, event_id=event_id)
+                return
+
+        except Exception as e:
+            log_error(e)
 
     await ut.get_start_msg(user=msg.from_user)
 
@@ -61,24 +84,36 @@ async def back_com_start(cb: CallbackQuery, state: FSMContext):
 @main_router.message(Command(MenuCommand.BOOK.command))
 async def com_book(msg: Message, state: FSMContext):
     await state.clear()
+    user = await User.get_by_id(msg.from_user.id)
 
-    await ut.get_start_book_msg(user=msg.from_user)
+    if user.status == UserStatus.USER.value:
+        await ut.get_start_book_msg(user=msg.from_user)
+    else:
+        await send_start_view_msg(chat_id=msg.from_user.id, book_type=Key.QR_BOOK.value, admin=user)
 
 
 # Команда старт
 @main_router.message(Command(MenuCommand.TICKET.command))
 async def com_ticket(msg: Message, state: FSMContext):
     await state.clear()
+    user = await User.get_by_id(msg.from_user.id)
 
-    await send_start_ticket_msg(chat_id=msg.from_user.id)
+    if user.status == UserStatus.USER.value:
+        await send_start_ticket_msg(chat_id=msg.from_user.id)
+    else:
+        await send_start_view_msg(chat_id=msg.from_user.id, book_type=Key.QR_TICKET.value, admin=user)
 
 
 # Команда мои брони
 @main_router.message(Command(MenuCommand.SETTINGS.command))
 async def com_settings(msg: Message, state: FSMContext):
     await state.clear()
+    user = await User.get_by_id(msg.from_user.id)
 
-    await send_main_settings_msg(msg.from_user.id)
+    if user.status == UserStatus.USER.value:
+        await send_main_settings_msg(msg.from_user.id)
+    else:
+        await ut.get_start_msg(user=msg.from_user)
 
 
 # показывает кр
@@ -97,7 +132,7 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
 
 
 # удаляет сообщение
-@main_router.callback_query(lambda cb: cb.data.startswith(UserCB.VIEW_QR.value))
+@main_router.callback_query(lambda cb: cb.data.startswith(UserCB.DEL_MSG.value))
 async def book_comment(cb: CallbackQuery, state: FSMContext):
     _, type_qr, entry_id_str = cb.data.split(':')
     entry_id = int(entry_id_str)

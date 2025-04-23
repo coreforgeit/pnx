@@ -11,6 +11,7 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
+from .admin_utils import send_start_view_msg
 from db import User, Ticket, Book, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
@@ -24,23 +25,8 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
     await state.clear()
 
     admin = await User.get_admin(cb.from_user.id)
-    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
-        await cb.message.answer(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
-        return
 
-    if book_type == Key.QR_TICKET.value:
-        ticket_stat = await Ticket.get_active_event_ticket_stats(admin.venue_id)
-        text = f'<b>Выберите мероприятие:</b>'
-        await cb.message.edit_text(text=text, reply_markup=kb.get_ticket_state_kb(ticket_stat))
-
-    elif book_type == Key.QR_BOOK.value:
-        book_stat = await Book.get_book_stats_by_date(admin.venue_id)
-        text = f'<b>Выберите дату:</b>'
-        await cb.message.edit_text(text=text, reply_markup=kb.get_book_state_kb(book_stat))
-
-    else:
-        text = f'<b>❗️ Ошибка</b>'
-        await cb.message.edit_text(text=text, reply_markup=kb.get_back_start_kb())
+    await send_start_view_msg(chat_id=cb.from_user.id, book_type=book_type, admin=admin, msg_id=cb.message.message_id)
 
 
 # просмотра броней за день
@@ -71,3 +57,5 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
     else:
         text = f'<b>❗️ Ошибка</b>'
         await cb.message.edit_text(text=text, reply_markup=kb.get_back_start_kb())
+
+

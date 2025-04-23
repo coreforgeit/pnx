@@ -155,3 +155,4 @@ class SendData(BaseData):
     sender_status: str = None
     book_type: str = None
     entry_id: int = None
+    base_msg_id: int = None

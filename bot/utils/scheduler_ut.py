@@ -4,7 +4,7 @@ from datetime import datetime, date, time, timedelta
 import keyboards as kb
 from init import scheduler, bot
 from settings import log_error
-from db import User, Book
+from db import User, Book, Ticket
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key
 
@@ -20,53 +20,84 @@ async def shutdown_schedulers():
 
 
 # предупреждаем за день
-async def notice_book_for_day(book_id: int):
-    book = await Book.get_booking_with_venue(book_id)
+async def notice_book_for_day(entry_id: int, book_type: str):
+    if book_type == Key.QR_BOOK.value:
+        book = await Book.get_booking_with_venue(entry_id)
 
-    if book and book.is_active:
-        text = f'Напоминаем о брони {book.date_str()} в {book.time_str()} в {book.venue.name}'
-        await bot.send_message(chat_id=book.user_id, text=text)
+        if book and book.is_active:
+            text = f'Напоминаем о брони {book.date_str()} в {book.time_str()} в {book.venue.name}'
+            await bot.send_message(chat_id=book.user_id, text=text)
+
+    elif book_type == Key.QR_TICKET.value:
+        ticket = await Ticket.get_full_ticket(entry_id)
+
+        if ticket and ticket.is_active:
+            text = f'Напоминаем о мероприятии {ticket.event.name} завтра в {ticket.event.time_str()} в {ticket.event.venue.name}'
+            await bot.send_message(chat_id=ticket.user_id, text=text)
 
 
 # предупреждаем за 3 часа
-async def notice_book_for_2_hours(book_id):
-    book = await Book.get_booking_with_venue(book_id)
+async def notice_book_for_2_hours(entry_id: int, book_type: str):
+    if book_type == Key.QR_BOOK.value:
+        book = await Book.get_booking_with_venue(entry_id)
 
-    if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
-        text = f'Ждём вас через 2 часа в {book.venue.name}'
-        await bot.send_message(
-            chat_id=book.user_id,
-            text=text,
-            reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
-        )
+        if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
+            text = f'Ждём вас через 2 часа в {book.venue.name}'
+            await bot.send_message(
+                chat_id=book.user_id,
+                text=text,
+                reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
+            )
 
+    elif book_type == Key.QR_TICKET.value:
+        ticket = await Ticket.get_full_ticket(entry_id)
 
-# предупреждаем об опоздании
-async def notice_book_for_now(book_id: int):
-    book = await Book.get_booking_with_venue(book_id)
-
-    if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
-        text = f'Ваша бронь активна, мы будем ждать вас ещё 30 минут в {book.venue.name}'
-        await bot.send_message(
-            chat_id=book.user_id,
-            text=text,
-            reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
-        )
+        if ticket and ticket.is_active:
+            text = f'Ждём вас через 2 часа в {ticket.event.venue.name} на {ticket.event.name}'
+            await bot.send_message(
+                chat_id=ticket.user_id,
+                text=text,
+                reply_markup=kb.get_view_qr_kb(book_type=Key.QR_TICKET.value, entry_id=ticket.id))
 
 
 # предупреждаем об опоздании
-async def notice_book_for_close(book_id: int):
-    book = await Book.get_booking_with_venue(book_id)
+async def notice_book_for_now(entry_id: int, book_type: str):
+    if book_type == Key.QR_BOOK.value:
+        book = await Book.get_booking_with_venue(entry_id)
 
-    if book and book.is_active and not book.status == BookStatus.CONFIRMED.value:
-        text = f'Мы не дождались вас 😔 Простите, но бронь была снята.'
-        await bot.send_message(chat_id=book.user_id, text=text)
+        if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
+            text = f'Ваша бронь активна, мы будем ждать вас ещё 30 минут в {book.venue.name}'
+            await bot.send_message(
+                chat_id=book.user_id,
+                text=text,
+                reply_markup=kb.get_view_qr_kb(book_type=Key.QR_BOOK.value, entry_id=book.id)
+            )
 
-        await Book.update(book_id=book_id, is_active=False)
+    elif book_type == Key.QR_TICKET.value:
+        ticket = await Ticket.get_full_ticket(entry_id)
+
+        if ticket and ticket.is_active:
+            text = f'Мы уже начали!! Ждём вас в {ticket.event.venue.name} на {ticket.event.name}'
+            await bot.send_message(
+                chat_id=ticket.user_id,
+                text=text,
+                reply_markup=kb.get_view_qr_kb(book_type=Key.QR_TICKET.value, entry_id=ticket.id))
+
+
+# предупреждаем об опоздании
+async def notice_book_for_close(entry_id: int, book_type: str):
+    if book_type == Key.QR_BOOK.value:
+
+        book = await Book.get_booking_with_venue(entry_id)
+        if book and book.is_active and not book.status == BookStatus.CONFIRMED.value:
+            text = f'Мы не дождались вас 😔 Простите, но бронь была снята.'
+            await bot.send_message(chat_id=book.user_id, text=text)
+
+            await Book.update(book_id=entry_id, is_active=False)
 
 
 # создаём уведомления для каждого напоминания
-def create_book_notice(book_id: int, book_date: date, book_time: time):  # не удалять end_date
+def create_book_notice(book_id: int, book_date: date, book_time: time, book_type: str):  # не удалять end_date
     now = datetime.now()
     book_dt = datetime.combine(book_date, book_time)
 
@@ -77,7 +108,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
             trigger='date',
             run_date=book_dt_for_day,
             id=f"{book_id}-{NoticeKey.BOOK_DAY.value}",
-            args=[book_id],
+            args=[book_id, book_type],
             replace_existing=True,
         )
 
@@ -88,7 +119,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
             trigger='date',
             run_date=book_dt_for_2_hours,
             id=f"{book_id}-{NoticeKey.BOOK_2_HOUR.value}",
-            args=[book_id],
+            args=[book_id, book_type],
             replace_existing=True,
         )
 
@@ -97,7 +128,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
         trigger='date',
         run_date=book_dt,
         id=f"{book_id}-{NoticeKey.BOOK_NOW.value}",
-        args=[book_id],
+        args=[book_id, book_type],
         replace_existing=True,
     )
 
@@ -107,6 +138,6 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
         trigger='date',
         run_date=book_dt_for_close,
         id=f"{book_id}-{NoticeKey.BOOK_CLOSE.value}",
-        args=[book_id],
+        args=[book_id, book_type],
         replace_existing=True,
     )

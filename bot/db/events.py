@@ -20,6 +20,7 @@ class Event(Base):
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_event: Mapped[time] = mapped_column(sa.Time())
     date_event: Mapped[date] = mapped_column(sa.Date())
+    link: Mapped[str] = mapped_column(sa.String(), nullable=True)
     name: Mapped[str] = mapped_column(sa.String())
     text: Mapped[str] = mapped_column(sa.Text(), nullable=True)
     entities: Mapped[str] = mapped_column(sa.Text(), nullable=True)
@@ -77,7 +78,7 @@ class Event(Base):
                 index_elements=[cls.id],
                 set_={
                     "updated_at": now,
-                    "creator_id": creator_id,
+                    # "creator_id": creator_id,
                     "venue_id": venue_id,
                     "time_event": time_event,
                     "date_event": date_event,
@@ -114,6 +115,7 @@ class Event(Base):
             cls,
             event_id: int,
             page_id: int = None,
+            link: str = None,
             is_active: bool = None
     ) -> None:
         now = datetime.now()
@@ -121,6 +123,9 @@ class Event(Base):
 
         if page_id:
             query = query.values(gs_page=page_id)
+
+        if link:
+            query = query.values(link=link)
 
         if is_active is not None:
             query = query.values(is_active=is_active)

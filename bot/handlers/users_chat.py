@@ -11,10 +11,10 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from db import User, Ticket, Book, EventOption, Event, Venue
+from db import User, Ticket, Book, AdminLog, Event, Venue
 from settings import conf, log_error
 from init import bot, main_router
-from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, MailingData
+from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, AdminAction
 
 
 # начало переписки
@@ -48,7 +48,8 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
         book_text=text_book,
         sender_status=sender_info.status,
         book_type=book_type,
-        entry_id=entry_id
+        entry_id=entry_id,
+        base_msg_id=cb.message.message_id,
     )
 
     if sender_info.status == UserStatus.USER.value:
@@ -74,6 +75,7 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
 async def mailing_preview(msg: Message, state: FSMContext):
     data = await state.get_data()
     data_obj = SendData(**data)
+    data_obj.print_all()
     await state.clear()
 
     text = (
@@ -93,3 +95,32 @@ async def mailing_preview(msg: Message, state: FSMContext):
             book_type=data_obj.book_type
         )
     )
+    # await bot.edit_message_reply_markup(
+    #     chat_id=msg.from_user.id,
+    #     message_id=data_obj.base_msg_id,
+    #     reply_markup=kb.get_send_answer_kb(
+    #         user_id=data_obj.for_user_id,
+    #         book_id=data_obj.entry_id,
+    #         book_type=data_obj.book_type
+    #     )
+    # )
+
+    # запись в журнал
+    text = msg.text or msg.caption
+    if not text:
+        text = msg.content_type
+    if data_obj.sender_status == UserStatus.USER.value:
+        await AdminLog.add(
+            admin_id=data_obj.for_user_id,
+            user_id=msg.from_user.id,
+            action=AdminAction.USER_SEND.value,
+            comment=text
+        )
+    else:
+        await AdminLog.add(
+            admin_id=msg.from_user.id,
+            user_id=data_obj.for_user_id,
+            action=AdminAction.ADMIN_SEND.value,
+            comment=text
+        )
+

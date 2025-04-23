@@ -234,7 +234,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     )
 
     # создаём уведомления
-    ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book)
+    ut.create_book_notice(book_id=book_id, book_date=date_book, book_time=time_book, book_type=Key.QR_BOOK.value)
+
     # пишем админу
     comment = f'\n\n<i>{data_obj.comment}</i>' if data_obj.comment else ''
     if data_obj.book_id:

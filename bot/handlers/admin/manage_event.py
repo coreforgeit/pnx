@@ -9,15 +9,15 @@ from datetime import datetime
 
 import asyncio
 
-from .utils import send_main_manage_event_msg
+from .admin_utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
-from db import User, Book, EventOption, Event, Venue
+from db import User, AdminLog, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
 from google_api import create_event_sheet
-from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict
+from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, AdminAction
 
 
 # старт брони столиков
@@ -367,12 +367,21 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
             page_id=data_obj.pade_id
         )
 
-        await Event.update(event_id=event_id, page_id=page_id)
+        link = f'{conf.bot_link}{Key.QR_TICKET.value}:{event_id}'
+        await Event.update(event_id=event_id, page_id=page_id, link=link)
+
         #     Отчитываемся об успехе
         await cb.message.edit_reply_markup(reply_markup=None)
         await state.clear()
 
         await sent.edit_text(text='✅ Мероприятие успешно создано')
+
+        # запись в журнал
+        await AdminLog.add(
+            admin_id=cb.from_user.id,
+            action=AdminAction.EDIT.value if data_obj.event_id else AdminAction.ADD.value,
+            comment=data_obj.name
+        )
 
     except Exception as e:
         log_error(e)

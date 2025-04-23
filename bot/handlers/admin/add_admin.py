@@ -12,10 +12,10 @@ import asyncio
 
 import keyboards as kb
 import utils as ut
-from db import User, Ticket, Book, EventOption, Event, Venue
+from db import User, Ticket, Book, EventOption, AdminLog, Venue
 from settings import conf, log_error
 from init import bot, admin_router, redis_client
-from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, MailingData
+from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, AdminAction
 
 
 # старт просмотра броней
@@ -55,6 +55,8 @@ async def add_status(cb: CallbackQuery, state: FSMContext):
     )
 
     # Формируем ссылку
-    link = f"https://t.me/{conf.bot_username}?start={access_id}"
+    link = f"{conf.bot_link}{Key.ADD_ADMIN.value}:{access_id}"
 
-    await cb.message.edit_text(text=f"<b>🔗 Ссылка для подключения пользователя:</b>\n\n{link}",)
+    await cb.message.edit_text(text=f"<b>🔗 Ссылка для подключения пользователя:</b>\n\n{link}")
+
+    await AdminLog.add(admin_id=cb.from_user.id, action=AdminAction.LINK.value, comment=link)

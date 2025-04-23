@@ -8,20 +8,13 @@ import os
 
 import keyboards as kb
 import utils as ut
-from db import User, Book
+from db import User, Book, AdminLog, Ticket
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
-from enums import UserCB, UserStatus, Key, BookStatus
+from enums import UserCB, UserStatus, Key, BookStatus, AdminAction
 
 from google_api import update_book_gs
-
-from aiogram.filters.command import CommandStart
-
-# @dp.message(CommandStart())
-# async def com_start(msg: Message, state: FSMContext):
-#     # await state.clear()
-#     print(__name__)
 
 
 # Команда старт
@@ -44,18 +37,18 @@ async def qr_check(msg: Message, state: FSMContext):
         await msg.answer("Не удалось распознать QR-код 😞")
         return
 
-    key, user_id_str, book_id_str = qr_content.split(':')
+    key, user_id_str, entry_id_str = qr_content.split(':')
 
     if key == Key.QR_BOOK.value:
-        book_id = int(book_id_str)
+        ticket_id = int(entry_id_str)
 
-        book = await Book.get_booking_with_venue(book_id)
+        book = await Book.get_booking_with_venue(ticket_id)
 
         if not book:
             await msg.answer("❌ Бронь не найдена")
             return
 
-        if book.status == BookStatus.VISITED.value:
+        if book.status != BookStatus.CONFIRMED.value:
             await msg.answer("❌ Уже была использована")
             return
 
@@ -78,6 +71,50 @@ async def qr_check(msg: Message, state: FSMContext):
             status=BookStatus.VISITED.value,
             row=book.gs_row
         )
+
+        # запись в журнал
+        await AdminLog.add(
+            admin_id=msg.from_user.id, action=AdminAction.BOOK.value, user_id=book.user_id, comment=book_text
+        )
+
+    if key == Key.QR_TICKET.value:
+        ticket_id = int(entry_id_str)
+
+        ticket = await Ticket.get_full_ticket(ticket_id)
+
+        if not ticket:
+            await msg.answer("❌ Билет не найдена")
+            return
+
+        if ticket.status != BookStatus.CONFIRMED.value:
+            await msg.answer("❌ Уже была использована")
+            return
+
+        if not ticket.is_active:
+            await msg.answer("❌ Билет не активен")
+            return
+
+        ticket_text = ut.get_ticket_text(ticket)
+        await msg.answer(f"✅ Билет подтверждена\n\n{ticket_text}")
+
+        await bot.send_message(
+            chat_id=ticket.user_id, text=f'✅ Ваш билет подтвержден\n\n{ticket_text}\nДобро пожаловать!'
+        )
+
+        await Ticket.update(ticket_id=ticket.id, status=BookStatus.VISITED.value)
+
+        await update_book_gs(
+            spreadsheet_id=ticket.event.venue.event_gs_id,
+            sheet_name=ticket.event.gs_page,
+            status=BookStatus.VISITED.value,
+            row=ticket.gs_row
+        )
+
+        # запись в журнал
+        await AdminLog.add(
+            admin_id=msg.from_user.id, action=AdminAction.TICKET.value, user_id=ticket.user_id, comment=ticket_text
+        )
+
 
 
 
