@@ -1,8 +1,8 @@
 aiogram
-APScheduler
+apscheduler
 asyncpg
 redis
-SQLAlchemy
+sqlalchemy
 uvloop
 segno
 pyzbar

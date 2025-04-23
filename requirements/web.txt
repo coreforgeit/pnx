@@ -1,9 +1,9 @@
-APScheduler
-Django
+apscheduler
+django
 django-unfold
 djangorestframework
 psycopg2
-pyTelegramBotAPI
+pytelegrambotapi
 pytz
 redis
 requests
