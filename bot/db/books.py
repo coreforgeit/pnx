@@ -26,7 +26,7 @@ class Book(Base):
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())
     people_count: Mapped[int] = mapped_column(sa.Integer())
-    comment: Mapped[str] = mapped_column(sa.String())
+    comment: Mapped[str] = mapped_column(sa.String(), nullable=True)
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), default=2)
     status: Mapped[str] = mapped_column(sa.String())
