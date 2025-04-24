@@ -1,4 +1,4 @@
-FROM ubuntu/python
+FROM python:3.12.8-jammy
 
 
 # Установка системных зависимостей
