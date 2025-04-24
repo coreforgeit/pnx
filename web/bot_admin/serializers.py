@@ -13,4 +13,5 @@ class BookingFromSheetSerializer(serializers.Serializer):
     spreadsheet_id = serializers.CharField()
     sheet_id = serializers.IntegerField()
     row_number = serializers.IntegerField(min_value=1)
+    type = serializers.CharField()
     data = BookingDataSerializer()
