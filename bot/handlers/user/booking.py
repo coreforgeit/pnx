@@ -246,10 +246,11 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     text = (f'{pre_text}'
             f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
             f'{comment}')
-    await bot.send_message(chat_id=conf.admin_chat, text=text)
+
+    venue = await Venue.get_by_id(data_obj.venue_id)
+    await bot.send_message(chat_id=venue.admin_chat_id, text=text)
 
     #     отправляем в таблицу
-    venue = await Venue.get_by_id(data_obj.venue_id)
     last_day_book = await Book.get_last_book_day(date_book=date_book)
     gs_row = await add_or_update_book_gs(
         spreadsheet_id=venue.book_gs_id,

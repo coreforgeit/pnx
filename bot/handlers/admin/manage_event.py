@@ -53,10 +53,11 @@ async def event_msg_data(msg: Message, state: FSMContext):
 
     elif data_obj.step == EventStep.COVER.value:
         entities = msg.entities or msg.caption_entities
+        text = msg.text or msg.caption
 
         data_obj.step = EventStep.DATE.value
         data_obj.photo_id = msg.photo[-1].file_id if msg.photo else None
-        data_obj.text = msg.text or msg.caption
+        data_obj.text = text[:500]
         data_obj.entities = ut.save_entities(entities)
         markup = kb.get_event_date_kb()
 
