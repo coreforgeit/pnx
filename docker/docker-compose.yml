@@ -78,6 +78,8 @@ services:
       - ../bot:/app
       - ../logs/bot:/app/logs
     restart: unless-stopped
+    ports:
+      - "433:433"
     depends_on:
       - db
     env_file:
