@@ -71,6 +71,7 @@ services:
     build:
       context: ..
       dockerfile: docker/dockerfiles/DockerfileBot
+      network: host
       args:
         - --no-cache
     container_name: bot_pnx
