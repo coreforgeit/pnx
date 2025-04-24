@@ -254,6 +254,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     gs_row = await add_or_update_book_gs(
         spreadsheet_id=venue.book_gs_id,
         sheet_name=data_obj.date_str,
+        book_id=book_id,
         booking_time=data_obj.time_str,
         full_name=cb.from_user.full_name,
         count_place=data_obj.people_count,

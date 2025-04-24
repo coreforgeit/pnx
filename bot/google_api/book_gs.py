@@ -11,6 +11,7 @@ from enums import OptionData, Key, book_status_dict
 async def add_or_update_book_gs(
         spreadsheet_id: str,
         sheet_name: str,
+        book_id: int,
         full_name: str,
         booking_time: str,
         count_place: int,
@@ -25,7 +26,7 @@ async def add_or_update_book_gs(
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    new_values = [[full_name, booking_time, count_place, comment, book_status_dict.get(status)]]
+    new_values = [[book_id, full_name, booking_time, count_place, comment, book_status_dict.get(status)]]
 
     row = start_row
     attempts = 0
@@ -36,7 +37,7 @@ async def add_or_update_book_gs(
         return row_num
 
     while attempts < max_attempts:
-        cell_range = f"C{row}:G{row}"
+        cell_range = f"B{row}:G{row}"
         try:
             existing = await worksheet.get(cell_range)
             if not any(cell.strip() for cell in existing[0] if cell):

@@ -67,43 +67,25 @@ services:
 #      - .env
 
 
-#  bot:
-#    build:
-#      context: ..
-#      dockerfile: docker/dockerfiles/DockerfileBot
-#      network: host
-#      args:
-#        - --no-cache
-#    container_name: bot_pnx
-#    volumes:
-#      - ../bot:/app
-#      - ../logs/bot:/app/logs
-#    restart: unless-stopped
-#    ports:
-#      - "433:433"
-#    depends_on:
-#      - db
-#    env_file:
-#      - .env
-
-
   bot:
     build:
       context: ..
       dockerfile: docker/dockerfiles/DockerfileBot
+      network: host
+      args:
+        - --no-cache
     container_name: bot_pnx
     volumes:
       - ../bot:/app
       - ../logs/bot:/app/logs
     restart: unless-stopped
+    ports:
+      - "433:433"
     depends_on:
       - db
-      - redis
     env_file:
       - .env
-    dns:
-      - 8.8.8.8
-      - 1.1.1.1
+
 
 volumes:
   pgadmin_data:
