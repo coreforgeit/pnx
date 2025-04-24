@@ -7,7 +7,7 @@ import logging
 
 from .serializers import BookingFromSheetSerializer
 from .models import Book, Venue
-from web.settings import DATE_FORMAT, DATETIME_FORMAT_ISO
+from web.settings import DATE_FORMAT, DATETIME_FORMAT_ISO, TIME_SHORT_FORMAT
 from enums import Key, book_status_inverted_dict, BookStatus
 
 
@@ -31,7 +31,10 @@ class GoogleSheetWebhookView(APIView):
 
             date_book = datetime.strptime(page_name, DATE_FORMAT).date()
             # time_book = datetime.strptime(data['time'], DATETIME_FORMAT_ISO).time()
-            time_book = datetime.fromisoformat(data['time'].replace("Z", "+00:00")).time()
+            try:
+                time_book = datetime.fromisoformat(data['time'].replace("Z", "+00:00")).time()
+            except Exception as e:
+                time_book = datetime.strptime(data['time'], TIME_SHORT_FORMAT).time()
 
             name = data['name']
             person = data['person']
