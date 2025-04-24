@@ -44,7 +44,7 @@ class GoogleSheetWebhookView(APIView):
 
             book = Book.get_by_date_row(row=row_number, date_book=date_book)
             if book:
-                book.time_book = time_book
+                book.time_book = time_book.replace(second=0)
                 book.people_count = person
                 book.comment = comment
                 book.status = book_status
