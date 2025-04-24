@@ -121,6 +121,7 @@ RUN set -eux; \
 		ln -svT "$src" "/usr/local/bin/$dst"; \
 	done
 
+RUN echo "nameserver 8.8.8.8" > /etc/resolv.conf
 
 # Установка системных зависимостей
 RUN apt-get update && apt-get install -y --no-install-recommends \
