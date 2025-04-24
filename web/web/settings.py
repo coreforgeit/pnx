@@ -127,8 +127,10 @@ USE_I18N = True
 
 USE_TZ = True
 
+DATE_FORMAT = '%d.%m.%Y'
 DATETIME_FORMAT = '%H:%M %d.%m.%Y'
-DATETIME_FORMAT_ISO = '"%Y-%m-%dT%H:%M:%SZ"'
+DATETIME_FORMAT_ISO = '%Y-%m-%dT%H:%M:%SZ'
+DATETIME_FORMAT_ISO = '1899-12-30T13:00:49.000Z'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 

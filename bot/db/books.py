@@ -21,7 +21,7 @@ class Book(Base):
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
     updated_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
-    user_id: Mapped[int] = mapped_column(sa.BigInteger)
+    user_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=True)
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())

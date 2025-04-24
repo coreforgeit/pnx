@@ -1,5 +1,8 @@
 from django.db import models
+from datetime import date
+import typing as t
 import random
+
 
 from enums import admin_action_choice, book_status_choice
 
@@ -18,6 +21,8 @@ class Venue(models.Model):
     admin_chat_id = models.BigIntegerField(default=random.randint(10000, 99999), verbose_name='Chat ID администратора')
     is_active = models.BooleanField(null=True, blank=True, verbose_name='Активен')
 
+    objects: models.Manager = models.Manager()
+
     class Meta:
         db_table = 'venues'
         managed = False
@@ -26,6 +31,10 @@ class Venue(models.Model):
 
     def __str__(self):
         return self.name
+
+    @classmethod
+    def get_by_book_gs_id(cls, book_gs_id: str) -> t.Optional[t.Self]:
+        return cls.objects.filter(book_gs_id=book_gs_id).first()
 
 
 class User(models.Model):
@@ -58,6 +67,8 @@ class User(models.Model):
         verbose_name = 'Пользователь'
         verbose_name_plural = 'Пользователи'
 
+    objects: models.Manager = models.Manager()
+
     def __str__(self):
         return f"{self.full_name} ({self.username or 'no username'})"
 
@@ -67,7 +78,7 @@ class Book(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
 
-    user_id = models.BigIntegerField(verbose_name='ID пользователя')
+    user_id = models.BigIntegerField(verbose_name='ID пользователя', null=True)
     venue = models.ForeignKey(
         'Venue',
         on_delete=models.CASCADE,
@@ -84,6 +95,8 @@ class Book(models.Model):
     status = models.CharField(max_length=255, verbose_name='Статус', choices=book_status_choice)
     is_active = models.BooleanField(default=True, verbose_name='Активна')
 
+    objects: models.Manager = models.Manager()
+
     class Meta:
         db_table = 'books'
         managed = False
@@ -92,6 +105,10 @@ class Book(models.Model):
 
     def __str__(self):
         return f"{self.date_book} {self.time_book} | {self.people_count} гостей"
+
+    @classmethod
+    def get_by_date_row(cls, row: int, date_book: date) -> t.Optional[t.Self]:
+        return cls.objects.filter(gs_row=row, date_book=date_book).first()
 
 
 class Event(models.Model):
@@ -115,6 +132,8 @@ class Event(models.Model):
     photo_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID фото')
     gs_page = models.BigIntegerField(null=True, blank=True, verbose_name='Страница Google Sheets')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
+
+    objects: models.Manager = models.Manager()
 
     class Meta:
         db_table = 'events'
@@ -144,6 +163,8 @@ class EventOption(models.Model):
     price = models.IntegerField(default=0, null=True, blank=True, verbose_name='Цена')
     gs_row = models.IntegerField(null=True, blank=True, verbose_name='Строка в таблице')
     is_active = models.BooleanField(default=True, verbose_name='Активна')
+
+    objects: models.Manager = models.Manager()
 
     class Meta:
         db_table = 'events_options'
@@ -187,6 +208,8 @@ class Ticket(models.Model):
     status = models.CharField(max_length=50, verbose_name='Статус')
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
+    objects: models.Manager = models.Manager()
+
     class Meta:
         db_table = 'tickets'
         managed = False
@@ -203,6 +226,8 @@ class AdminLog(models.Model):
     action = models.CharField(max_length=255, verbose_name='Действие', choices=admin_action_choice)
     comment = models.TextField(null=True, blank=True, verbose_name='Комментарий')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
+
+    objects: models.Manager = models.Manager()
 
     class Meta:
         db_table = 'logs_admin'
@@ -221,6 +246,8 @@ class LogError(models.Model):
     traceback = models.TextField(verbose_name="Traceback ошибки")
     message = models.TextField(verbose_name="Сообщение об ошибке")
     comment = models.CharField(max_length=255, blank=True, null=True, verbose_name="Комментарий")
+
+    objects: models.Manager = models.Manager()
 
     class Meta:
         db_table = "logs_error"

@@ -79,7 +79,7 @@ class AdminLogAdmin(ModelAdmin):
 
 
 @admin.register(LogError)
-class ErrorJournalAdmin(admin.ModelAdmin):
+class ErrorJournalAdmin(ModelAdmin):
     list_display = ("id", "created_at", "user_id", "message", "comment")
     search_fields = ("user_id", "message", "traceback")
     list_filter = ("created_at",)

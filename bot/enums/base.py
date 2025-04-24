@@ -34,8 +34,14 @@ book_status_dict = {
     BookStatus.VISITED.value: 'Пришёл',
     BookStatus.CANCELED.value: 'Отменена',
 }
-
 book_status_choice = tuple(book_status_dict.items())
+
+book_status_inverted_dict = {
+    'Новая': BookStatus.NEW.value,
+    'Подтверждена': BookStatus.CONFIRMED.value,
+    'Пришёл': BookStatus.VISITED.value,
+    'Отменена': BookStatus.CANCELED.value
+}
 
 
 # Ключи к автосообщениям
