@@ -5,7 +5,7 @@ from gspread.exceptions import APIError, WorksheetNotFound
 from typing import Union
 
 from .base import agcm
-from enums import OptionData, Key, book_status_dict
+from enums import OptionData, Key, book_status_dict, BookStatus
 
 
 async def add_or_update_book_gs(
@@ -26,7 +26,7 @@ async def add_or_update_book_gs(
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
-    new_values = [[book_id, full_name, booking_time, count_place, comment, book_status_dict.get(status)]]
+    new_values = [[book_id, full_name, booking_time, count_place, comment, book_status_dict.get(status), "✅"]]
 
     row = start_row
     attempts = 0
@@ -37,7 +37,7 @@ async def add_or_update_book_gs(
         return row_num
 
     while attempts < max_attempts:
-        cell_range = f"B{row}:G{row}"
+        cell_range = f"B{row}:H{row}"
         try:
             existing = await worksheet.get(cell_range)
             if not any(cell.strip() for cell in existing[0] if cell):
@@ -136,7 +136,7 @@ async def create_event_sheet(
     await safe_update(worksheet, f"A2:D{len(option_rows)+1}", option_rows)
 
     # Таблица регистрации
-    await safe_update(worksheet, "F1:J1", [["ID", "Опция", "Имя", "Пришёл", "В базе"]])
+    await safe_update(worksheet, "F1:J1", [["ID", "Опция", "Имя", "Статус", "В базе"]])
     # empty_rows = [[i+1, "", "", "⬜"] for i in range(20)]
     # await safe_update(worksheet, "F2:I21", empty_rows)
 
@@ -145,17 +145,27 @@ async def create_event_sheet(
 
 # --- Добавить билет в первую свободную строку таблицы регистрации ---
 async def add_ticket_row_to_registration(
-    spreadsheet_id: str,
-    page_id: str,
-    ticket_id: int,
-    option_name: str,
-    user_name: str,
-    start_row: int = 2,
+        spreadsheet_id: str,
+        page_id: str,
+        ticket_id: int,
+        option_name: str,
+        user_name: str,
+        start_row: int = 2,
+        ticket_row: int = None,
+        status: str = BookStatus.CONFIRMED.value
 ) -> int:
-    max_rows: int = 500
+    max_rows: int = 50
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+
+    # если запись существует просто её обновляем
+    if ticket_row:
+        cell_range = f"F{ticket_row}:J{ticket_row}"
+
+        new_row = [[ticket_id, option_name, user_name, status, "✅"]]
+        await safe_update(worksheet, cell_range, new_row)
+        return ticket_row
 
     for row in range(start_row, start_row + max_rows):
         cell_range = f"F{row}:J{row}"
@@ -171,7 +181,7 @@ async def add_ticket_row_to_registration(
 
         # если все ячейки пусты
         if not any(cell.strip() for cell in existing[0] if cell):
-            new_row = [[ticket_id, option_name, user_name, "⬜", "✅"]]
+            new_row = [[ticket_id, option_name, user_name, status, "✅"]]
             await safe_update(worksheet, cell_range, new_row)
             return row
 

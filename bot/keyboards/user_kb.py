@@ -57,7 +57,7 @@ def get_book_time_kb(popular_time: list[str]) -> InlineKeyboardMarkup:
         kb.button(text=time_book, callback_data=f'{UserCB.BOOK_PEOPLE.value}:{time_book.replace(":", " ")}')
 
     bc_bt = InlineKeyboardBuilder()
-    bc_bt.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_DATE.value}:{Action.BACK.value}')
+    bc_bt.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_VENUE.value}:{Action.BACK.value}')
     return kb.adjust(2).attach(bc_bt).as_markup()
 
 
@@ -68,7 +68,7 @@ def get_book_people_kb() -> InlineKeyboardMarkup:
         kb.button(text=f'{i}', callback_data=f'{UserCB.BOOK_COMMENT.value}:{i}')
 
     kb.button(text='Нас будет больше', callback_data=f'{UserCB.BOOK_COMMENT.value}:5')
-    kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_TIME.value}:{Action.BACK.value}')
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.BOOK_DATE.value}:{Action.BACK.value}')
     return kb.adjust(4, 1).as_markup()
 
 
@@ -126,7 +126,7 @@ def get_ticket_place_kb(empty_pace: int) -> InlineKeyboardMarkup:
         kb.button(text=f'{i}', callback_data=f'{UserCB.TICKET_CONFIRM.value}:{i}')
 
     kb_back = InlineKeyboardBuilder()
-    kb_back.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_OPTION.value}')
+    kb_back.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_EVENT.value}:{Action.BACK.value}')
     return kb.adjust(row_len).attach(kb_back).as_markup()
 
 
@@ -134,7 +134,15 @@ def get_ticket_place_kb(empty_pace: int) -> InlineKeyboardMarkup:
 def get_ticket_confirm_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
     kb.button(text='✅ Подтвердить', callback_data=f'{UserCB.TICKET_END.value}')
-    kb.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_PLACE.value}')
+    kb.button(text='🔙 Назад', callback_data=f'{UserCB.TICKET_PLACE.value}:{Action.BACK.value}')
+    return kb.adjust(1).as_markup()
+
+
+# выбор способа оплаты
+def get_ticket_pay_method_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='💳 Онлайн оплата', callback_data=f'ffff')
+    kb.button(text='💸 Через оператора', callback_data=f'{UserCB.TICKET_ALTER_PAY.value}')
     return kb.adjust(1).as_markup()
 
 

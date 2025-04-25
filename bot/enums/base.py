@@ -51,6 +51,7 @@ class Action(str, Enum):
     ADD = 'add'
     DEL = 'del'
     SEND = 'send'
+    CONF = 'confirm'
 
 
 # Ключи к редису

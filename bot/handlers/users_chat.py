@@ -33,7 +33,7 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
     elif book_type == Key.QR_TICKET.value:
         ticket = await Ticket.get_full_ticket(ticket_id=entry_id)
         user = await User.get_by_id(ticket.user_id)
-        text_book = f'🎫 Билет:\n{ut.get_ticket_text(ticket)}'
+        text_book = f'{ut.get_ticket_text(ticket)}'
         pre_text = f'🎫 Билет:\n'
 
     else:
@@ -72,6 +72,9 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
 
 # отправка сообщения пользователю
 @main_router.message(StateFilter(UserState.SEND_MSG.value))
+# @main_router.message(
+#     lambda msg: msg.chat.type == ChatType.GROUP.value and msg.text and msg.text.isdigit() and len(msg.text) == 5
+# )
 async def mailing_preview(msg: Message, state: FSMContext):
     data = await state.get_data()
     data_obj = SendData(**data)
@@ -86,7 +89,7 @@ async def mailing_preview(msg: Message, state: FSMContext):
     await bot.send_message(chat_id=data_obj.for_user_id, text=text)
     await bot.copy_message(
         chat_id=data_obj.for_user_id,
-        from_chat_id=msg.from_user.id,
+        from_chat_id=msg.chat.id,
         message_id=msg.message_id,
         parse_mode=None,
         reply_markup=kb.get_send_answer_kb(

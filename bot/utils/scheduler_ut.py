@@ -4,6 +4,8 @@ from datetime import datetime, date, time, timedelta
 import keyboards as kb
 from init import scheduler, bot
 from settings import log_error
+from .text_utils import get_ticket_text, get_book_text
+from google_api import add_ticket_row_to_registration
 from db import User, Book, Ticket
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key
@@ -139,5 +141,45 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
         run_date=book_dt_for_close,
         id=f"{book_id}-{NoticeKey.BOOK_CLOSE.value}",
         args=[book_id, book_type],
+        replace_existing=True,
+    )
+
+
+# обнуляет старые билеты
+async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None:
+    for ticket_id in ticket_id_list:
+        ticket = await Ticket.get_full_ticket(ticket_id)
+        user = await User.get_by_id(user_id)
+        if ticket.status == BookStatus.NEW.value:
+            await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
+
+            ticket_text = get_ticket_text(ticket)
+
+            await add_ticket_row_to_registration(
+                spreadsheet_id=ticket.event.venue.event_gs_id,
+                page_id=ticket.event.gs_page,
+                ticket_id=ticket_id,
+                option_name=ticket.option.name,
+                user_name=user.full_name,
+                ticket_row=ticket.gs_row
+            )
+
+            text = f'Оплата не была подтверждена, билет аннулирован\n{ticket_text}'
+            await bot.send_message(chat_id=user_id, text=text)
+
+
+# создаём уведомления для каждого напоминания
+def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
+    now = datetime.now()
+    notice_time = now - timedelta(hours=12)
+
+    key = '-'.join(map(str, ticket_id_list))
+
+    scheduler.add_job(
+        func=notice_book_for_day,
+        trigger='date',
+        run_date=notice_time,
+        id=f"{NoticeKey.BOOK_DAY.value}-{key}",
+        args=[user_id, ticket_id_list],
         replace_existing=True,
     )

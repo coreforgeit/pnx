@@ -48,14 +48,13 @@ async def add_status(cb: CallbackQuery, state: FSMContext):
     _, venue_id_str, user_status = cb.data.split(':')
     venue_id = int(venue_id_str)
 
-    access_id = uuid4().hex[:16]
-    ut.save_redis_temp(
-        key=f"{Key.ADD_ADMIN.value}{access_id}",
+    access_id = ut.save_redis_temp(
+        key=Key.ADD_ADMIN.value,
         data={"venue_id": venue_id, "user_status": user_status}
     )
 
     # Формируем ссылку
-    link = f"{conf.bot_link}{Key.ADD_ADMIN.value}:{access_id}"
+    link = f"{conf.bot_link}{Key.ADD_ADMIN.value}-{access_id}"
 
     await cb.message.edit_text(text=f"<b>🔗 Ссылка для подключения пользователя:</b>\n\n{link}")
 

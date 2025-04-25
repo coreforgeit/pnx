@@ -20,14 +20,15 @@ from enums import UserCB, MenuCommand, Key, UserStatus
 
 
 # Команда старт
-@main_router.message(lambda msg: msg.chat.type == ChatType.GROUP.value)
+@main_router.message(
+    lambda msg: msg.chat.type == ChatType.GROUP.value and msg.text and msg.text.isdigit() and len(msg.text) == 5
+)
 async def group_msg(msg: Message):
-    if msg.text and msg.text.isdigit() and len(msg.text) == 5:
-        venue = await Venue.get_by_admin_chat(chat_id=int(msg.text))
-        if venue:
-            await Venue.update(venue_id=venue.id, chat_id=msg.chat.id)
-            text = f'✅ Чат успешно добавлен как группа для заведения {venue.name}'
-            await msg.answer(text)
+    venue = await Venue.get_by_admin_chat(chat_id=int(msg.text))
+    if venue:
+        await Venue.update(venue_id=venue.id, chat_id=msg.chat.id)
+        text = f'✅ Чат успешно добавлен как группа для заведения {venue.name}'
+        await msg.answer(text)
 
 
 # Команда старт
@@ -40,15 +41,15 @@ async def com_start(msg: Message, state: FSMContext):
 
     payloads = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else None
     # print(msg.text)
-    # print(access_id)
+    # print(payloads)
 
     if payloads:
         try:
-            key, value = payloads.split(':') if payloads.split(':') == 2 else None, 0
+            key, value = payloads.split('-') if len(payloads.split('-')) == 2 else (None, 0)
 
             if key == Key.ADD_ADMIN.value:
                 key = f"{Key.ADD_ADMIN.value}{value}"
-                admin_data = ut.get_redis_data(key)
+                admin_data = ut.get_redis_data(key, del_data=True)
 
                 if not admin_data:
                     await msg.answer('⚠️ Ссылка устарела или уже была использована')

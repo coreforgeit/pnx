@@ -55,6 +55,7 @@ class Ticket(Base):
             user_id: int,
             option_id: int,
             status: str,
+            is_active: bool = True,
     ) -> int:
         """Добавляет билет к событию"""
         now = datetime.now()
@@ -63,6 +64,7 @@ class Ticket(Base):
             user_id=user_id,
             option_id=option_id,
             status=status,
+            is_active=is_active,
             created_at=now,
             updated_at=now,
         )
@@ -91,7 +93,8 @@ class Ticket(Base):
             gs_page: int = None,
             gs_row: int = None,
             status: str = None,
-            pay_id: bool = None,
+            pay_id: int = None,
+            is_active: bool = None,
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == ticket_id).values(updated_at=now)
@@ -113,6 +116,9 @@ class Ticket(Base):
 
         if pay_id:
             query = query.values(pay_id=pay_id)
+
+        if is_active is not None:
+            query = query.values(is_active=is_active)
 
         async with begin_connection() as conn:
             await conn.execute(query)

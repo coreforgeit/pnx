@@ -53,7 +53,7 @@ def get_event_date_kb() -> InlineKeyboardMarkup:
         day_str = day.strftime(conf.date_format)
         kb.button(text=day_str[:-5], callback_data=f'{AdminCB.EVENT_DATE.value}:{day_str}')
 
-    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_COVER.value}')
+    # kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_VENUE.value}:{Action.BACK.value}')
     return kb.adjust(2).as_markup()
 
 
@@ -65,7 +65,7 @@ def get_event_time_kb(popular_time: list[str]) -> InlineKeyboardMarkup:
         kb.button(text=time_book, callback_data=f'{AdminCB.EVENT_TIME.value}:{time_book.replace(":", " ")}')
 
     bc_bt = InlineKeyboardBuilder()
-    bc_bt.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_COVER.value}:{Action.BACK.value}')
+    # bc_bt.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_COVER.value}:{Action.BACK.value}')
     return kb.adjust(2).attach(bc_bt).as_markup()
 
 
@@ -93,7 +93,7 @@ def get_event_option_select_kb(options: list) -> InlineKeyboardMarkup:
     for option in options or []:
         kb.button(text=str(option), callback_data=f'{AdminCB.EVENT_OPTION.value}:{option}')
 
-    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_OPTION.value}:{Action.BACK.value}')
+    # kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_OPTION.value}:{Action.BACK.value}')
     return kb.adjust(2).as_markup()
 
 
@@ -107,7 +107,7 @@ def get_event_option_del_kb(options: list[dict]) -> InlineKeyboardMarkup:
         kb.button(text=opt_obj.name, callback_data=f'{AdminCB.EVENT_DEL_OPTION_2.value}:{i}')
         i += 1
 
-    kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_OPTION.value}:{Action.BACK.value}')
+    # kb.button(text='🔙 Назад', callback_data=f'{AdminCB.EVENT_OPTION.value}:{Action.BACK.value}')
     return kb.adjust(1).as_markup()
 
 
@@ -185,3 +185,15 @@ def get_add_admin_status_kb(venue_id: int) -> InlineKeyboardMarkup:
     kb.button(text='Персонал', callback_data=f'{AdminCB.ADD_STATUS.value}:{venue_id}:{UserStatus.STAFF.value}')
     kb.button(text='🔙 Назад', callback_data=f'{AdminCB.ADD_START.value}')
     return kb.adjust(2, 1).as_markup()
+
+
+# выбор способа оплаты
+def get_ticket_pay_confirm_kb(ticket_id: int, redis_key: str) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(
+        text='📲 Написать пользователю',
+        callback_data=f'{AdminCB.SEND_MESSAGE_START.value}:{Key.QR_TICKET.value}:{ticket_id}:0'
+    )
+    kb.button(text='✅ Подтвердить оплату', callback_data=f'{AdminCB.ALTER_PAY.value}:{Action.CONF.value}:{redis_key}')
+    kb.button(text='❌ Удалить билеты', callback_data=f'{AdminCB.ALTER_PAY.value}:{Action.DEL.value}:{redis_key}')
+    return kb.adjust(1).as_markup()

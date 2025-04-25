@@ -23,6 +23,7 @@ class UserCB(str, Enum):
     TICKET_PLACE = 'user_ticket_place'
     TICKET_CONFIRM = 'user_ticket_confirm'
     TICKET_END = 'user_ticket_end'
+    TICKET_ALTER_PAY = 'user_alter_pay'
 
     SETTINGS_START = 'user_settings_start'
     SETTINGS_EDIT = 'user_settings_edit'
@@ -69,5 +70,8 @@ class AdminCB(str, Enum):
     EVENT_BACK = 'admin_event_back'
     EVENT_EDIT = 'admin_event_edit'
     EVENT_END = 'admin_event_end'
+
+    ALTER_PAY = 'admin_alter_pay'
+
 
 

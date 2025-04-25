@@ -140,6 +140,7 @@ class TicketData(BaseData):
     event: "Event" = None
     option: "EventOption" = None
     count_place: int = None
+    ticket_id_list: list = None
 
 
 @dataclass

@@ -38,6 +38,28 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
     await send_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
 
 
+# записывает дату
+@admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_VENUE.value))
+async def event_date(cb: CallbackQuery, state: FSMContext):
+    _, venue_id_str = cb.data.split(':')
+
+    data = await state.get_data()
+    data_obj = EventData(**data)
+
+    if venue_id_str != Action.BACK.value:
+        venue_id = int(venue_id_str)
+
+        venue = await Venue.get_by_id(venue_id)
+        data_obj.venue_id = venue_id
+        data_obj.venue_name = venue.name
+        data_obj.sheet_id = venue.event_gs_id
+
+    data_obj.step = EventStep.NAME.value
+    await state.update_data(data=asdict(data_obj))
+
+    await send_main_manage_event_msg(state, markup=kb.get_event_back_kb(AdminCB.EVENT_START.value))
+
+
 # принимает текстовые поля
 @admin_router.message(StateFilter(UserState.EVENT.value))
 async def event_msg_data(msg: Message, state: FSMContext):
@@ -49,7 +71,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
     if data_obj.step == EventStep.NAME.value:
         data_obj.step = EventStep.COVER.value
         data_obj.name = msg.text[:64]
-        markup = kb.get_event_back_kb(AdminCB.EVENT_START.value)
+        markup = kb.get_event_back_kb(AdminCB.EVENT_VENUE.value)
 
     elif data_obj.step == EventStep.COVER.value:
         entities = msg.entities or msg.caption_entities
@@ -57,7 +79,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
 
         data_obj.step = EventStep.DATE.value
         data_obj.photo_id = msg.photo[-1].file_id if msg.photo else None
-        data_obj.text = text[:500]
+        data_obj.text = text[:600]
         data_obj.entities = ut.save_entities(entities)
         markup = kb.get_event_date_kb()
 
@@ -143,28 +165,6 @@ async def event_msg_data(msg: Message, state: FSMContext):
 
     await state.update_data(data=asdict(data_obj))
     await send_main_manage_event_msg(state, markup=markup)
-
-
-# записывает дату
-@admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_VENUE.value))
-async def event_date(cb: CallbackQuery, state: FSMContext):
-    _, venue_id_str = cb.data.split(':')
-
-    data = await state.get_data()
-    data_obj = EventData(**data)
-
-    if venue_id_str != Action.BACK.value:
-        venue_id = int(venue_id_str)
-
-        venue = await Venue.get_by_id(venue_id)
-        data_obj.venue_id = venue_id
-        data_obj.venue_name = venue.name
-        data_obj.sheet_id = venue.event_gs_id
-
-    data_obj.step = EventStep.NAME.value
-    await state.update_data(data=asdict(data_obj))
-
-    await send_main_manage_event_msg(state)
 
 
 # записывает дату
@@ -273,6 +273,9 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         option_obj = OptionData(**data_obj.current_option)
     else:
         option_obj = OptionData()
+
+    # if cb_value == Action.BACK.value:
+    #     data_obj
 
     if data_obj.step == EventStep.OPTION_NAME.value:
         option_obj.name = cb_value
