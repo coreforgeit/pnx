@@ -164,9 +164,14 @@ def get_user_manage_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMark
 
 
 # Кнопка отмена брони
-def get_cancel_book_kb(book_type: str, entry_id: int) -> InlineKeyboardMarkup:
+def get_cancel_book_kb(book_type: str, entry_id: int, source_msg_id: int) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='🗑 Отменить', callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{book_type}:{entry_id}')
-    kb.button(text='🔙 Сохранить', callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{Action.DEL.value}:{entry_id}')
+    kb.button(
+        text='🗑 Отменить', callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{book_type}:{entry_id}:{source_msg_id}'
+    )
+    kb.button(
+        text='🔙 Сохранить',
+        callback_data=f'{UserCB.SETTINGS_REMOVE_2.value}:{Action.DEL.value}:{entry_id}:{source_msg_id}'
+    )
 
     return kb.adjust(1).as_markup()

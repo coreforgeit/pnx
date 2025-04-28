@@ -14,7 +14,7 @@ from init import bot, admin_router
 from data import texts_dict
 from enums import UserCB, UserStatus, Key, BookStatus, AdminAction
 
-from google_api import update_book_gs
+from google_api import update_book_status_gs
 
 
 # Команда старт
@@ -63,9 +63,9 @@ async def qr_check(msg: Message, state: FSMContext):
             chat_id=book.user_id, text=f'✅ Ваша бронь подтверждена\n\n{book_text}\n\nДобро пожаловать!'
         )
 
-        await Book.update(book_id=book.id, status=BookStatus.VISITED.value)
+        await Book.update(book_id=book.id, status=BookStatus.VISITED.value, is_active=False)
 
-        await update_book_gs(
+        await update_book_status_gs(
             spreadsheet_id=book.venue.gs_id,
             sheet_name=book.date_str(),
             status=BookStatus.VISITED.value,
@@ -103,7 +103,7 @@ async def qr_check(msg: Message, state: FSMContext):
 
         await Ticket.update(ticket_id=ticket.id, status=BookStatus.VISITED.value)
 
-        await update_book_gs(
+        await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
             status=BookStatus.VISITED.value,

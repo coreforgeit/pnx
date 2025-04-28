@@ -10,7 +10,7 @@ import utils as ut
 from db import Ticket, Event, EventOption, Venue
 from settings import conf, log_error
 from init import user_router, bot
-from google_api import add_ticket_row_to_registration
+from google_api import update_book_status_gs
 from enums import UserCB, BookStatus, TicketData, TicketStep, ticket_text_dict, UserState, Action, Key
 
 
@@ -27,13 +27,20 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
         # last_row = await Ticket.get_max_event_row(ticket.event.id)
 
         #     записать в таблицу
-        await add_ticket_row_to_registration(
+        # await add_ticket_row_to_registration(
+        #     spreadsheet_id=ticket.event.venue.event_gs_id,
+        #     page_id=ticket.event.gs_page,
+        #     ticket_id=ticket_id,
+        #     option_name=ticket.option.name,
+        #     user_name=full_name,
+        #     ticket_row=ticket.gs_row
+        # )
+
+        await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,
-            page_id=ticket.event.gs_page,
-            ticket_id=ticket_id,
-            option_name=ticket.option.name,
-            user_name=full_name,
-            ticket_row=ticket.gs_row
+            sheet_name=ticket.event.gs_page,
+            status=BookStatus.CONFIRMED.value,
+            row=ticket.gs_row
         )
 
         await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id, status=BookStatus.CONFIRMED.value, is_active=True)

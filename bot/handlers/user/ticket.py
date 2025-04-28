@@ -11,7 +11,7 @@ from .user_utils import send_main_ticket_msg, send_start_ticket_msg, send_select
 from db import Ticket, Event, EventOption, Venue, AdminLog
 from settings import conf, log_error
 from init import user_router, bot
-from google_api import add_ticket_row_to_registration
+from google_api import add_ticket_row_to_registration, update_book_status_gs
 from enums import (
     UserCB, AdminCB, BookStatus, TicketData, TicketStep, UserState, Action, Key, AdminAction, TicketRedisData
 )
@@ -260,14 +260,12 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
             ticket = await Ticket.get_full_ticket(ticket_id)
             if ticket.status == BookStatus.NEW.value:
                 await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
-                await add_ticket_row_to_registration(
+
+                await update_book_status_gs(
                     spreadsheet_id=ticket.event.venue.event_gs_id,
-                    page_id=ticket.event.gs_page,
-                    ticket_id=ticket_id,
-                    option_name=ticket.option.name,
-                    user_name=redis_data.full_name,
-                    ticket_row=ticket.gs_row,
-                    status=BookStatus.CANCELED.value
+                    sheet_name=ticket.event.gs_page,
+                    status=BookStatus.CANCELED.value,
+                    row=ticket.gs_row
                 )
 
                 ticket_text = ut.get_ticket_text(ticket)

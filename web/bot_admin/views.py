@@ -5,7 +5,7 @@ from datetime import datetime
 
 import logging
 
-from .serializers import BookingFromSheetSerializer
+from .serializers import BookingFromSheetSerializer, NewTableRowSerializer
 from .models import Book, Venue
 from web.settings import DATE_FORMAT, DATETIME_FORMAT_ISO, TIME_SHORT_FORMAT
 from enums import Key, book_status_inverted_dict, BookStatus
@@ -70,3 +70,22 @@ class GoogleSheetWebhookView(APIView):
             logger.warning(e, exc_info=True)
             return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
+
+class NewTableWebhookView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = NewTableDataSerializer(data=request.data)
+        if serializer.is_valid():
+            validated = serializer.validated_data
+
+            spreadsheet_id = validated["spreadsheet_id"]
+            sheet_id = validated["sheet_id"]
+            sheet_name = validated["sheet_name"]
+            row_number = validated["row_number"]
+            data = validated["data"]
+
+            # Здесь можно сохранять в базу, отправлять дальше и т.д.
+            print(f"✅ Получены данные с таблицы {sheet_name}, строка {row_number}: {data}")
+
+            return Response({"status": "ok"}, status=status.HTTP_200_OK)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)

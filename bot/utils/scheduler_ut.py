@@ -5,7 +5,7 @@ import keyboards as kb
 from init import scheduler, bot
 from settings import log_error
 from .text_utils import get_ticket_text, get_book_text
-from google_api import add_ticket_row_to_registration
+from google_api import add_ticket_row_to_registration, update_book_status_gs
 from db import User, Book, Ticket
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key
@@ -155,13 +155,20 @@ async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None
 
             ticket_text = get_ticket_text(ticket)
 
-            await add_ticket_row_to_registration(
+            # await add_ticket_row_to_registration(
+            #     spreadsheet_id=ticket.event.venue.event_gs_id,
+            #     page_id=ticket.event.gs_page,
+            #     ticket_id=ticket_id,
+            #     option_name=ticket.option.name,
+            #     user_name=user.full_name,
+            #     ticket_row=ticket.gs_row
+            # )
+
+            await update_book_status_gs(
                 spreadsheet_id=ticket.event.venue.event_gs_id,
-                page_id=ticket.event.gs_page,
-                ticket_id=ticket_id,
-                option_name=ticket.option.name,
-                user_name=user.full_name,
-                ticket_row=ticket.gs_row
+                sheet_name=ticket.event.gs_page,
+                status=BookStatus.CANCELED.value,
+                row=ticket.gs_row
             )
 
             text = f'Оплата не была подтверждена, билет аннулирован\n{ticket_text}'

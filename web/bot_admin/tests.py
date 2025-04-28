@@ -24,5 +24,25 @@ def test_edit_book():
         print(response.status_code, response.text)
 
 
+def test_add_ticket_row():
+    url = "http://localhost:8000/api/new-table-webhook/"
+    payload = {
+        "spreadsheet_id": "1RVcxIFP0K6U45gBwxSnBSvHAs0ORV0CvnU0jqKvufC4",
+        "sheet_id": 811514896,
+        "sheet_name": "24.04.2025",
+        "row_number": 5,
+        "data": {
+            "option": "VIP",
+            "quantity": "2",
+            "price": "1500",
+            "note": "Бронировали заранее"
+        }
+    }
+
+    response = requests.post(url, json=payload)
+    print(response.status_code)
+    print(response.json())
+
+
 if __name__ == '__main__':
     test_edit_book()
