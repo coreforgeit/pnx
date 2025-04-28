@@ -36,10 +36,9 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
             ticket_row=ticket.gs_row
         )
 
-        await Ticket.update(ticket_id=ticket_id ,qr_id=qr_photo_id, status=BookStatus.CONFIRMED.value)
+        await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id, status=BookStatus.CONFIRMED.value, is_active=True)
 
         text = f'<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>'
-
         await bot.send_message(chat_id=ticket.event.venue.admin_chat_id, text=text)
 
     if ticket_id and ticket:

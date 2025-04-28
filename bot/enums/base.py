@@ -85,6 +85,8 @@ class AdminAction(str, Enum):
     ADD = 'add'
     DEL = 'del'
     EDIT = 'edit'
+    PAY_CONFIRMED = 'pay_confirmed'
+    PAY_CANCELED = 'pay_canceled'
 
 
 admin_action_choice = (
@@ -94,4 +96,6 @@ admin_action_choice = (
     (AdminAction.ADD.value, 'Добавил'),
     (AdminAction.DEL.value, 'Удалил'),
     (AdminAction.EDIT.value, 'Изменил'),
+    (AdminAction.PAY_CONFIRMED.value, 'Подтвердил оплату'),
+    (AdminAction.PAY_CANCELED.value, 'Отменил оплату'),
 )

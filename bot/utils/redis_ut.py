@@ -27,3 +27,8 @@ def get_redis_data(key: str, del_data: bool = False) -> dict:
         data = redis_client.get(key)
 
     return json.loads(data) if data else {}
+
+
+# удаляет данные
+def del_redis_data(key: str) -> None:
+    redis_client.delete(key)

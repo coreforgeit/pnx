@@ -20,4 +20,5 @@ jobs:
           cd /home/pnx/docker
           git push origin main
           docker compose down
+          docker rmi pnx-web pnx-bot
           docker compose up -d

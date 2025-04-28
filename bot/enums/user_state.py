@@ -144,6 +144,15 @@ class TicketData(BaseData):
 
 
 @dataclass
+class TicketRedisData(BaseData):
+    ticket_id_list: list[int] = None
+    event_id: int = None
+    user_id: int = None
+    option_id: int = None
+    full_name: str = None
+
+
+@dataclass
 class MailingData(BaseData):
     del_msg_id: int = None
 

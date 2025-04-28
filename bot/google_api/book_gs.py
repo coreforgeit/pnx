@@ -163,7 +163,7 @@ async def add_ticket_row_to_registration(
     if ticket_row:
         cell_range = f"F{ticket_row}:J{ticket_row}"
 
-        new_row = [[ticket_id, option_name, user_name, status, "✅"]]
+        new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
         await safe_update(worksheet, cell_range, new_row)
         return ticket_row
 
@@ -181,7 +181,7 @@ async def add_ticket_row_to_registration(
 
         # если все ячейки пусты
         if not any(cell.strip() for cell in existing[0] if cell):
-            new_row = [[ticket_id, option_name, user_name, status, "✅"]]
+            new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
             await safe_update(worksheet, cell_range, new_row)
             return row
 
