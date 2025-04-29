@@ -66,10 +66,11 @@ async def qr_check(msg: Message, state: FSMContext):
         await Book.update(book_id=book.id, status=BookStatus.VISITED.value, is_active=False)
 
         await update_book_status_gs(
-            spreadsheet_id=book.venue.gs_id,
+            spreadsheet_id=book.venue.book_gs_id,
             sheet_name=book.date_str(),
             status=BookStatus.VISITED.value,
-            row=book.gs_row
+            row=book.gs_row,
+            book_type=Key.QR_TICKET.value
         )
 
         # запись в журнал
@@ -107,7 +108,8 @@ async def qr_check(msg: Message, state: FSMContext):
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
             status=BookStatus.VISITED.value,
-            row=ticket.gs_row
+            row=ticket.gs_row,
+            book_type=Key.QR_TICKET.value
         )
 
         # запись в журнал
