@@ -95,7 +95,15 @@ async def notice_book_for_close(entry_id: int, book_type: str):
             text = f'Мы не дождались вас 😔 Простите, но бронь была снята.'
             await bot.send_message(chat_id=book.user_id, text=text)
 
-            await Book.update(book_id=entry_id, is_active=False)
+            await Book.update(book_id=entry_id, is_active=False, status=BookStatus.CANCELED.value)
+
+            await update_book_status_gs(
+                spreadsheet_id=book.venue.book_gs_id,
+                sheet_name=book.date_str(),
+                status=BookStatus.CANCELED.value,
+                row=book.gs_row,
+                book_type=Key.QR_BOOK.value
+            )
 
 
 # создаём уведомления для каждого напоминания
@@ -168,7 +176,8 @@ async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None
                 spreadsheet_id=ticket.event.venue.event_gs_id,
                 sheet_name=ticket.event.gs_page,
                 status=BookStatus.CANCELED.value,
-                row=ticket.gs_row
+                row=ticket.gs_row,
+                book_type=Key.QR_TICKET.value
             )
 
             text = f'Оплата не была подтверждена, билет аннулирован\n{ticket_text}'

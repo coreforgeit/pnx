@@ -265,7 +265,8 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
                     spreadsheet_id=ticket.event.venue.event_gs_id,
                     sheet_name=ticket.event.gs_page,
                     status=BookStatus.CANCELED.value,
-                    row=ticket.gs_row
+                    row=ticket.gs_row,
+                    book_type=Key.QR_TICKET.value
                 )
 
                 ticket_text = ut.get_ticket_text(ticket)

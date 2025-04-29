@@ -70,7 +70,7 @@ async def qr_check(msg: Message, state: FSMContext):
             sheet_name=book.date_str(),
             status=BookStatus.VISITED.value,
             row=book.gs_row,
-            book_type=Key.QR_TICKET.value
+            book_type=Key.QR_BOOK.value
         )
 
         # запись в журнал

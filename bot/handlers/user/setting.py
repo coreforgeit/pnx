@@ -72,7 +72,8 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
             spreadsheet_id=book.venue.gs_id,
             sheet_name=book.date_str(),
             status=BookStatus.CANCELED.value,
-            row=book.gs_row
+            row=book.gs_row,
+            book_type=type_qr
         )
         await Book.update(book_id=entry_id, status=BookStatus.CANCELED.value, is_active=False)
 
@@ -95,7 +96,8 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
             status=BookStatus.CANCELED.value,
-            row=ticket.gs_row
+            row=ticket.gs_row,
+            book_type=type_qr
         )
 
         user_text = f'✅ Билет успешно возвращён'

@@ -40,7 +40,8 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
             status=BookStatus.CONFIRMED.value,
-            row=ticket.gs_row
+            row=ticket.gs_row,
+            book_type=Key.QR_TICKET.value
         )
 
         await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id, status=BookStatus.CONFIRMED.value, is_active=True)
