@@ -135,14 +135,16 @@ async def book_comment(cb: CallbackQuery, state: FSMContext):
 # удаляет сообщение
 @main_router.callback_query(lambda cb: cb.data.startswith(UserCB.DEL_MSG.value))
 async def book_comment(cb: CallbackQuery, state: FSMContext):
-    _, type_qr, entry_id_str = cb.data.split(':')
-    entry_id = int(entry_id_str)
-
-    if type_qr == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
-        await cb.message.answer_photo(photo=book.qr_id, caption=ut.get_book_text(book))
-
-    elif type_qr == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(entry_id)
-        await cb.message.answer_photo(photo=ticket.qr_id, caption=ut.get_ticket_text(ticket))
+    await state.clear()
+    await cb.message.delete()
+    # _, type_qr, entry_id_str = cb.data.split(':')
+    # entry_id = int(entry_id_str)
+    #
+    # if type_qr == Key.QR_BOOK.value:
+    #     book = await Book.get_booking_with_venue(entry_id)
+    #     await cb.message.answer_photo(photo=book.qr_id, caption=ut.get_book_text(book))
+    #
+    # elif type_qr == Key.QR_TICKET.value:
+    #     ticket = await Ticket.get_full_ticket(entry_id)
+    #     await cb.message.answer_photo(photo=ticket.qr_id, caption=ut.get_ticket_text(ticket))
 
