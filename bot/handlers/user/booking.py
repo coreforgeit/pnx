@@ -243,9 +243,12 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     else:
         pre_text = f'<b>Новая бронь!</b>\n\n'
 
-    text = (f'{pre_text}'
-            f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
-            f'{comment}')
+    text = (
+        f'{pre_text}'
+        f'#{book_id}\n'
+        f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
+        f'{comment}'
+    )
 
     venue = await Venue.get_by_id(data_obj.venue_id)
     await bot.send_message(chat_id=venue.admin_chat_id, text=text)

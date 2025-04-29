@@ -44,6 +44,9 @@ class BookView(APIView):
             except Exception as e:
                 time_book = datetime.strptime(time_book_str, TIME_SHORT_FORMAT).time()
 
+            if comment == '-':
+                comment = None
+
             if book_id:
                 book = Book.get_by_id(book_id=book_id)
 

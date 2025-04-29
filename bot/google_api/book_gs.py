@@ -44,6 +44,9 @@ async def add_or_update_book_gs(
     spreadsheet = await agc.open_by_key(spreadsheet_id)
     worksheet = await spreadsheet.worksheet(sheet_name)
 
+    if not comment:
+        comment = '-'
+        
     new_values = [[book_id, full_name, booking_time, count_place, comment, book_status_dict.get(status), "✅"]]
 
     # row = start_row
