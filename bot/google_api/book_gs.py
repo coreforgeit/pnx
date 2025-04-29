@@ -46,7 +46,7 @@ async def add_or_update_book_gs(
 
     if not comment:
         comment = '-'
-        
+
     new_values = [[book_id, full_name, booking_time, count_place, comment, book_status_dict.get(status), "✅"]]
 
     # row = start_row
@@ -92,7 +92,10 @@ async def update_book_status_gs(
 ) -> None:
     agc = await agcm.authorize()
     spreadsheet = await agc.open_by_key(spreadsheet_id)
-    worksheet = await spreadsheet.worksheet(sheet_name)
+    if sheet_name.isdigit():
+        worksheet = await spreadsheet.get_worksheet_by_id(int(sheet_name))
+    else:
+        worksheet = await spreadsheet.worksheet(sheet_name)
 
     new_values = [[book_status_dict.get(status)]]
 
