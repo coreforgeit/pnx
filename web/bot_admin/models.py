@@ -107,8 +107,8 @@ class Book(models.Model):
         return f"{self.date_book} {self.time_book} | {self.people_count} гостей"
 
     @classmethod
-    def get_by_date_row(cls, row: int, date_book: date) -> t.Optional[t.Self]:
-        return cls.objects.filter(gs_row=row, date_book=date_book).first()
+    def get_by_id(cls, book_id: int) -> t.Optional[t.Self]:
+        return cls.objects.filter(id=book_id).first()
 
 
 class Event(models.Model):
@@ -144,6 +144,10 @@ class Event(models.Model):
     def __str__(self):
         return f"{self.name} ({self.date_event})"
 
+    @classmethod
+    def get_by_gs_page(cls, gs_page: int) -> t.Optional[t.Self]:
+        return cls.objects.filter(gs_page=gs_page).first()
+
 
 class EventOption(models.Model):
     id = models.AutoField(primary_key=True, verbose_name='ID')
@@ -175,6 +179,10 @@ class EventOption(models.Model):
     def __str__(self):
         return f"{self.name} | {self.event.name if self.event else 'Без события'}"
 
+    @classmethod
+    def get_by_event_name(cls, event_id: int, option_name: str) -> t.Optional[t.Self]:
+        return cls.objects.filter(event_id=event_id, name=option_name).first()
+
 
 class Ticket(models.Model):
     id = models.AutoField(primary_key=True, verbose_name='ID')
@@ -191,7 +199,8 @@ class Ticket(models.Model):
         'User',
         on_delete=models.CASCADE,
         verbose_name='Пользователь',
-        related_name='tickets'
+        related_name='tickets',
+        null=True
     )
     option = models.ForeignKey(
         'EventOption',
@@ -218,6 +227,10 @@ class Ticket(models.Model):
 
     def __str__(self):
         return f"Билет #{self.id} - {self.event.name} ({self.status})"
+
+    @classmethod
+    def get_by_id(cls, ticket_id: int) -> t.Optional[t.Self]:
+        return cls.objects.select_related('event__venue', 'option').filter(id=ticket_id).first()
 
 
 class AdminLog(models.Model):

@@ -2,9 +2,9 @@ from django.contrib import admin
 from django.urls import path, include
 
 
-from .views import GoogleSheetWebhookView
+from .views import BookView, TicketView
 
 urlpatterns = [
-    path("edit-book/", GoogleSheetWebhookView.as_view(), name="edit-book"),
+    path("edit-book/", BookView.as_view(), name="edit-book"),
+    path("edit-ticket/", TicketView.as_view(), name="edit-ticket"),
 ]
-'"http://89.111.155.92/api/v1/edit-book/"'

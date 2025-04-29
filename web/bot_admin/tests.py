@@ -4,17 +4,16 @@ import requests
 def test_edit_book():
     url = "http://127.0.0.1:8000/api/v1/edit-book/"
     payload = {
-        "spreadsheet_id": "1RVcxIFP0K6U45gBwxSnBSvHAs0ORV0CvnU0jqKvufC4",
-        "sheet_id": 811514896,
-        "sheet_name": "29.04.2025",
-        "row_number": 3,
-        "data": {
-            "name": "Анна",
-            "time": "1899-12-30T15:00:49.000Z",
-            "person": 1,
-            "comment": "Убара",
-            "status": "Подтверждена"
-        }
+        "spreadsheetId": "1RVcxIFP0K6U45gBwxSnBSvHAs0ORV0CvnU0jqKvufC4",
+        "sheetId": 811514896,
+        "sheetName": "29.04.2025",
+        "rowNumber": 3,
+        "name": "Анна",
+        "time": "1899-12-30T15:00:49.000Z",
+        "person": 1,
+        "comment": "Убара",
+        "status": "Подтверждена",
+        "bookId": 12
     }
 
     response = requests.post(url, json=payload)
@@ -25,18 +24,17 @@ def test_edit_book():
 
 
 def test_add_ticket_row():
-    url = "http://localhost:8000/api/new-table-webhook/"
+    url = "http://127.0.0.1:8000/api/v1/edit-ticket/"
+
     payload = {
-        "spreadsheet_id": "1RVcxIFP0K6U45gBwxSnBSvHAs0ORV0CvnU0jqKvufC4",
-        "sheet_id": 811514896,
-        "sheet_name": "24.04.2025",
-        "row_number": 5,
-        "data": {
-            "option": "VIP",
-            "quantity": "2",
-            "price": "1500",
-            "note": "Бронировали заранее"
-        }
+        "spreadsheetId": "1RVcxIFP0K6U45gBwxSnBSvHAs0ORV0CvnU0jqKvufC4",
+        "sheetId": 1711029444,
+        "sheetName": "HHHH",
+        "rowNumber": 54,
+        "ticketId": 54,
+        "option": "Стоя",
+        "name": "2",
+        "status": "Пришёл",
     }
 
     response = requests.post(url, json=payload)
@@ -46,3 +44,4 @@ def test_add_ticket_row():
 
 if __name__ == '__main__':
     test_edit_book()
+    test_add_ticket_row()

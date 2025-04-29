@@ -23,7 +23,7 @@ class Ticket(Base):
     updated_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
 
     event_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("events.id"))
-    user_id: Mapped[int] = mapped_column(sa.BigInteger(), sa.ForeignKey("users.id"))
+    user_id: Mapped[int] = mapped_column(sa.BigInteger(), sa.ForeignKey("users.id"), nullable=True)
     option_id: Mapped[int] = mapped_column(sa.Integer(), sa.ForeignKey("events_options.id"))
     # pay_id: Mapped[int] = mapped_column(sa.Integer(), sa.ForeignKey("options.id"))
     pay_id: Mapped[int] = mapped_column(sa.Integer(), nullable=True)

@@ -1,7 +1,12 @@
 from rest_framework import serializers
 
 
-class BookingDataSerializer(serializers.Serializer):
+class BookSerializer(serializers.Serializer):
+    spreadsheetId = serializers.CharField()
+    sheetId = serializers.IntegerField()
+    sheetName = serializers.CharField()
+    rowNumber = serializers.IntegerField(min_value=1)
+    bookId = serializers.IntegerField(default=None, required=False)
     name = serializers.CharField()
     time = serializers.CharField()
     person = serializers.IntegerField()
@@ -9,24 +14,11 @@ class BookingDataSerializer(serializers.Serializer):
     status = serializers.CharField()
 
 
-class BookingFromSheetSerializer(serializers.Serializer):
-    spreadsheet_id = serializers.CharField()
-    sheet_id = serializers.IntegerField()
-    sheet_name = serializers.CharField()
-    row_number = serializers.IntegerField(min_value=1)
-    data = BookingDataSerializer()
-
-
-class NewTableRowSerializer(serializers.Serializer):
+class TicketSerializer(serializers.Serializer):
+    spreadsheetId = serializers.CharField()
+    sheetId = serializers.IntegerField()
+    sheetName = serializers.CharField()
+    rowNumber = serializers.IntegerField()
+    ticketId = serializers.IntegerField(required=False, default=0)
     option = serializers.CharField()
-    quantity = serializers.IntegerField()
-    price = serializers.IntegerField()
-    note = serializers.CharField(allow_blank=True)
-
-
-class NewTableDataSerializer(serializers.Serializer):
-    spreadsheet_id = serializers.CharField()
-    sheet_id = serializers.IntegerField()
-    sheet_name = serializers.CharField()
-    row_number = serializers.IntegerField()
-    data = NewTableRowSerializer()
+    status = serializers.CharField()
