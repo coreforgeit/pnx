@@ -5,7 +5,7 @@ from datetime import datetime
 
 import logging
 
-from .serializers import BookingFromSheetSerializer, NewTableRowSerializer
+from .serializers import BookingFromSheetSerializer, NewTableDataSerializer
 from .models import Book, Venue
 from web.settings import DATE_FORMAT, DATETIME_FORMAT_ISO, TIME_SHORT_FORMAT
 from enums import Key, book_status_inverted_dict, BookStatus
