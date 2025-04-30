@@ -160,6 +160,8 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
 
     # уменьшить количество мест
     await EventOption.update(option_id=option_actual.id, add_place=0 - data_obj.count_place)
+    # возвращение статуса по таймеру
+    ut.create_cancel_ticket(user_id=cb.from_user.id, ticket_id_list=ticket_id_list)
 
     if amount:
         data_obj.ticket_id_list = ticket_id_list
@@ -194,7 +196,7 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
     venue = await Venue.get_by_id(event.venue_id)
 
     # напоминалки
-    ut.create_cancel_ticket(cb.from_user.id, data_obj.ticket_id_list)
+    # ut.create_cancel_ticket(cb.from_user.id, data_obj.ticket_id_list)
     redis_data = TicketRedisData(
         ticket_id_list=data_obj.ticket_id_list,
         event_id=event.id,

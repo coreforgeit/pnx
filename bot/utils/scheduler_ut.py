@@ -157,7 +157,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
 async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None:
     for ticket_id in ticket_id_list:
         ticket = await Ticket.get_full_ticket(ticket_id)
-        user = await User.get_by_id(user_id)
+        # user = await User.get_by_id(user_id)
         if ticket.status == BookStatus.NEW.value:
             await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
 
