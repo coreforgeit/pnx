@@ -10,11 +10,13 @@ class Config:
         token = os.getenv("TEST_TOKEN")
         admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
+        google_key_path = os.path.join('data', 'cred_test.json')
 
     else:
         token = os.getenv("TEST_TOKEN")
         admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
+        google_key_path = os.path.join('data', 'cred.json')
 
     bot_link = f'https://t.me/{bot_username}?start='
     db_host = os.getenv('DB_HOST')
@@ -30,7 +32,6 @@ class Config:
     tz = ZoneInfo('Asia/Tashkent')
 
     path_temp = 'temp'
-    google_key_path = os.path.join('data', 'cred.json')
 
     date_format = '%d.%m.%Y'
     time_format = '%H:%M'
