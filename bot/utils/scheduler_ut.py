@@ -1,10 +1,12 @@
-from apscheduler.triggers.interval import IntervalTrigger
+from apscheduler.triggers.cron import CronTrigger
 from datetime import datetime, date, time, timedelta
 
 import keyboards as kb
 from init import scheduler, bot
 from settings import log_error
 from .text_utils import get_ticket_text, get_book_text
+from .payment_ut import get_pay_token_redis
+from .redis_ut import save_pay_token_redis
 from google_api import add_ticket_row_to_registration, update_book_status_gs
 from db import User, Book, Ticket
 from data import texts_dict
@@ -13,11 +15,18 @@ from enums import NoticeKey, BookStatus, Key
 
 # запускает планировщики
 async def start_schedulers():
+    scheduler.add_job(
+        func=update_pay_token,
+        trigger=CronTrigger(hour=5),
+        id=Key.PAY_TOKEN.value,
+        replace_existing=True,
+    )
     scheduler.start()
 
 
 # тормозит планировщики
 async def shutdown_schedulers():
+    scheduler.remove_job(job_id=Key.PAY_TOKEN.value)
     scheduler.shutdown()
 
 
@@ -199,3 +208,9 @@ def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
         args=[user_id, ticket_id_list],
         replace_existing=True,
     )
+
+
+async def update_pay_token():
+    token = await get_pay_token_redis()
+    if token:
+        save_pay_token_redis(token)

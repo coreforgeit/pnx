@@ -1,6 +1,7 @@
 from aiogram.types import Message, CallbackQuery, InputMediaPhoto, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
+from uuid import uuid4
 from dataclasses import asdict
 
 import asyncio
@@ -122,6 +123,7 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
     venue = await Venue.get_by_id(event.venue_id)
 
     # сохраняем билеты
+    ofd_items = []
     for i in range(0, data_obj.count_place):
         try:
             await cb.message.edit_text(
@@ -158,20 +160,44 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
             gs_row=row
         )
 
+        price_tian = option_actual.price * 100
+        ofd_items.append(
+            {
+                "vat": 12,
+                "price": price_tian,
+                "qty": 1,
+                "name": f"Ticket-{ticket_id}",
+                "package_code": f'{ticket_id}',
+                "mxik": "10202001002000000",
+                "total": price_tian
+            }
+        )
+
     # уменьшить количество мест
     await EventOption.update(option_id=option_actual.id, add_place=0 - data_obj.count_place)
     # возвращение статуса по таймеру
     ut.create_cancel_ticket(user_id=cb.from_user.id, ticket_id_list=ticket_id_list)
 
     if amount:
+        # invoice_id = uuid4().hex[:16]
+        invoice_id = ut.save_redis_temp(key=Key.PAY_DATA.value, data=ofd_items)
+        invoice_link = await ut.create_invoice(
+            invoice_id=uuid4().hex[:16],
+            amount=amount,
+            ofd_items=ofd_items
+        )
         data_obj.ticket_id_list = ticket_id_list
         await state.update_data(data=asdict(data_obj))
 
-        await cb.message.edit_text('<b>Выберите способ оплаты:</b>', reply_markup=kb.get_ticket_pay_method_kb())
+        await cb.message.edit_text(
+            '<b>Выберите способ оплаты:</b>', reply_markup=kb.get_ticket_pay_method_kb(invoice_link)
+        )
 
     else:
         await state.clear()
-        await ut.confirm_tickets(user_id=cb.from_user.id, full_name=cb.from_user.full_name, ticket_id_list=ticket_id_list)
+        await ut.confirm_tickets(
+            user_id=cb.from_user.id, full_name=cb.from_user.full_name, ticket_id_list=ticket_id_list
+        )
 
 
 # альтернативная оплата

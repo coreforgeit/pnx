@@ -9,7 +9,7 @@ from datetime import datetime
 from init import set_main_menu, bot
 from settings import conf, log_error
 from db.base import init_models
-# from utils.scheduler_utils import start_schedulers, shutdown_schedulers
+from utils.payment_ut import get_pay_token
 from handlers import main_router
 from handlers.admin.manage_event import admin_router
 from handlers.user import user_router
@@ -19,8 +19,8 @@ from handlers.exceptions import error_router
 dp = Dispatcher()
 
 
-
 async def main() -> None:
+    # await get_pay_token()
     await init_models()
     await set_main_menu()
     # if not conf.debug:

@@ -11,12 +11,21 @@ class Config:
         admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
         google_key_path = os.path.join('data', 'cred_test.json')
+        pay_url = "https://dev-mesh.multicard.uz/"
+        application_id = os.getenv('APPLICATION_ID_TEST')
+        pay_secret = os.getenv('PAY_SECRET_TEST')
+        store_id = 6
+        callback_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
 
     else:
         token = os.getenv("TEST_TOKEN")
         admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
         google_key_path = os.path.join('data', 'cred.json')
+        application_id = os.getenv('APPLICATION_ID_TEST')
+        pay_secret = os.getenv('PAY_SECRET_TEST')
+        store_id = os.getenv('STORE_ID')
+        callback_url = '"http://89.111.155.92/api/v1/payment/"'
 
     bot_link = f'https://t.me/{bot_username}?start='
     db_host = os.getenv('DB_HOST')

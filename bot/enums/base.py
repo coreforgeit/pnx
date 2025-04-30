@@ -59,6 +59,8 @@ class Key(str, Enum):
     QR_BOOK = 'book'
     QR_TICKET = 'ticket'
     ADD_ADMIN = 'add_admin'
+    PAY_TOKEN = 'pay_token'
+    PAY_DATA = 'pay_data'
 
 
 # Ключи к редису
@@ -67,6 +69,12 @@ class NoticeKey(str, Enum):
     BOOK_2_HOUR = 'book_2_hour'
     BOOK_NOW = 'book_now'
     BOOK_CLOSE = 'book_close'
+
+
+# Ключи к редису
+class UrlTail(str, Enum):
+    AUTH = 'auth'
+    INVOICE = 'payment/invoice'
 
 
 # Ключи планировщика

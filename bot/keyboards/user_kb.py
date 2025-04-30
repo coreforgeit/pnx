@@ -139,9 +139,10 @@ def get_ticket_confirm_kb() -> InlineKeyboardMarkup:
 
 
 # выбор способа оплаты
-def get_ticket_pay_method_kb() -> InlineKeyboardMarkup:
+def get_ticket_pay_method_kb(invoice_link: str) -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
-    kb.button(text='💳 Онлайн оплата', callback_data=f'ffff')
+    if invoice_link:
+        kb.button(text='💳 Онлайн оплата', url=invoice_link)
     kb.button(text='💸 Через оператора', callback_data=f'{UserCB.TICKET_ALTER_PAY_1.value}')
     return kb.adjust(1).as_markup()
 
