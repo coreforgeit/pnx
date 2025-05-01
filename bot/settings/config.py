@@ -28,6 +28,8 @@ class Config:
         store_id = os.getenv('STORE_ID')
         callback_url = 'http://89.111.155.92/api/v1/payment/'
 
+    test_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
+
     bot_link = f'https://t.me/{bot_username}?start='
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')
