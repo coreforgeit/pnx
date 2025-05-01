@@ -1,7 +1,7 @@
 import aiohttp
 import typing as t
 
-from settings import conf
+from settings import conf, log_error
 from .redis_ut import get_pay_token_redis, save_pay_token_redis
 from enums import UrlTail
 
@@ -13,18 +13,17 @@ async def get_pay_token() -> t.Optional[str]:
         "application_id": conf.application_id,
         "secret": conf.pay_secret,
     }
-    # print(url)
-    # print(payload)
+    log_error(url, wt=False)
+    log_error(payload, wt=False)
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, json=payload) as response:
-                # print(response.text)
+                log_error(response.text)
                 response.raise_for_status()
                 data = await response.json()
 
-                # print(f'get_pay_token')
-                # for k, v in data.items():
-                #     print(f'{k}: {v}')
+                log_error(f'get_pay_token', wt=False)
+                log_error(data, wt=False)
 
                 if "token" in data:
                     return data["token"]
@@ -47,10 +46,10 @@ async def create_invoice(
     :param ofd_items: Список позиций для фискализации
     """
     token = get_pay_token_redis()
-    print(f'token:{token}')
+    log_error(f'token:{token}', wt=False)
     if not token:
         token = await get_pay_token()
-        print(f'token2:{token}')
+        log_error(f'token2:{token}', wt=False)
         save_pay_token_redis(token)
 
     url = conf.pay_url + UrlTail.INVOICE.value
