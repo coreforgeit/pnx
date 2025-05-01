@@ -18,6 +18,9 @@ async def get_pay_token() -> t.Optional[str]:
 
     async with aiohttp.ClientSession() as session:
         try:
+            async with session.post('https://lightboxapi.ru/api/mock/test', json=payload) as response:
+                log_error('mosc', wt=False)
+                log_error(response.text, wt=False)
             async with session.post(conf.test_url, json=payload) as response:
                 log_error(response.text, wt=False)
 
