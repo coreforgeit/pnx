@@ -18,7 +18,7 @@ async def get_pay_token() -> t.Optional[str]:
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, json=payload) as response:
-                log_error(response.text)
+                log_error(response.text, wt=False)
                 response.raise_for_status()
                 data = await response.json()
 
@@ -30,7 +30,7 @@ async def get_pay_token() -> t.Optional[str]:
                 else:
                     print("Ошибка получения токена:", data)
         except aiohttp.ClientError as e:
-            print("Ошибка запроса к Multicard:", e)
+            log_error(e)
 
 
 # создаём счёт
