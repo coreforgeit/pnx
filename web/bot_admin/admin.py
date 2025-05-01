@@ -1,6 +1,6 @@
 from django.contrib import admin
 from unfold.admin import ModelAdmin, TabularInline
-from .models import User, Venue, Book, Event, EventOption, Ticket, AdminLog, LogError
+from .models import User, Venue, Book, Event, EventOption, Ticket, AdminLog, LogError, Payment
 
 
 @admin.register(User)
@@ -85,3 +85,11 @@ class ErrorJournalAdmin(ModelAdmin):
     list_filter = ("created_at",)
     ordering = ("-created_at",)
     readonly_fields = ("created_at", "user_id", "traceback", "message")
+
+
+@admin.register(Payment)
+class PaymentAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "amount", "payment_time", "invoice_id", "uuid")
+    readonly_fields = [field.name for field in Payment._meta.fields]
+    search_fields = ("invoice_id", "uuid", "phone", "card_pan", "user__username")
+    list_filter = ("ps", "store_id", "created_at")

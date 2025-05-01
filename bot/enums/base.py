@@ -20,6 +20,13 @@ class UserStatus(str, Enum):
     ADMIN = 'admin'
 
 
+user_status_choice = (
+    (UserStatus.USER.value, 'Пользователь'),
+    (UserStatus.STAFF.value, 'Персонал'),
+    (UserStatus.ADMIN.value, 'Админ'),
+)
+
+
 # Команды меню
 class BookStatus(str, Enum):
     NEW = 'new'

@@ -1,10 +1,11 @@
 from django.db import models
+from django.contrib.postgres.fields import ArrayField
 from datetime import date
 import typing as t
 import random
 
 
-from enums import admin_action_choice, book_status_choice
+from enums import admin_action_choice, book_status_choice, UserStatus, user_status_choice
 
 
 class Venue(models.Model):
@@ -38,18 +39,13 @@ class Venue(models.Model):
 
 
 class User(models.Model):
-    class UserStatus(models.TextChoices):
-        USER = 'user', 'Пользователь'
-        ADMIN = 'admin', 'Администратор'
-        STAFF = 'staff', 'Персонал'
-
     id = models.BigAutoField(primary_key=True, verbose_name='ID')
     first_visit = models.DateTimeField(auto_now_add=True, verbose_name='Первое посещение')
     last_visit = models.DateTimeField(auto_now=True, verbose_name='Последнее посещение')
     full_name = models.CharField(max_length=255, verbose_name='Имя и фамилия')
     username = models.CharField(max_length=150, null=True, blank=True, verbose_name='Юзернейм')
     status = models.CharField(
-        max_length=255, choices=UserStatus.choices, default=UserStatus.USER, verbose_name='Статус'
+        max_length=255, choices=user_status_choice, default=UserStatus.USER.value, verbose_name='Статус'
     )
     mailing = models.BooleanField(default=True, verbose_name='Получает рассылку')
     venue = models.ForeignKey(
@@ -71,6 +67,10 @@ class User(models.Model):
 
     def __str__(self):
         return f"{self.full_name} ({self.username or 'no username'})"
+
+    @classmethod
+    def get_by_id(cls, user_id: str) -> t.Optional[t.Self]:
+        return cls.objects.filter(id=user_id).first()
 
 
 class Book(models.Model):
@@ -231,6 +231,47 @@ class Ticket(models.Model):
     @classmethod
     def get_by_id(cls, ticket_id: int) -> t.Optional[t.Self]:
         return cls.objects.select_related('event__venue', 'option').filter(id=ticket_id).first()
+
+    @classmethod
+    def update(cls, ticket_id: int, qr_id: str, status: str, is_active: bool = True) -> None:
+        ticket = cls.objects.filter(id=ticket_id).first()
+        if ticket:
+            ticket.qr_id = qr_id
+            ticket.status = status
+            ticket.is_active = is_active
+            ticket.save()
+
+
+class Payment(models.Model):
+    id = models.BigAutoField(primary_key=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments")
+
+    store_id = models.CharField(max_length=50)
+    amount = models.PositiveBigIntegerField()
+    invoice_id = models.CharField(max_length=255)
+    invoice_uuid = models.CharField(max_length=255)
+    billing_id = models.CharField(max_length=255, null=True, blank=True)
+    payment_time = models.DateTimeField()
+    phone = models.CharField(max_length=20)
+    card_pan = models.CharField(max_length=20)
+    card_token = models.CharField(max_length=255)
+    ps = models.CharField(max_length=50)
+    uuid = models.CharField(max_length=255)
+    receipt_url = models.URLField()
+    tickets = ArrayField(base_field=models.IntegerField(), default=list, blank=True)
+
+    objects: models.Manager = models.Manager()
+
+    class Meta:
+        verbose_name = "Платёж"
+        verbose_name_plural = "Платежи"
+        ordering = ["-created_at"]
+        managed = False
+
+    def __str__(self):
+        return f"Payment #{self.id} — {self.amount} сум"
 
 
 class AdminLog(models.Model):

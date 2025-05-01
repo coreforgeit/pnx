@@ -57,6 +57,7 @@ services:
       - ../web:/app
       - ../logs/django:/app/logs
       - ../bot/enums:/app/enums
+      - ../bot/data:/app/data
     restart: unless-stopped
     ports:
       - "8000:8000"

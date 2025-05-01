@@ -5,25 +5,50 @@ from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.executors.pool import ThreadPoolExecutor
 
 import os
+import redis
+import telebot
 from zoneinfo import ZoneInfo
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
+PAY_SECRET = os.getenv('PAY_SECRET')
 
 DEBUG = os.getenv('DEBUG')
 
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = os.getenv('REDIS_PORT')
 
+REDIS_CLIENT = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
+
 
 if DEBUG:
     ALLOWED_HOSTS = ['*']
     BOT_TOKEN = os.getenv('TEST_TOKEN')
+    GOOGLE_KEY_PATH = os.path.join('data', 'cred.json')
 
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'nginx']
+    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'nginx', '89.111.155.92']
     BOT_TOKEN = os.getenv('TOKEN')
+    GOOGLE_KEY_PATH = os.path.join('data', 'cred.json')
+
+bot = telebot.TeleBot(BOT_TOKEN, parse_mode='html')
+
+
+# Настройка планировщика
+jobstores = {
+    'default': RedisJobStore(host=REDIS_HOST, port=REDIS_PORT, db=1)
+}
+executors = {
+    'default': ThreadPoolExecutor(10)
+}
+job_defaults = {
+    'coalesce': True,
+    'max_instances': 3
+}
+
+scheduler = BackgroundScheduler(jobstores=jobstores, executors=executors, job_defaults=job_defaults)
+scheduler.start()
 
 
 # Application definition

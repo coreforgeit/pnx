@@ -22,3 +22,19 @@ class TicketSerializer(serializers.Serializer):
     ticketId = serializers.IntegerField(required=False, default=0)
     option = serializers.CharField()
     status = serializers.CharField()
+
+
+# payments/serializers.py
+class PaymentSerializer(serializers.Serializer):
+    store_id = serializers.CharField()
+    amount = serializers.IntegerField()
+    invoice_id = serializers.CharField()
+    billing_id = serializers.CharField(required=False, allow_null=True, allow_blank=True, default=None)
+    payment_time = serializers.DateTimeField()
+    phone = serializers.CharField()
+    card_pan = serializers.CharField()
+    card_token = serializers.CharField()
+    uuid = serializers.CharField()
+    receipt_url = serializers.URLField()
+    sign = serializers.CharField()
+

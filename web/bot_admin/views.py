@@ -1,13 +1,17 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from asgiref.sync import async_to_sync
 from datetime import datetime
 
 import logging
+import hashlib
+import json
 
-from .serializers import BookSerializer, TicketSerializer
-from .models import Book, Venue, Event, EventOption, Ticket
-from web.settings import DATE_FORMAT, DATETIME_FORMAT_ISO, TIME_SHORT_FORMAT
+from . import utils as ut
+from .serializers import BookSerializer, TicketSerializer, PaymentSerializer
+from .models import Book, Venue, Event, EventOption, Ticket, User, Payment
+from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIENT, bot
 from enums import Key, book_status_inverted_dict, BookStatus
 
 
@@ -142,3 +146,102 @@ class TicketView(APIView):
 
             return Response({"status": "ok", "ticketId": ticket.id}, status=status.HTTP_201_CREATED)
 
+
+class PaymentView(APIView):
+    def post(self, request):
+        serializer = PaymentSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        data = serializer.validated_data
+
+        # Проверка подписи
+        expected_sign = hashlib.md5(
+            f"{data['store_id']}{data['invoice_id']}{data['amount']}{PAY_SECRET}".encode()
+        ).hexdigest()
+
+        if expected_sign != data["sign"]:
+            return Response(
+                {"success": False, "message": "Подпись не совпадает"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Получение данных из Redis
+        redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
+        raw = REDIS_CLIENT.get(redis_key)
+
+        if not raw:
+            return Response(
+                {"success": False, "message": "Данные по invoice_id не найдены в Redis"},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        redis_data: dict = json.loads(raw)
+        logger.warning(redis_data)
+        user_id = redis_data.get("user_id")
+        full_name = redis_data.get("full_name")
+        ticket_id_list = redis_data.get("ticket_id_list")
+
+        # Подтверждение билетов (аналог confirm_tickets)
+
+        ticket_id = None
+        book_date = None
+        book_time = None
+        for ticket_id in ticket_id_list:
+            ticket = Ticket.get_by_id(ticket_id)
+            book_date = ticket.event.date_event
+            book_time = ticket.event.time_event
+            qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
+            text = ut.get_ticket_text(ticket)
+
+            qr_photo_id = ut.generate_and_sand_qr(
+                chat_id=user_id,
+                qr_data=qr_data,
+                caption=text,
+            )
+
+            ut.update_book_status_gs(
+                spreadsheet_id=ticket.event.venue.event_gs_id,
+                sheet_name=ticket.event.gs_page,
+                status=BookStatus.CONFIRMED.value,
+                row=ticket.gs_row,
+            )
+
+            Ticket.update(
+                ticket_id=ticket_id,
+                qr_id=qr_photo_id,
+                status=BookStatus.CONFIRMED.value,
+                is_active=True
+            )
+
+            bot.send_message(
+                chat_id=ticket.event.venue.admin_chat_id,
+                text=f"<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>",
+            )
+
+        # напоминалка
+        ut.create_book_notice(
+            book_id=ticket_id,
+            book_date=book_date,
+            book_time=book_time,
+        )
+
+        # Сохраняем платёж
+        # Payment.objects.create(
+        #     user_id=user_id,
+        #     store_id=data["store_id"],
+        #     amount=data["amount"],
+        #     invoice_id=data["invoice_id"],
+        #     invoice_uuid=data["uuid"],
+        #     billing_id=data.get("billing_id"),
+        #     payment_time=data["payment_time"],
+        #     phone=data["phone"],
+        #     card_pan=data["card_pan"],
+        #     card_token=data["card_token"],
+        #     ps=data["ps"],
+        #     uuid=data["uuid"],
+        #     receipt_url=data["receipt_url"],
+        # )
+
+        # Можно удалить данные из Redis, если больше не нужны
+        # REDIS_CLIENT.delete(redis_key)
+
+        return Response({"success": True}, status=status.HTTP_200_OK)

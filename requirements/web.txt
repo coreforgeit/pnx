@@ -4,7 +4,9 @@ django-unfold
 djangorestframework
 psycopg2
 pytelegrambotapi
+gspread
 pytz
+segno
 redis
 requests
 qrcode[pil]

@@ -25,7 +25,7 @@ class Config:
         application_id = os.getenv('APPLICATION_ID_TEST')
         pay_secret = os.getenv('PAY_SECRET_TEST')
         store_id = os.getenv('STORE_ID')
-        callback_url = '"http://89.111.155.92/api/v1/payment/"'
+        callback_url = 'http://89.111.155.92/api/v1/payment/'
 
     bot_link = f'https://t.me/{bot_username}?start='
     db_host = os.getenv('DB_HOST')
@@ -41,7 +41,6 @@ class Config:
     tz = ZoneInfo('Asia/Tashkent')
 
     path_temp = 'temp'
-
     date_format = '%d.%m.%Y'
     time_format = '%H:%M'
     datetime_format = '%H:%M %d.%m.%Y'

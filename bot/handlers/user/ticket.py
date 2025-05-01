@@ -179,10 +179,15 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
     ut.create_cancel_ticket(user_id=cb.from_user.id, ticket_id_list=ticket_id_list)
 
     if amount:
-        # invoice_id = uuid4().hex[:16]
-        invoice_id = ut.save_redis_temp(key=Key.PAY_DATA.value, data=ofd_items)
+        redis_data = {
+            'user_id': cb.from_user.id,
+            'full_name': cb.from_user.full_name,
+            'ticket_id_list': ticket_id_list,
+            'data': ofd_items
+        }
+        invoice_id = ut.save_redis_temp(key=Key.PAY_DATA.value, data=redis_data)
         invoice_link = await ut.create_invoice(
-            invoice_id=uuid4().hex[:16],
+            invoice_id=invoice_id,
             amount=amount,
             ofd_items=ofd_items
         )

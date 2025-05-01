@@ -126,7 +126,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
             func=notice_book_for_day,
             trigger='date',
             run_date=book_dt_for_day,
-            id=f"{book_id}-{NoticeKey.BOOK_DAY.value}",
+            id=f"{book_id}-{book_type}-{NoticeKey.BOOK_DAY.value}",
             args=[book_id, book_type],
             replace_existing=True,
         )
@@ -137,7 +137,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
             func=notice_book_for_2_hours,
             trigger='date',
             run_date=book_dt_for_2_hours,
-            id=f"{book_id}-{NoticeKey.BOOK_2_HOUR.value}",
+            id=f"{book_id}-{book_type}-{NoticeKey.BOOK_2_HOUR.value}",
             args=[book_id, book_type],
             replace_existing=True,
         )
@@ -146,7 +146,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
         func=notice_book_for_now,
         trigger='date',
         run_date=book_dt,
-        id=f"{book_id}-{NoticeKey.BOOK_NOW.value}",
+        id=f"{book_id}-{book_type}-{NoticeKey.BOOK_NOW.value}",
         args=[book_id, book_type],
         replace_existing=True,
     )
@@ -156,7 +156,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
         func=notice_book_for_close,
         trigger='date',
         run_date=book_dt_for_close,
-        id=f"{book_id}-{NoticeKey.BOOK_CLOSE.value}",
+        id=f"{book_id}-{book_type}-{NoticeKey.BOOK_CLOSE.value}",
         args=[book_id, book_type],
         replace_existing=True,
     )
@@ -211,6 +211,6 @@ def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
 
 
 async def update_pay_token():
-    token = await get_pay_token_redis()
+    token = get_pay_token_redis()
     if token:
         save_pay_token_redis(token)

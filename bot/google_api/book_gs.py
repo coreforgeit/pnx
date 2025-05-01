@@ -1,12 +1,15 @@
 import asyncio
-from gspread_asyncio import AsyncioGspreadClientManager
 from gspread.exceptions import APIError, WorksheetNotFound
 
 from typing import Union
+import logging
 
 from .base import agcm
-from settings import log_error
+# from settings import log_error
 from enums import OptionData, Key, book_status_dict, BookStatus
+
+
+logger = logging.getLogger(__name__)
 
 
 # --- Обёртка для безопасного update ---
@@ -78,7 +81,7 @@ async def add_or_update_book_gs(
                 raise  # пробрасываем другие ошибки
 
         except Exception as e:
-            log_error(e)
+            logger.warning(e, exc_info=True)
 
     raise Exception(f"Не удалось найти пустую строку за {max_attempts} попыток")
 
