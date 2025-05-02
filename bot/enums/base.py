@@ -76,12 +76,14 @@ class NoticeKey(str, Enum):
     BOOK_2_HOUR = 'book_2_hour'
     BOOK_NOW = 'book_now'
     BOOK_CLOSE = 'book_close'
+    DEACTIVATE_EVENT = 'deactivate_event'
 
 
 # Ключи к редису
 class UrlTail(str, Enum):
     AUTH = 'auth'
     INVOICE = 'payment/invoice'
+    PAYMENT = 'payment'
 
 
 # Ключи планировщика

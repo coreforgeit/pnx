@@ -233,13 +233,27 @@ class Ticket(models.Model):
         return cls.objects.select_related('event__venue', 'option').filter(id=ticket_id).first()
 
     @classmethod
-    def update(cls, ticket_id: int, qr_id: str, status: str, is_active: bool = True) -> None:
+    def update(
+            cls,
+            ticket_id: int,
+            qr_id: str = None,
+            status: str = None,
+            pay_id: str = None,
+            is_active: bool = True
+    ) -> None:
         ticket = cls.objects.filter(id=ticket_id).first()
-        if ticket:
+        if not ticket:
+            return
+
+        if qr_id:
             ticket.qr_id = qr_id
+        if status:
             ticket.status = status
+        if pay_id:
+            ticket.pay_id = pay_id
+        if is_active is not None:
             ticket.is_active = is_active
-            ticket.save()
+        ticket.save()
 
 
 class Payment(models.Model):

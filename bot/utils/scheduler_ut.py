@@ -8,7 +8,7 @@ from .text_utils import get_ticket_text, get_book_text
 from .payment_ut import get_pay_token_redis
 from .redis_ut import save_pay_token_redis
 from google_api import add_ticket_row_to_registration, update_book_status_gs
-from db import User, Book, Ticket
+from db import User, Book, Ticket, Event
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key
 
@@ -214,3 +214,22 @@ async def update_pay_token():
     token = get_pay_token_redis()
     if token:
         save_pay_token_redis(token)
+
+
+async def deactivate_event(event_id: int):
+    await Event.update(event_id=event_id, is_active=False)
+
+
+# создаём уведомления для каждого напоминания
+def create_deactivate_event(event_id: int, event_date: date, event_time: time):
+    event_dt = datetime.combine(event_date, event_time)
+    run_time = event_dt + timedelta(hours=2)
+
+    scheduler.add_job(
+        func=deactivate_event,
+        trigger='date',
+        run_date=run_time,
+        id=f"{NoticeKey.DEACTIVATE_EVENT.value}-{event_id}",
+        args=[event_id,],
+        replace_existing=True,
+    )

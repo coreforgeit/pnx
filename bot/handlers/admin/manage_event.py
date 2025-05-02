@@ -334,17 +334,22 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
 
     try:
         #     сохраняем ивент
+
+        time_event = datetime.strptime(data_obj.time_str, conf.time_format).time()
+        date_event = datetime.strptime(data_obj.date_str, conf.date_format).date()
         event_id = await Event.add(
             creator_id=cb.from_user.id,  # например, из Telegram user.id
             venue_id=data_obj.venue_id,  # передаётся отдельно
-            time_event=datetime.strptime(data_obj.time_str, conf.time_format).time(),
-            date_event=datetime.strptime(data_obj.date_str, conf.date_format).date(),
+            time_event=time_event,
+            date_event=date_event,
             name=data_obj.name,
             text=data_obj.text,
             entities=data_obj.entities,
             photo_id=data_obj.photo_id,
             event_id=data_obj.event_id
         )
+        # планировцик на отключения ивента
+        ut.create_deactivate_event(event_id=event_id, event_date=date_event, event_time=time_event)
         #     сохраняем опции
         updated_options = []
 

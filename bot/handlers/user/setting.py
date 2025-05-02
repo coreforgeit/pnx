@@ -91,6 +91,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
         """тут ещё нужно добавить возврат средств"""
         ticket = await Ticket.get_full_ticket(entry_id)
 
+        await ut.refund_payment(uuid=ticket.pay_id)
         await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
         await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,

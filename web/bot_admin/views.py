@@ -209,6 +209,7 @@ class PaymentView(APIView):
                 ticket_id=ticket_id,
                 qr_id=qr_photo_id,
                 status=BookStatus.CONFIRMED.value,
+                pay_id=data["uuid"],
                 is_active=True
             )
 
@@ -225,23 +226,23 @@ class PaymentView(APIView):
         )
 
         # Сохраняем платёж
-        # Payment.objects.create(
-        #     user_id=user_id,
-        #     store_id=data["store_id"],
-        #     amount=data["amount"],
-        #     invoice_id=data["invoice_id"],
-        #     invoice_uuid=data["uuid"],
-        #     billing_id=data.get("billing_id"),
-        #     payment_time=data["payment_time"],
-        #     phone=data["phone"],
-        #     card_pan=data["card_pan"],
-        #     card_token=data["card_token"],
-        #     ps=data["ps"],
-        #     uuid=data["uuid"],
-        #     receipt_url=data["receipt_url"],
-        # )
+        Payment.objects.create(
+            user_id=user_id,
+            store_id=data["store_id"],
+            amount=data["amount"],
+            invoice_id=data["invoice_id"],
+            invoice_uuid=data["uuid"],
+            billing_id=data.get("billing_id"),
+            payment_time=data["payment_time"],
+            phone=data["phone"],
+            card_pan=data["card_pan"],
+            card_token=data["card_token"],
+            ps=data["ps"],
+            uuid=data["uuid"],
+            receipt_url=data["receipt_url"],
+        )
 
         # Можно удалить данные из Redis, если больше не нужны
-        # REDIS_CLIENT.delete(redis_key)
+        REDIS_CLIENT.delete(redis_key)
 
         return Response({"success": True}, status=status.HTTP_200_OK)

@@ -87,3 +87,28 @@ async def create_invoice(
 
     return None
 
+
+async def refund_payment(uuid: str) -> dict | None:
+    token = get_pay_token_redis()
+    log_error(f'token:{token}', wt=False)
+    if not token:
+        token = await get_pay_token()
+        log_error(f'token2:{token}', wt=False)
+        save_pay_token_redis(token)
+
+    url = f"{conf.pay_url}{UrlTail.INVOICE.value}/{uuid}"
+    headers = {"Authorization": f"Bearer {token}"}
+
+    async with aiohttp.ClientSession() as session:
+        try:
+            async with session.delete(url, headers=headers) as response:
+                response.raise_for_status()
+                data = await response.json()
+                if data.get("success"):
+                    return data["data"]
+                else:
+                    print("Ошибка возврата:", data)
+        except aiohttp.ClientError as e:
+            print("Ошибка запроса:", e)
+
+    return None
