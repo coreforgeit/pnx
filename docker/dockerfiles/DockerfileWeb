@@ -1,41 +1,15 @@
-#FROM python:3.12.8
-#
-## Устанавливаем зависимости
-#WORKDIR /app
-#COPY /requirements/web.txt /app/web.txt
-#
-#RUN pip install --upgrade pip && pip install --no-cache-dir -r web.txt
-#
-#COPY /web .
-#
-#EXPOSE 8000
-#
-#CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"]
-
 FROM python:3.12.8
 
-# не писать байт-код, сразу выводить логи
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1
-
+# Устанавливаем зависимости
 WORKDIR /app
+COPY /requirements/web.txt /app/web.txt
 
-# 1) ставим зависимости
-COPY requirements/web.txt .
-RUN pip install --upgrade pip \
-    && pip install --no-cache-dir -r web.txt
+RUN pip install --upgrade pip && pip install --no-cache-dir -r web.txt
 
-# 2) копируем весь код проекта (manage.py, папку проекта, settings.py и т.д.)
-COPY . .
+COPY /web .
 
-# 3) чисто для документации — в network_mode: host docker-ignore его, но не помешает
 EXPOSE 8000
 
-# 4) запускаем миграции, собираем статику и поднятие сервера
-CMD ["sh", "-c", "\
-    python manage.py makemigrations && \
-    python manage.py migrate --noinput && \
-    python manage.py collectstatic --noinput && \
-    gunicorn your_project_name.wsgi:application \
-      --bind 0.0.0.0:8000 --workers 3 \
-"]
+CMD ["sh", "-c", "python manage.py makemigrations && python manage.py migrate && python manage.py collectstatic --noinput && python manage.py runserver 0.0.0.0:8000"]
+
+

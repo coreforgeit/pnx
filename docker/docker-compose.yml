@@ -56,7 +56,7 @@ services:
       context: ..
       dockerfile: docker/dockerfiles/DockerfileWeb
       network: host
-    network_mode: "host"
+#    network_mode: "host"
     container_name: web_pnx
     volumes:
       - ../web:/app
@@ -79,7 +79,7 @@ services:
       network: host
       args:
         - --no-cache
-    network_mode: "host"
+#    network_mode: "host"
     container_name: bot_pnx
     volumes:
       - ../bot:/app
