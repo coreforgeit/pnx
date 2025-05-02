@@ -1,4 +1,5 @@
 apscheduler
+gunicorn
 django
 django-unfold
 djangorestframework
