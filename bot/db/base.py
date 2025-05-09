@@ -14,10 +14,6 @@ METADATA = sa.MetaData ()
 
 begin_connection = sessionmaker(bind=ENGINE, class_=AsyncSession, expire_on_commit=False)
 
-# def begin_connection() -> t.AsyncContextManager [AsyncConnection]:
-#     ENGINE.connect ()
-#     return ENGINE.begin ()
-
 
 async def init_models():
     async with ENGINE.begin () as conn:

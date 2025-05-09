@@ -20,7 +20,6 @@ from enums import MenuCommand
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
 loop = asyncio.get_event_loop()
-# dp = Dispatcher()
 bot = Bot(
     token=conf.token,
     loop=loop,

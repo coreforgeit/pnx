@@ -12,17 +12,7 @@ def save_entities(entities: t.Optional[list[MessageEntity]]) -> str:
         for entity in entities:
             entity_dict = entity.dict()
             entities_list.append (entity_dict)
-            # entities_list.append (
-            #     {
-            #         'type': entity.type,
-            #         'offset': entity.offset,
-            #         'length': entity.length,
-            #         'url': entity.url,
-            #         'user': entity.user,
-            #         'language': entity.language,
-            #         'custom_emoji_id': entity.custom_emoji_id
-            #     }
-            # )
+
     return json.dumps(entities_list)
 
 
@@ -36,13 +26,5 @@ def recover_entities(entities_str: t.Optional[str]) -> list[MessageEntity]:
     if entities:
         for entity in entities:
             entities_list.append(MessageEntity(**entity))
-            # entities_list.append(
-            #     MessageEntity(
-            #         type=entity['type'],
-            #         offset=entity['offset'],
-            #         length=entity['length'],
-            #         url=entity['url'],
-            #         user=entity['user'],
-            #         language=entity['language'],
-            #     ))
+
     return entities_list

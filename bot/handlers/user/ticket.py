@@ -186,12 +186,12 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
             'data': ofd_items
         }
         invoice_id = ut.save_redis_temp(key=Key.PAY_DATA.value, data=redis_data)
-        # invoice_link = await ut.create_invoice(
-        #     invoice_id=invoice_id,
-        #     amount=amount,
-        #     ofd_items=ofd_items
-        # )
-        invoice_link = None
+        invoice_link = await ut.create_invoice(
+            invoice_id=invoice_id,
+            amount=amount,
+            ofd_items=ofd_items
+        )
+        # invoice_link = None
         data_obj.ticket_id_list = ticket_id_list
         await state.update_data(data=asdict(data_obj))
 
