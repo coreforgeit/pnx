@@ -22,7 +22,9 @@ def save_redis_data(key: str, data: dict, with_hash: bool = True) -> str:
 
 # сохраняет на время. дефолт сутки
 def save_pay_token_redis(token: str) -> None:
-    redis_client.set(name=Key.PAY_TOKEN.value, value=token)
+    redis_client.setex(name=Key.PAY_TOKEN.value, value=token, time=86400)
+    # redis_client.setex(name=f'{key}-{redis_hash}', time=86400, value=json.dumps(data))
+
 
 
 # возвращает данные

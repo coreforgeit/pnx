@@ -47,10 +47,11 @@ async def create_invoice(
     :param ofd_items: Список позиций для фискализации
     """
     token = get_pay_token_redis()
-    log_error(f'token:{token}', wt=False)
+    # token = None
+    log_error(f'token_redis:{token}', wt=False)
     if not token:
         token = await get_pay_token()
-        log_error(f'token2:{token}', wt=False)
+        log_error(f'token:{token}', wt=False)
         save_pay_token_redis(token)
 
     url = conf.pay_url + UrlTail.INVOICE.value
@@ -71,7 +72,8 @@ async def create_invoice(
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, json=payload) as response:
-                response.raise_for_status()
+                # response.raise_for_status()
+                print(response.text)
                 data = await response.json()
                 if data.get("success"):
 
