@@ -25,9 +25,9 @@ async def main() -> None:
     await set_main_menu()
     if not conf.debug:
         await start_schedulers()
-    # else:
-    #     pass
-    #     await start_schedulers()
+    else:
+        pass
+        await start_schedulers()
     dp.include_router(main_router)
     dp.include_router(admin_router)
     dp.include_router(user_router)

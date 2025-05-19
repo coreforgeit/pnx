@@ -65,7 +65,7 @@ class Book(Base):
             "id": book_id,
             "user_id": user_id,
             "venue_id": venue_id,
-            "time_book": time_book,
+            "time_book": time_book.replace(second=0, microsecond=0),
             "date_book": date_book,
             "comment": comment,
             "status": status,
@@ -85,7 +85,7 @@ class Book(Base):
                 set_={
                     "user_id": user_id,
                     "venue_id": venue_id,
-                    "time_book": time_book,
+                    "time_book": time_book.replace(second=0, microsecond=0),
                     "date_book": date_book,
                     "comment": comment,
                     "status": status,

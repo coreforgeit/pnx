@@ -1,4 +1,5 @@
 from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, date, time, timedelta
 
 import keyboards as kb
@@ -21,13 +22,36 @@ async def start_schedulers():
         id=Key.PAY_TOKEN.value,
         replace_existing=True,
     )
+
+    scheduler.add_job(
+        func=print_scheduled_jobs,
+        trigger=IntervalTrigger(hours=1),
+        id='print_scheduled_jobs',
+        replace_existing=True,
+    )
     scheduler.start()
+    await print_scheduled_jobs()
 
 
 # тормозит планировщики
 async def shutdown_schedulers():
     scheduler.remove_job(job_id=Key.PAY_TOKEN.value)
+    scheduler.remove_job(job_id='print_scheduled_jobs')
     scheduler.shutdown()
+
+
+# показывает все запланированные работ
+async def print_scheduled_jobs():
+    jobs = scheduler.get_jobs()
+    s_log = [f"\nЗапланировано {len(jobs)} задач(и):"]
+    for job in jobs:
+        s_log.append(f"- ID: {job.id}")
+        s_log.append(f"  Функция: {job.func_ref}")
+        s_log.append(f"  Триггер: {job.trigger}")
+        s_log.append(f"  Следующий запуск: {job.next_run_time}")
+        s_log.append("—" * 10)
+    log_error('\n'.join(s_log), wt=False)
+
 
 
 # предупреждаем за день
@@ -118,10 +142,13 @@ async def notice_book_for_close(entry_id: int, book_type: str):
 # создаём уведомления для каждого напоминания
 def create_book_notice(book_id: int, book_date: date, book_time: time, book_type: str):  # не удалять end_date
     now = datetime.now()
+    book_log = [f'now {now}',]
     book_dt = datetime.combine(book_date, book_time)
+    book_log.append(f'book_dt {book_dt} ')
 
     book_dt_for_day = book_dt - timedelta(days=1)
-    if book_dt_for_day < now:
+    book_log.append(f'book_dt_for_day {book_dt_for_day} | {book_dt_for_day > now}')
+    if book_dt_for_day > now:
         scheduler.add_job(
             func=notice_book_for_day,
             trigger='date',
@@ -132,7 +159,9 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
         )
 
     book_dt_for_2_hours = book_dt - timedelta(hours=2)
-    if book_dt_for_2_hours < now:
+    book_log.append(f'book_dt_for_2_hours {book_dt_for_2_hours} | {book_dt_for_2_hours > now}')
+
+    if book_dt_for_2_hours > now:
         scheduler.add_job(
             func=notice_book_for_2_hours,
             trigger='date',
@@ -152,6 +181,8 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
     )
 
     book_dt_for_close = book_dt + timedelta(minutes=30)
+    book_log.append(f'book_dt_for_close {book_dt_for_close}')
+
     scheduler.add_job(
         func=notice_book_for_close,
         trigger='date',
@@ -160,6 +191,17 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
         args=[book_id, book_type],
         replace_existing=True,
     )
+
+    log_error('\n'.join(book_log), wt=False)
+
+
+'''
+now 2025-05-19 15:31:27.574335
+book_dt 2025-05-27 15:00:00
+book_dt_for_day 2025-05-26 15:00:00 | False
+book_dt_for_2_hours 2025-05-27 13:00:00 | False
+book_dt_for_close 2025-05-27 15:30:00
+'''
 
 
 # обнуляет старые билеты
