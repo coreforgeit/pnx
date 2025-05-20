@@ -2,8 +2,10 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, date, time, timedelta
 
+import redis
+
 import keyboards as kb
-from init import scheduler, bot
+from init import scheduler, bot, redis_client_1
 from settings import log_error
 from .text_utils import get_ticket_text, get_book_text
 from .payment_ut import get_pay_token_redis
@@ -44,14 +46,21 @@ async def shutdown_schedulers():
 async def print_scheduled_jobs():
     jobs = scheduler.get_jobs()
     s_log = [f"\nЗапланировано {len(jobs)} задач(и):"]
+
     for job in jobs:
+        # Попробуем получить TTL по ключу Redis
+        redis_key = f'apscheduler.jobs'  # основной ключ, где хранятся job'ы
+        # ttl = await redis.ttl(redis_key)
+        ttl = redis_client_1.ttl(redis_key)
+
         s_log.append(f"- ID: {job.id}")
         s_log.append(f"  Функция: {job.func_ref}")
         s_log.append(f"  Триггер: {job.trigger}")
         s_log.append(f"  Следующий запуск: {job.next_run_time}")
+        s_log.append(f"  TTL ключа jobs: {ttl if ttl >= 0 else '∞'} секунд")
         s_log.append("—" * 10)
-    log_error('\n'.join(s_log), wt=False)
 
+    log_error('\n'.join(s_log), wt=False)
 
 
 # предупреждаем за день
