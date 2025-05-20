@@ -46,7 +46,9 @@ scheduler = AsyncIOScheduler(
     job_defaults={
         'coalesce': True,
         'max_instances': 3
-    }
+    },
+    timezone=conf.tz
+
 )
 
 

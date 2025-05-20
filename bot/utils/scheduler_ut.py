@@ -2,11 +2,9 @@ from apscheduler.triggers.cron import CronTrigger
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import datetime, date, time, timedelta
 
-import redis
-
 import keyboards as kb
 from init import scheduler, bot, redis_client_1
-from settings import log_error
+from settings import log_error, conf
 from .text_utils import get_ticket_text, get_book_text
 from .payment_ut import get_pay_token_redis
 from .redis_ut import save_pay_token_redis
@@ -32,7 +30,7 @@ async def start_schedulers():
         replace_existing=True,
     )
     scheduler.start()
-    await print_scheduled_jobs()
+    print_scheduled_jobs()
 
 
 # тормозит планировщики
@@ -43,7 +41,7 @@ async def shutdown_schedulers():
 
 
 # показывает все запланированные работ
-async def print_scheduled_jobs():
+def print_scheduled_jobs():
     jobs = scheduler.get_jobs()
     s_log = [f"\nЗапланировано {len(jobs)} задач(и):"]
 
@@ -150,9 +148,9 @@ async def notice_book_for_close(entry_id: int, book_type: str):
 
 # создаём уведомления для каждого напоминания
 def create_book_notice(book_id: int, book_date: date, book_time: time, book_type: str):  # не удалять end_date
-    now = datetime.now()
+    now = datetime.now().replace(tzinfo=conf.tz)
     book_log = [f'now {now}',]
-    book_dt = datetime.combine(book_date, book_time)
+    book_dt = datetime.combine(book_date, book_time, conf.tz)
     book_log.append(f'book_dt {book_dt} ')
 
     book_dt_for_day = book_dt - timedelta(days=1)
@@ -202,6 +200,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time, book_type
     )
 
     log_error('\n'.join(book_log), wt=False)
+    # print_scheduled_jobs()
 
 
 '''
@@ -223,15 +222,6 @@ async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None
 
             ticket_text = get_ticket_text(ticket)
 
-            # await add_ticket_row_to_registration(
-            #     spreadsheet_id=ticket.event.venue.event_gs_id,
-            #     page_id=ticket.event.gs_page,
-            #     ticket_id=ticket_id,
-            #     option_name=ticket.option.name,
-            #     user_name=user.full_name,
-            #     ticket_row=ticket.gs_row
-            # )
-
             await update_book_status_gs(
                 spreadsheet_id=ticket.event.venue.event_gs_id,
                 sheet_name=ticket.event.gs_page,
@@ -246,7 +236,7 @@ async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None
 
 # создаём уведомления для каждого напоминания
 def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
-    now = datetime.now()
+    now = datetime.now().replace(tzinfo=conf.tz)
     notice_time = now - timedelta(hours=12)
 
     key = '-'.join(map(str, ticket_id_list))
