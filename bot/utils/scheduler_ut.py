@@ -235,12 +235,12 @@ async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None
 # создаём уведомления для каждого напоминания
 def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
     now = datetime.now().replace(tzinfo=conf.tz)
-    notice_time = now - timedelta(hours=12)
+    notice_time = now + timedelta(hours=1)
 
     key = '-'.join(map(str, ticket_id_list))
 
     scheduler.add_job(
-        func=notice_book_for_day,
+        func=cancel_unpaid_tickets,
         trigger='date',
         run_date=notice_time,
         id=f"{NoticeKey.BOOK_DAY.value}-{key}",
