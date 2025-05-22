@@ -8,25 +8,30 @@ class Config:
 
     if debug:
         token = os.getenv("TEST_TOKEN")
-        admin_chat = -4658767585
+        # admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
         google_key_path = os.path.join('data', 'cred.json')
-        pay_url = "https://dev-mesh.multicard.uz/"
-        application_id = os.getenv('APPLICATION_ID_TEST')
-        pay_secret = os.getenv('PAY_SECRET_TEST')
-        store_id = 6
+        # pay_url = os.getenv('PAY_URL_TEST')
+        # application_id = os.getenv('APPLICATION_ID_TEST')
+        # pay_secret = os.getenv('PAY_SECRET_TEST')
+        # store_id = os.getenv('STORE_ID_TEST')
         callback_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
+
+        pay_url = os.getenv('PAY_URL')
+        application_id = os.getenv('APPLICATION_ID')
+        pay_secret = os.getenv('PAY_SECRET')
+        store_id = os.getenv('STORE_ID')
 
     else:
         token = os.getenv("TEST_TOKEN")
-        admin_chat = -4658767585
+        # admin_chat = -4658767585
         bot_username = 'tushchkan_test_3_bot'
         google_key_path = os.path.join('data', 'cred.json')
-        pay_url = "https://dev-mesh.multicard.uz/"
-        application_id = os.getenv('APPLICATION_ID_TEST')
-        pay_secret = os.getenv('PAY_SECRET_TEST')
+        pay_url = os.getenv('PAY_URL')
+        application_id = os.getenv('APPLICATION_ID')
+        pay_secret = os.getenv('PAY_SECRET')
         store_id = os.getenv('STORE_ID')
-        callback_url = 'http://89.111.155.92/api/v1/payment/'
+        callback_url = os.getenv('CALLBACK_URL')
 
     test_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
 

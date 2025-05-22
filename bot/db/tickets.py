@@ -5,8 +5,10 @@ from sqlalchemy.dialects import postgresql as psql
 import sqlalchemy as sa
 import typing as t
 
+from settings import conf
 from .base import Base, begin_connection
 from .events import Event
+from enums import BookStatus
 
 
 class TicketStatRow(t.Protocol):
@@ -75,16 +77,6 @@ class Ticket(Base):
         return result.inserted_primary_key[0]
 
     @classmethod
-    async def get_all(cls, user_id: int = None) -> t.Optional[list[t.Self]]:
-        query = sa.select(cls)
-        if user_id:
-            query = query.where(cls.user_id == user_id)
-
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-        return result.scalars().all()
-
-    @classmethod
     async def update(
             cls,
             ticket_id: int,
@@ -138,6 +130,16 @@ class Ticket(Base):
         return max_row + 1 if max_row else 2
 
     @classmethod
+    async def get_all(cls, user_id: int = None) -> t.Optional[list[t.Self]]:
+        query = sa.select(cls)
+        if user_id:
+            query = query.where(cls.user_id == user_id)
+
+        async with begin_connection() as conn:
+            result = await conn.execute(query)
+        return result.scalars().all()
+
+    @classmethod
     async def get_all_tickets(cls, user_id: int = None, event_id: int = None) -> t.Optional[list[t.Self]]:
         """Получает все билеты пользователя с подгрузкой event, venue и option"""
 
@@ -184,5 +186,23 @@ class Ticket(Base):
             result = await conn.execute(query)
 
         return result.all()
+
+    @classmethod
+    async def close_old(cls) -> None:
+        today = datetime.now(tz=conf.tz).date()
+
+        query = (
+            sa.update(cls)
+            .where(
+                cls.status == BookStatus.CONFIRMED.value,
+                cls.event_id == Event.id,
+                Event.date_event < today
+            )
+            .values(status=BookStatus.CANCELED.value)
+        )
+
+        async with begin_connection() as conn:
+            await conn.execute(query)
+
 
 

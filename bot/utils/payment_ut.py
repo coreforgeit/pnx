@@ -19,12 +19,12 @@ async def get_pay_token() -> t.Optional[str]:
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, json=payload) as response:
-                log_error(response.text, wt=False)
-                response.raise_for_status()
+                # log_error(response.text, wt=False)
+                # response.raise_for_status()
                 data = await response.json()
 
-                log_error(f'get_pay_token', wt=False)
-                log_error(data, wt=False)
+                # log_error(f'get_pay_token', wt=False)
+                # log_error(data, wt=False)
 
                 if "token" in data:
                     return data["token"]
@@ -47,17 +47,17 @@ async def create_invoice(
     :param ofd_items: Список позиций для фискализации
     """
     token = get_pay_token_redis()
-    # token = None
-    log_error(f'token_redis:{token}', wt=False)
+    token = None
+    log_error(f'token_redis:\n{token}', wt=False)
     if not token:
         token = await get_pay_token()
-        log_error(f'token:{token}', wt=False)
+        # log_error(f'token:\n{token}', wt=False)
         save_pay_token_redis(token)
 
     url = conf.pay_url + UrlTail.INVOICE.value
     headers = {"Authorization": f"Bearer {token}"}
     payload = {
-        "store_id": conf.store_id,
+        "store_id": int(conf.store_id),
         "invoice_id": invoice_id,
         "amount": amount * 100,
         "return_url": conf.bot_link,
@@ -68,12 +68,13 @@ async def create_invoice(
 
     # Удаляем None-поля из payload
     payload = {k: v for k, v in payload.items() if v is not None}
-
+    # print(url)
+    # print(payload)
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, json=payload) as response:
                 # response.raise_for_status()
-                print(response.text)
+                # print(response.text)
                 data = await response.json()
                 if data.get("success"):
 
@@ -83,7 +84,7 @@ async def create_invoice(
                     # return data["data"]["short_link"]
                     return data["data"]["checkout_url"]
                 else:
-                    print("Ошибка создания счёта:", data)
+                    print("Ошибка создания счёта:\n", data)
         except aiohttp.ClientError as e:
             print("Ошибка запроса:", e)
 

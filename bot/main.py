@@ -5,7 +5,7 @@ import sys
 from aiogram import Dispatcher
 from datetime import datetime
 
-# from handlers import dp
+import db
 from init import set_main_menu, bot
 from settings import conf, log_error
 from db.base import init_models
@@ -23,11 +23,13 @@ async def main() -> None:
     # await get_pay_token()
     await init_models()
     await set_main_menu()
+    await db.close_old()
     if not conf.debug:
         await start_schedulers()
     else:
         pass
         await start_schedulers()
+
     dp.include_router(main_router)
     dp.include_router(admin_router)
     dp.include_router(user_router)

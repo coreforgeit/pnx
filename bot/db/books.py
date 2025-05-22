@@ -7,7 +7,7 @@ import typing as t
 
 from .base import Base, begin_connection
 from settings import conf
-from enums import UserStatus
+from enums import BookStatus
 
 
 class BookStatRow(t.Protocol):
@@ -144,13 +144,21 @@ class Book(Base):
             await conn.commit()
 
     @classmethod
-    async def get_booking(cls, venue_id: int, user_id: int, date_book: date) -> t.Optional[t.Self]:
+    async def get_booking(
+            cls,
+            venue_id: int,
+            user_id: int,
+            date_book: date,
+            status: str = BookStatus.CONFIRMED.value
+    ) -> t.Optional[t.Self]:
         """Находим бронь пользователя"""
 
         query = sa.select(cls).where(
             cls.venue_id == venue_id,
             cls.user_id == user_id,
             cls.date_book == date_book,
+            cls.date_book == date_book,
+            cls.status == status,
         )
 
         async with begin_connection() as conn:
@@ -254,14 +262,15 @@ class Book(Base):
 
         return result.all()
 
-    # @classmethod
-    # async def del_booking(cls, book_id: int) -> None:
-    #     """Получает бронь по ID вместе с данными о заведении"""
-    #
-    #     query = sa.delete(cls).where(cls.id == book_id)
-    #
-    #     async with begin_connection() as conn:
-    #         await conn.execute(query)
-    #         await conn.commit()
+    @classmethod
+    async def close_old(cls) -> None:
+        today = datetime.now(tz=conf.tz).date()
+        query = (
+            sa.update(cls).
+            where(cls.date_book < today, cls.status == BookStatus.CONFIRMED.value).
+            values(status=BookStatus.CANCELED.value)
+        )
+        async with begin_connection() as conn:
+            await conn.execute(query)
 
 

@@ -148,3 +148,14 @@ class Event(Base):
             result = await conn.execute(query)
             return result.scalars().first()
 
+    @classmethod
+    async def close_old(cls) -> None:
+        today = datetime.now(tz=conf.tz).date()
+        print(f'event today: {today}')
+        query = (
+            sa.update(cls).
+            where(cls.date_event < today, cls.is_active == True).
+            values(is_active=False)
+        )
+        async with begin_connection() as conn:
+            await conn.execute(query)

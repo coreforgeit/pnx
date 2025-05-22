@@ -9,6 +9,8 @@ import typing as t
 
 from .base import Base, begin_connection
 from .books import Book
+from .tickets import Ticket
+from .events import Event
 from .venues import Venue
 
 
@@ -32,13 +34,8 @@ async def get_available_tables(venue_id: int, book_date: date, book_time: time) 
     return table_count - booked_count
 
 
-
-class PluginSubRow(t.Protocol):
-    plugin_id: int
-    name: str
-    # description: str
-    is_corporate: bool
-    end_sub_time: datetime
-
-
-
+# отменяет брони и закрывает ивенты если не сработал обычный тригер
+async def close_old():
+    await Book.close_old()
+    await Ticket.close_old()
+    await Event.close_old()

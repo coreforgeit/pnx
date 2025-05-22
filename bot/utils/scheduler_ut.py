@@ -46,9 +46,7 @@ def print_scheduled_jobs():
     s_log = [f"\nЗапланировано {len(jobs)} задач(и):"]
 
     for job in jobs:
-        # Попробуем получить TTL по ключу Redis
         redis_key = f'apscheduler.jobs'  # основной ключ, где хранятся job'ы
-        # ttl = await redis.ttl(redis_key)
         ttl = redis_client_1.ttl(redis_key)
 
         s_log.append(f"- ID: {job.id}")

@@ -84,7 +84,9 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 
     if date_str != Action.BACK.value:
         exist_book = await Book.get_booking(
-            venue_id=data_obj.venue_id, user_id=cb.from_user.id, date_book=datetime.strptime(date_str, conf.date_format).date()
+            venue_id=data_obj.venue_id,
+            user_id=cb.from_user.id,
+            date_book=datetime.strptime(date_str, conf.date_format).date()
         )
 
         # print(f'>>>>>>>>>> {type(exist_book)}')

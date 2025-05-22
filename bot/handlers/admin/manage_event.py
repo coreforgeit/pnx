@@ -334,7 +334,6 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
 
     try:
         #     сохраняем ивент
-
         time_event = datetime.strptime(data_obj.time_str, conf.time_format).time()
         date_event = datetime.strptime(data_obj.date_str, conf.date_format).date()
         event_id = await Event.add(
