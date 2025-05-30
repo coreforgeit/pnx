@@ -92,62 +92,67 @@ class BookView(APIView):
 
 class TicketView(APIView):
     def post(self, request, *args, **kwargs):
-        serializer = TicketSerializer(data=request.data)
-        if not serializer.is_valid():
-            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            serializer = TicketSerializer(data=request.data)
+            if not serializer.is_valid():
+                return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        validated = serializer.validated_data
+            validated = serializer.validated_data
 
-        spreadsheet_id = validated["spreadsheetId"]
-        sheet_id = validated["sheetId"]
-        sheet_name = validated["sheetName"]
-        row_number = validated["rowNumber"]
-        ticket_id = validated['ticketId']
-        option_name = validated['option']
-        ticket_status_name = validated['status']
+            spreadsheet_id = validated["spreadsheetId"]
+            sheet_id = validated["sheetId"]
+            sheet_name = validated["sheetName"]
+            row_number = validated["rowNumber"]
+            ticket_id = validated['ticketId']
+            option_name = validated['option']
+            ticket_status_name = validated['status']
 
-        ticket_status = book_status_inverted_dict.get(ticket_status_name)
-        if not ticket_status:
-            return Response('status error', status=status.HTTP_400_BAD_REQUEST)
-
-        if ticket_id:
-            ticket = Ticket.get_by_id(ticket_id)
             ticket_status = book_status_inverted_dict.get(ticket_status_name)
+            if not ticket_status:
+                return Response('status error', status=status.HTTP_400_BAD_REQUEST)
 
-            if not ticket:
-                return Response('ticket not found', status=status.HTTP_400_BAD_REQUEST)
+            if ticket_id:
+                ticket = Ticket.get_by_id(ticket_id)
+                ticket_status = book_status_inverted_dict.get(ticket_status_name)
 
-            if ticket.status != ticket_status:
-                ticket.status = ticket_status
-                ticket.is_active = True if ticket_status == BookStatus.CONFIRMED.value else False
-                ticket.save()
+                if not ticket:
+                    return Response('ticket not found', status=status.HTTP_400_BAD_REQUEST)
 
-                add_place = 1 if ticket_status == BookStatus.CONFIRMED.value else -1
-                ticket.option.empty_place = ticket.option.empty_place + add_place
-                ticket.option.save()
+                if ticket.status != ticket_status:
+                    ticket.status = ticket_status
+                    ticket.is_active = True if ticket_status == BookStatus.CONFIRMED.value else False
+                    ticket.save()
 
-            return Response({"status": "ok"}, status=status.HTTP_200_OK)
+                    add_place = 1 if ticket_status == BookStatus.CONFIRMED.value else -1
+                    ticket.option.empty_place = ticket.option.empty_place + add_place
+                    ticket.option.save()
 
-        else:
-            event = Event.get_by_gs_page(sheet_id)
-            if not event:
-                return Response('event not found', status=status.HTTP_400_BAD_REQUEST)
+                return Response({"status": "ok"}, status=status.HTTP_200_OK)
 
-            option = EventOption.get_by_event_name(event_id=event.id, option_name=option_name)
-            if not option:
-                return Response('option not found', status=status.HTTP_400_BAD_REQUEST)
+            else:
+                event = Event.get_by_gs_page(sheet_id)
+                if not event:
+                    return Response('event not found', status=status.HTTP_400_BAD_REQUEST)
 
-            ticket = Ticket.objects.create(
-                event=event,
-                option=option,
-                gs_sheet=spreadsheet_id,
-                gs_page=sheet_id,
-                gs_row=row_number,
-                status=ticket_status,
-                is_active=True if ticket_status == BookStatus.CONFIRMED.value else False
-            )
+                option = EventOption.get_by_event_name(event_id=event.id, option_name=option_name)
+                if not option:
+                    return Response('option not found', status=status.HTTP_400_BAD_REQUEST)
 
-            return Response({"status": "ok", "ticketId": ticket.id}, status=status.HTTP_201_CREATED)
+                ticket = Ticket.objects.create(
+                    event=event,
+                    option=option,
+                    gs_sheet=spreadsheet_id,
+                    gs_page=sheet_id,
+                    gs_row=row_number,
+                    status=ticket_status,
+                    is_active=True if ticket_status == BookStatus.CONFIRMED.value else False
+                )
+
+                return Response({"status": "ok", "ticketId": ticket.id}, status=status.HTTP_201_CREATED)
+
+        except Exception as e:
+            logger.warning(e, exc_info=True)
+            return Response({"error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
 
 class PaymentView(APIView):
@@ -162,42 +167,23 @@ class PaymentView(APIView):
                 f"{data['store_id']}{data['invoice_id']}{data['amount']}{PAY_SECRET}".encode()
             ).hexdigest()
 
-            if DEBUG:
-                redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
-                redis_data: dict = {
-                    'user_id': 524275902,
-                    'full_name': 'Рус',
-                    'ticket_id_list': [39],
-                    'data': [
-                        {
-                            'vat': 12,
-                            'price': 100000,
-                            'qty': 1,
-                            'name': 'Ticket-39',
-                            'package_code': '39',
-                            'mxik': '10202001002000000',
-                            'total': 100000
-                        }
-                    ]
-                }
-            else:
-                if expected_sign != data["sign"]:
-                    return Response(
-                        {"success": False, "message": "Подпись не совпадает"},
-                        status=status.HTTP_400_BAD_REQUEST
-                    )
+            if expected_sign != data["sign"]:
+                return Response(
+                    {"success": False, "message": "Подпись не совпадает"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
 
-                # Получение данных из Redis
-                redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
-                raw = REDIS_CLIENT.get(redis_key)
+            # Получение данных из Redis
+            redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
+            raw = REDIS_CLIENT.get(redis_key)
 
-                if not raw:
-                    return Response(
-                        {"success": False, "message": "Данные по invoice_id не найдены в Redis"},
-                        status=status.HTTP_404_NOT_FOUND
-                    )
+            if not raw:
+                return Response(
+                    {"success": False, "message": "Данные по invoice_id не найдены в Redis"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
-                redis_data: dict = json.loads(raw)
+            redis_data: dict = json.loads(raw)
 
             logger.warning(f'redis_data: {redis_data}')
             user_id = redis_data.get("user_id")
@@ -274,3 +260,20 @@ class PaymentView(APIView):
             logger.exception(e, exc_info=True)
             return Response({"success": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
+# redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
+#                 redis_data: dict = {
+#                     'user_id': 524275902,
+#                     'full_name': 'Рус',
+#                     'ticket_id_list': [39],
+#                     'data': [
+#                         {
+#                             'vat': 12,
+#                             'price': 100000,
+#                             'qty': 1,
+#                             'name': 'Ticket-39',
+#                             'package_code': '39',
+#                             'mxik': '10202001002000000',
+#                             'total': 100000
+#                         }
+#                     ]
+#                 }
