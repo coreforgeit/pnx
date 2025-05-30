@@ -34,6 +34,7 @@ class PaymentSerializer(serializers.Serializer):
     phone = serializers.CharField()
     card_pan = serializers.CharField()
     card_token = serializers.CharField()
+    ps = serializers.CharField()
     uuid = serializers.CharField()
     receipt_url = serializers.URLField()
     sign = serializers.CharField()

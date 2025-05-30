@@ -280,6 +280,7 @@ class Payment(models.Model):
     objects: models.Manager = models.Manager()
 
     class Meta:
+        db_table = 'payments'
         verbose_name = "Платёж"
         verbose_name_plural = "Платежи"
         ordering = ["-created_at"]

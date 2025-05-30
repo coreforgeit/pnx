@@ -11,7 +11,7 @@ from enums import UserStatus
 
 
 class Payment(Base):
-    __tablename__ = "payment"
+    __tablename__ = "payments"
 
     id: Mapped[int] = mapped_column(sa.BigInteger, primary_key=True, autoincrement=True)
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())

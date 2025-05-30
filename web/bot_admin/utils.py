@@ -94,9 +94,9 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
     logging.warning(f'now: {now}')
 
     book_dt_for_day = book_dt - timedelta(days=1)
-    book_dt_for_day = now + timedelta(minutes=1)
-    logging.warning(f'book_dt_for_day: {book_dt_for_day}')
-    logging.warning(f'book_dt_for_day < now: {book_dt_for_day < now}')
+    # book_dt_for_day = now + timedelta(minutes=1)
+    # logging.warning(f'book_dt_for_day: {book_dt_for_day}')
+    # logging.warning(f'book_dt_for_day < now: {book_dt_for_day < now}')
 
     if book_dt_for_day > now:
         scheduler.add_job(
@@ -109,7 +109,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
         )
 
     book_dt_for_2_hours = book_dt - timedelta(hours=2)
-    book_dt_for_2_hours = now + timedelta(minutes=2)
+    # book_dt_for_2_hours = now + timedelta(minutes=2)
 
     if book_dt_for_2_hours > now:
         scheduler.add_job(
@@ -121,7 +121,7 @@ def create_book_notice(book_id: int, book_date: date, book_time: time):  # не 
             replace_existing=True,
         )
 
-    book_dt = now + timedelta(minutes=3)
+    # book_dt = now + timedelta(minutes=3)
 
     scheduler.add_job(
         func=notice_book_for_now,
