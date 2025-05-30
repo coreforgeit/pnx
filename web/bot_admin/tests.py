@@ -67,6 +67,8 @@ def test_payment():
     else:
         print("Response:", response.status_code, response.text)
 
+
 if __name__ == '__main__':
-    test_edit_book()
-    test_add_ticket_row()
+    # test_edit_book()
+    # test_add_ticket_row()
+    test_payment()

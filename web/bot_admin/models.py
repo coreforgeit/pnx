@@ -208,7 +208,8 @@ class Ticket(models.Model):
         verbose_name='Категория билета',
         related_name='tickets'
     )
-    pay_id = models.IntegerField(null=True, blank=True, verbose_name='ID платежа')
+    # pay_id = models.IntegerField(null=True, blank=True, verbose_name='ID платежа')
+    pay_id = models.CharField(null=True, blank=True, verbose_name='ID платежа')
 
     qr_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='QR ID')
     gs_sheet = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID таблицы')

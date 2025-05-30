@@ -197,6 +197,13 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'simple',
         },
+
+        'view_file': {
+            'level': 'WARNING',
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': os.path.join(LOG_DIR, 'view.log'),
+            'formatter': 'verbose',
+        },
     },
     'loggers': {
         'django': {
@@ -204,5 +211,42 @@ LOGGING = {
             'level': 'INFO',
             'propagate': True,
         },
+
+        'view_logger': {
+            'handlers': ['view_file'],
+            'level': 'WARNING',
+            'propagate': False,
+        },
     },
+}
+
+import os
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+
+    'formatters': {
+        'verbose': {
+            'format': '[{asctime}] [{levelname}] [{name}] {message}',
+            'style': '{',
+        },
+    },
+
+    'handlers': {
+        'view_file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': os.path.join(BASE_DIR, 'logs', 'view.log'),
+            'formatter': 'verbose',
+        },
+    },
+
+    'loggers': {
+        'view_logger': {
+            'handlers': ['view_file'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    }
 }

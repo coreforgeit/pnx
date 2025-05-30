@@ -15,7 +15,8 @@ from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIEN
 from enums import Key, book_status_inverted_dict, BookStatus
 
 
-logger = logging.getLogger(__name__)
+# logger = logging.getLogger(__name__)
+logger = logging.getLogger('view_logger')
 
 
 class BookView(APIView):

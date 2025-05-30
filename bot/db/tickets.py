@@ -28,7 +28,7 @@ class Ticket(Base):
     user_id: Mapped[int] = mapped_column(sa.BigInteger(), sa.ForeignKey("users.id"), nullable=True)
     option_id: Mapped[int] = mapped_column(sa.Integer(), sa.ForeignKey("events_options.id"))
     # pay_id: Mapped[int] = mapped_column(sa.Integer(), sa.ForeignKey("options.id"))
-    pay_id: Mapped[int] = mapped_column(sa.Integer(), nullable=True)
+    pay_id: Mapped[int] = mapped_column(sa.String(), nullable=True)
 
     qr_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_sheet: Mapped[int] = mapped_column(sa.String(), nullable=True)
