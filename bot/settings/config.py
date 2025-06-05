@@ -22,7 +22,7 @@ class Config:
         # store_id = os.getenv('STORE_ID')
 
     else:
-        token = os.getenv("TEST")
+        token = os.getenv("TOKEN")
         bot_username = 'Ponaexali_bot'
         google_key_path = os.path.join('data', 'cred.json')
         pay_url = os.getenv('PAY_URL')
