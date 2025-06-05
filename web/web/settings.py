@@ -17,7 +17,7 @@ PAY_SECRET = os.getenv('PAY_SECRET')
 DEBUG = os.getenv('DEBUG')
 
 REDIS_HOST = os.getenv('REDIS_HOST')
-REDIS_PORT = os.getenv('REDIS_PORT')
+REDIS_PORT = int(os.getenv('REDIS_PORT'))
 
 REDIS_CLIENT = redis.StrictRedis(host=REDIS_HOST, port=REDIS_PORT, db=0)
 
@@ -220,33 +220,33 @@ LOGGING = {
     },
 }
 
-import os
-
-LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-
-    'formatters': {
-        'verbose': {
-            'format': '[{asctime}] [{levelname}] [{name}] {message}',
-            'style': '{',
-        },
-    },
-
-    'handlers': {
-        'view_file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': os.path.join(BASE_DIR, 'logs', 'view.log'),
-            'formatter': 'verbose',
-        },
-    },
-
-    'loggers': {
-        'view_logger': {
-            'handlers': ['view_file'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    }
-}
+# import os
+#
+# LOGGING = {
+#     'version': 1,
+#     'disable_existing_loggers': False,
+#
+#     'formatters': {
+#         'verbose': {
+#             'format': '[{asctime}] [{levelname}] [{name}] {message}',
+#             'style': '{',
+#         },
+#     },
+#
+#     'handlers': {
+#         'view_file': {
+#             'level': 'INFO',
+#             'class': 'logging.FileHandler',
+#             'filename': os.path.join(BASE_DIR, 'logs', 'view.log'),
+#             'formatter': 'verbose',
+#         },
+#     },
+#
+#     'loggers': {
+#         'view_logger': {
+#             'handlers': ['view_file'],
+#             'level': 'INFO',
+#             'propagate': False,
+#         },
+#     }
+# }
