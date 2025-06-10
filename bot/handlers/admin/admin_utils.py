@@ -25,7 +25,8 @@ async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMa
     data = await state.get_data()
     data_obj = EventData(**data)
 
-    data_obj.print_all()
+    if conf.debug:
+        data_obj.print_all()
 
     if data_obj.end and not data_obj.step.startswith('option'):
         if data_obj.end == 1:
@@ -39,7 +40,7 @@ async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMa
         await state.update_data(data=asdict(data_obj))
 
     if data_obj.options:
-        option_text = '\nОпции:\n'
+        option_text = '\nКатегории билетов:\n'
         options: list[dict] = data_obj.options
         for option in options:
             option_obj = OptionData(**option)
@@ -147,8 +148,11 @@ async def sent_mailing_preview(
 
 
 async def send_start_view_msg(chat_id: int, book_type: str, admin: User, msg_id: int = None):
-    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
-        await bot.send_message(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
+    if (not admin or
+            admin.status == UserStatus.USER.value or
+            (admin.status == UserStatus.STAFF.value and not admin.venue_id)
+    ):
+        await bot.send_message(chat_id, f'❗️ Вам отказано в доступе. Обратитесь к администратору')
         return
 
     if book_type == Key.QR_TICKET.value:

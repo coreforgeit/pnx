@@ -81,7 +81,7 @@ event_text_dict = {
     EventStep.COVER.value: 'Отправьте обложку мероприятия с текстом и описанием',
     EventStep.DATE.value: 'День проведения\nВыберите из кнопок или отправьте в формате ДД:ММ:ГГГГ',
     EventStep.TIME.value: 'Время проведения\nВыберите из кнопок или отправьте в формате ЧЧ:ММ',
-    EventStep.OPTION_NAME.value: 'Название опции',
+    EventStep.OPTION_NAME.value: 'Название категории билета',
     EventStep.OPTION_PLACE.value: 'Количество мест',
     EventStep.OPTION_PRICE.value: 'Стоимость',
     EventStep.END.value: 'Создать мероприятие?',

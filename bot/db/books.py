@@ -254,7 +254,7 @@ class Book(Base):
             .order_by(cls.date_book)
         )
 
-        if venue_id is not None:
+        if venue_id:
             query = query.where(cls.venue_id == venue_id)
 
         async with begin_connection() as conn:

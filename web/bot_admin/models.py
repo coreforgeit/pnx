@@ -258,24 +258,38 @@ class Ticket(models.Model):
 
 
 class Payment(models.Model):
-    id = models.BigAutoField(primary_key=True)
-    created_at = models.DateTimeField(auto_now_add=True)
+    id = models.BigAutoField(primary_key=True, verbose_name='ID')
+    created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
 
-    user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name="payments")
+    user = models.ForeignKey(
+        'User',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="payments",
+        verbose_name='Пользователь'
+    )
 
-    store_id = models.CharField(max_length=50)
-    amount = models.PositiveBigIntegerField()
-    invoice_id = models.CharField(max_length=255)
-    invoice_uuid = models.CharField(max_length=255)
-    billing_id = models.CharField(max_length=255, null=True, blank=True)
-    payment_time = models.DateTimeField()
-    phone = models.CharField(max_length=20)
-    card_pan = models.CharField(max_length=20)
-    card_token = models.CharField(max_length=255)
-    ps = models.CharField(max_length=50)
-    uuid = models.CharField(max_length=255)
-    receipt_url = models.URLField()
-    tickets = ArrayField(base_field=models.IntegerField(), default=list, blank=True)
+    store_id = models.CharField(max_length=50, verbose_name='ID магазина')
+    amount = models.PositiveBigIntegerField(verbose_name='Сумма')
+    invoice_id = models.CharField(max_length=255, verbose_name='ID счёта')
+    invoice_uuid = models.CharField(max_length=255, verbose_name='UUID счёта')
+    billing_id = models.CharField(
+        max_length=255, null=True, blank=True, verbose_name='ID плательщика'
+    )
+    payment_time = models.DateTimeField(verbose_name='Время оплаты')
+    phone = models.CharField(max_length=20, verbose_name='Телефон')
+    card_pan = models.CharField(max_length=20, verbose_name='Маска карты')
+    card_token = models.CharField(max_length=255, verbose_name='Токен карты')
+    ps = models.CharField(max_length=50, verbose_name='Платёжная система')
+    uuid = models.CharField(max_length=255, verbose_name='UUID транзакции')
+    receipt_url = models.URLField(verbose_name='Ссылка на чек')
+    tickets = ArrayField(
+        base_field=models.IntegerField(),
+        default=list,
+        blank=True,
+        verbose_name='ID билетов'
+    )
 
     objects: models.Manager = models.Manager()
 
