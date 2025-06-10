@@ -35,7 +35,10 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
     _, book_type, value = cb.data.split(':')
 
     admin = await User.get_admin(cb.from_user.id)
-    if not admin or not admin.venue_id or admin.status == UserStatus.USER.value:
+    if (not admin or
+            admin.status == UserStatus.USER.value or
+            (admin.status == UserStatus.STAFF.value and not admin.venue_id)
+    ):
         await cb.message.answer(f'❗️ Вам отказано в доступе. Обратитесь к администратору')
         return
 
