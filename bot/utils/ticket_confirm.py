@@ -10,10 +10,15 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
     ticket = None
     for ticket_id in ticket_id_list:
         ticket = await Ticket.get_full_ticket(ticket_id)
-        qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
+        # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
         text = ut.get_ticket_text(ticket)
         # сохраняем кр
-        qr_photo_id = await ut.generate_and_sand_qr(chat_id=user_id, qr_data=qr_data, caption=text)
+        qr_photo_id = await ut.generate_and_sand_qr(
+            chat_id=user_id,
+            qr_type=Key.QR_TICKET.value,
+            qr_id=ticket_id,
+            caption=text
+        )
 
         await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,

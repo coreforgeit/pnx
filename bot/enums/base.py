@@ -63,6 +63,7 @@ class Action(str, Enum):
 
 # Ключи к редису
 class Key(str, Enum):
+    QR = 'qr'
     QR_BOOK = 'book'
     QR_TICKET = 'ticket'
     ADD_ADMIN = 'add_admin'

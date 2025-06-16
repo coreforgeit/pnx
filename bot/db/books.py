@@ -21,7 +21,8 @@ class Book(Base):
     id: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
     created_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
     updated_at: Mapped[datetime] = mapped_column(sa.DateTime(), server_default=sa.func.now())
-    user_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=True)
+    # user_id: Mapped[int] = mapped_column(sa.BigInteger, nullable=True)
+    user_id: Mapped[int] = mapped_column(sa.BigInteger, sa.ForeignKey('users.id'), nullable=True)
     venue_id: Mapped[int] = mapped_column(sa.Integer, sa.ForeignKey("venues.id"))
     time_book: Mapped[time] = mapped_column(sa.Time())
     date_book: Mapped[date] = mapped_column(sa.Date())
@@ -35,10 +36,15 @@ class Book(Base):
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), default=True)
 
     venue: Mapped["Venue"] = relationship("Venue", backref="bookings")
+    user: Mapped["User"] = relationship("User", backref="bookings")
+
 
     @classmethod
     def _get_query_with_venue(cls):
-        return sa.select(cls).options(joinedload(cls.venue))
+        return sa.select(cls).options(
+            joinedload(cls.venue),
+            joinedload(cls.user)
+        )
 
     def time_str(self) -> str:
         return self.time_book.strftime(conf.time_format)

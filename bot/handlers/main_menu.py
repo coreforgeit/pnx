@@ -45,9 +45,14 @@ async def com_start(msg: Message, state: FSMContext):
 
     if payloads:
         try:
-            key, value = payloads.split('-') if len(payloads.split('-')) == 2 else (None, 0)
+            print(f'payloads: {payloads}')
+            # payloads: qr-book-5772948261-20
+            payloads_list = payloads.split('-')
+            key = payloads_list[0]
+            # key, value = payloads.split('-') if len(payloads.split('-')) == 2 else (None, 0)
 
             if key == Key.ADD_ADMIN.value:
+                value = payloads_list[1]
                 key = f"{Key.ADD_ADMIN.value}{value}"
                 admin_data = ut.get_redis_data(key, del_data=True)
 
@@ -63,9 +68,19 @@ async def com_start(msg: Message, state: FSMContext):
                     await msg.answer('✅ Статус обновлён')
 
             elif key == Key.QR_TICKET.value:
+                value = payloads_list[1]
                 event_id = int(value)
                 await send_selected_event_msg(chat_id=msg.from_user.id, event_id=event_id)
                 return
+
+            elif key == Key.QR.value:
+                user = await User.get_by_id(msg.from_user.id)
+                if user.status == UserStatus.USER.value:
+                    pass
+                else:
+                    # book - 5772948261 - 20
+                    await ut.qr_checking(user_id=msg.from_user.id, key=payloads_list[1], entry_id_str=payloads_list[3])
+                    return
 
         except Exception as e:
             log_error(e)

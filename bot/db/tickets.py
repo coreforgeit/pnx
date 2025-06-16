@@ -46,7 +46,8 @@ class Ticket(Base):
         return (
             sa.select(cls).options(
                 joinedload(cls.event).joinedload(Event.venue),
-                joinedload(cls.option)
+                joinedload(cls.option),
+                joinedload(cls.user)
             )
         )
 

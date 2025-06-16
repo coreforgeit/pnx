@@ -231,7 +231,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     text = f'Ждём вас {data_obj.date_str} в {data_obj.time_str} в {data_obj.venue_name}'
     qr_id = await ut.generate_and_sand_qr(
         chat_id=cb.from_user.id,
-        qr_data=f'{Key.QR_BOOK.value}:{cb.from_user.id}:{book_id}',
+        qr_type=Key.QR_BOOK.value,
+        qr_id=book_id,
         caption=text
     )
 

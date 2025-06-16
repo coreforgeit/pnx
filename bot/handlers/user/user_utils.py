@@ -20,7 +20,7 @@ async def send_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = N
     data = await state.get_data()
     data_obj = BookData(**data)
 
-    data_obj.print_all()
+    # data_obj.print_all()
 
     people_count = data_obj.people_count
     if data_obj.people_count and data_obj.people_count >= 5:

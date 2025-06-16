@@ -7,6 +7,10 @@ from aiogram.client.default import DefaultBotProperties
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
+# from apscheduler.schedulers.asyncio import AsyncIOScheduler
+from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+# from apscheduler.executors.asyncio import AsyncIOExecutor
+
 
 import asyncio
 import redis
@@ -39,6 +43,7 @@ redis_client_1 = redis.StrictRedis(host=conf.redis_host, port=conf.redis_port, d
 scheduler = AsyncIOScheduler(
     jobstores={
         'default': RedisJobStore(host=conf.redis_host, port=conf.redis_port, db=1)
+        # 'default': SQLAlchemyJobStore(url=conf.db_url)
     },
     executors={
         'default': AsyncIOExecutor()
@@ -48,7 +53,6 @@ scheduler = AsyncIOScheduler(
         'max_instances': 3
     },
     timezone=conf.tz
-
 )
 
 
