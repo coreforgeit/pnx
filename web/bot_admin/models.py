@@ -305,8 +305,12 @@ class Payment(models.Model):
 
 
 class AdminLog(models.Model):
-    admin_id = models.BigIntegerField(verbose_name='ID администратора')
-    user_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID пользователя')
+    # admin_id = models.BigIntegerField(verbose_name='ID администратора')
+    # user_id = models.BigIntegerField(null=True, blank=True, verbose_name='ID пользователя')
+    admin = models.ForeignKey('User', on_delete=models.CASCADE, verbose_name='Админ', related_name='logs_admin')
+    user = models.ForeignKey(
+        'User', on_delete=models.CASCADE, verbose_name='Пользователь', null=True, blank=True, related_name='logs_user'
+    )
     action = models.CharField(max_length=255, verbose_name='Действие', choices=admin_action_choice)
     comment = models.TextField(null=True, blank=True, verbose_name='Комментарий')
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
