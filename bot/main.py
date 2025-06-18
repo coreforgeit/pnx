@@ -28,7 +28,7 @@ async def main() -> None:
         await start_schedulers()
     else:
         pass
-        await start_schedulers()
+        # await start_schedulers()
 
     dp.include_router(main_router)
     dp.include_router(admin_router)

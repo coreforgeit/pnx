@@ -15,7 +15,8 @@ class Config:
         application_id = os.getenv('APPLICATION_ID_TEST')
         pay_secret = os.getenv('PAY_SECRET_TEST')
         store_id = os.getenv('STORE_ID_TEST')
-        callback_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
+        # callback_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
+        callback_url = 'https://webhook.site/e0fd0984-9582-43fe-a126-ed73e2d7791f'
 
         # pay_url = os.getenv('PAY_URL')
         # application_id = os.getenv('APPLICATION_ID')
@@ -37,7 +38,8 @@ class Config:
         pay_secret = os.getenv('PAY_SECRET_TEST')
         store_id = os.getenv('STORE_ID_TEST')
 
-        callback_url = os.getenv('CALLBACK_URL')
+        # callback_url = os.getenv('CALLBACK_URL')
+        callback_url = 'https://webhook.site/e0fd0984-9582-43fe-a126-ed73e2d7791f'
 
     test_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
 

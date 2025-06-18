@@ -35,6 +35,7 @@ async def get_pay_token() -> t.Optional[str]:
 
 
 # создаём счёт
+# Тестовая карта: 8600 3036 5537 5959 03/26
 async def create_invoice(
     invoice_id: str,
     amount: int,
@@ -68,20 +69,22 @@ async def create_invoice(
 
     # Удаляем None-поля из payload
     payload = {k: v for k, v in payload.items() if v is not None}
-    # print(url)
-    # print(payload)
+    print(url)
+    print(payload)
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, json=payload) as response:
                 # response.raise_for_status()
                 # print(response.text)
                 data = await response.json()
+                # print(data)
                 if data.get("success"):
 
                     # for k, v in data.items():
                     #     print(f'{k}: {v}')
 
                     # return data["data"]["short_link"]
+                    print(data["data"]["short_link"])
                     return data["data"]["checkout_url"]
                 else:
                     print("Ошибка создания счёта:\n", data)
@@ -110,8 +113,8 @@ async def refund_payment(uuid: str) -> dict | None:
                 if data.get("success"):
                     return data["data"]
                 else:
-                    print("Ошибка возврата:", data)
+                    log_error(f"Ошибка возврата: {data}", wt=False)
         except aiohttp.ClientError as e:
-            print("Ошибка запроса:", e)
+            log_error(e)
 
     return None

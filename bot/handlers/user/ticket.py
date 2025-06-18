@@ -133,6 +133,7 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
         except Exception as e:
             pass
 
+        print('2')
         ticket_id = await Ticket.add(
             event_id=event.id,
             user_id=cb.from_user.id,
@@ -151,6 +152,7 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
             start_row=last_row,
             status=BookStatus.NEW.value
         )
+        print('2')
 
         last_row = row + 1
         await Ticket.update(

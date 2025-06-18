@@ -98,6 +98,8 @@ async def mailing_preview(msg: Message, state: FSMContext):
             book_type=data_obj.book_type
         )
     )
+
+    await msg.answer('✅ Сообщение отправленно')
     # await bot.edit_message_reply_markup(
     #     chat_id=msg.from_user.id,
     #     message_id=data_obj.base_msg_id,

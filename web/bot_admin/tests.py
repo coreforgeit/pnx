@@ -44,6 +44,7 @@ def test_add_ticket_row():
 
 def test_payment():
     url = 'http://127.0.0.1:8000/api/v1/payment/'
+    url = 'http://62.113.102.141/api/v1/payment/'
     payload = {
           "store_id": 6,
           "amount": 10000000,

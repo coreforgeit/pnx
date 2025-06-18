@@ -19,12 +19,14 @@ async def safe_update(worksheet, cell_range, values):
 
     for attempt in range(max_retries):
         try:
+
             return await worksheet.update(cell_range, values)
         except APIError as e:
             if "Quota exceeded" in str(e):
                 print(f"Превышена квота, попытка {attempt+1}/{max_retries}, жду {pause_sec} сек...")
                 await asyncio.sleep(pause_sec)
             else:
+                print(str(e))
                 raise  # другие ошибки не глотаем
     raise Exception("Превышен лимит попыток записи в Google Sheets")
 
