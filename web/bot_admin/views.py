@@ -11,7 +11,7 @@ import json
 from . import utils as ut
 from .serializers import BookSerializer, TicketSerializer, PaymentSerializer
 from .models import Book, Venue, Event, EventOption, Ticket, User, Payment
-from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIENT, bot, DEBUG
+from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIENT, bot, DEBUG, BOT_LINK
 from enums import Key, book_status_inverted_dict, BookStatus
 
 
@@ -167,11 +167,12 @@ class PaymentView(APIView):
                 f"{data['store_id']}{data['invoice_id']}{data['amount']}{PAY_SECRET}".encode()
             ).hexdigest()
 
-            # if expected_sign != data["sign"]:
-            #     return Response(
-            #         {"success": False, "message": "Подпись не совпадает"},
-            #         status=status.HTTP_400_BAD_REQUEST
-            #     )
+            if expected_sign != data["sign"]:
+                logger.warning(f'sign не прошла')
+                # return Response(
+                #     {"success": False, "message": "Подпись не совпадает"},
+                #     status=status.HTTP_400_BAD_REQUEST
+                # )
 
             # Получение данных из Redis
             redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
@@ -201,11 +202,11 @@ class PaymentView(APIView):
                 book_time = ticket.event.time_event
 
                 # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
-                qr_data = f'{conf.bot_link}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
+                qr_data = f'{BOT_LINK}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
 
                 text = ut.get_ticket_text(ticket)
 
-                # создаём qr
+                # создаём и отправляет qr
                 qr_photo_id = ut.generate_and_sand_qr(
                     chat_id=user_id,
                     qr_data=qr_data,
