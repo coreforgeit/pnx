@@ -48,8 +48,8 @@ async def create_invoice(
     :param ofd_items: Список позиций для фискализации
     """
     token = get_pay_token_redis()
-    token = None
-    log_error(f'token_redis:\n{token}', wt=False)
+    # token = None
+    # log_error(f'token_redis:\n{token}', wt=False)
     if not token:
         token = await get_pay_token()
         # log_error(f'token:\n{token}', wt=False)
@@ -69,8 +69,8 @@ async def create_invoice(
 
     # Удаляем None-поля из payload
     payload = {k: v for k, v in payload.items() if v is not None}
-    print(url)
-    print(payload)
+    # print(url)
+    # print(payload)
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, json=payload) as response:

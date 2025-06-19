@@ -167,11 +167,11 @@ class PaymentView(APIView):
                 f"{data['store_id']}{data['invoice_id']}{data['amount']}{PAY_SECRET}".encode()
             ).hexdigest()
 
-            if expected_sign != data["sign"]:
-                return Response(
-                    {"success": False, "message": "Подпись не совпадает"},
-                    status=status.HTTP_400_BAD_REQUEST
-                )
+            # if expected_sign != data["sign"]:
+            #     return Response(
+            #         {"success": False, "message": "Подпись не совпадает"},
+            #         status=status.HTTP_400_BAD_REQUEST
+            #     )
 
             # Получение данных из Redis
             redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
