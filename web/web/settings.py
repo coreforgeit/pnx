@@ -14,7 +14,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY')
 PAY_SECRET = os.getenv('PAY_SECRET')
 
-DEBUG = os.getenv('DEBUG')
+DEBUG = bool(int(os.getenv('DEBUG')))
 
 REDIS_HOST = os.getenv('REDIS_HOST')
 REDIS_PORT = int(os.getenv('REDIS_PORT'))
@@ -28,7 +28,7 @@ if DEBUG:
     GOOGLE_KEY_PATH = os.path.join('data', 'cred.json')
 
 else:
-    ALLOWED_HOSTS = ['localhost', '127.0.0.1', 'nginx', '89.111.155.92']
+    ALLOWED_HOSTS = ['*']
     BOT_TOKEN = os.getenv('TOKEN')
     GOOGLE_KEY_PATH = os.path.join('data', 'cred.json')
 

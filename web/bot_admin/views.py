@@ -199,15 +199,20 @@ class PaymentView(APIView):
                 ticket = Ticket.get_by_id(ticket_id)
                 book_date = ticket.event.date_event
                 book_time = ticket.event.time_event
-                qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
+
+                # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
+                qr_data = f'{conf.bot_link}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
+
                 text = ut.get_ticket_text(ticket)
 
+                # создаём qr
                 qr_photo_id = ut.generate_and_sand_qr(
                     chat_id=user_id,
                     qr_data=qr_data,
                     caption=text,
                 )
 
+                # обновляем таблицу
                 ut.update_book_status_gs(
                     spreadsheet_id=ticket.event.venue.event_gs_id,
                     sheet_name=ticket.event.gs_page,
@@ -215,6 +220,7 @@ class PaymentView(APIView):
                     row=ticket.gs_row,
                 )
 
+                # обновляем базу
                 Ticket.update(
                     ticket_id=ticket_id,
                     qr_id=qr_photo_id,
@@ -223,6 +229,7 @@ class PaymentView(APIView):
                     is_active=True
                 )
 
+                # письмо админам
                 bot.send_message(
                     chat_id=ticket.event.venue.admin_chat_id,
                     text=f"<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>",
