@@ -199,18 +199,17 @@ class PaymentView(APIView):
             book_date = None
             book_time = None
             for ticket_id in ticket_id_list:
-                ticket = Ticket.get_by_id(ticket_id)
-                book_date = ticket.event.date_event
-                book_time = ticket.event.time_event
-
                 # обновляем базу
                 Ticket.update(
                     ticket_id=ticket_id,
-                    # qr_id=qr_photo_id,
                     status=BookStatus.CONFIRMED.value,
                     pay_id=data["uuid"],
                     is_active=True
                 )
+
+                ticket = Ticket.get_by_id(ticket_id)
+                book_date = ticket.event.date_event
+                book_time = ticket.event.time_event
 
                 # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
                 qr_data = f'{BOT_LINK}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'

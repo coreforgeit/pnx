@@ -78,7 +78,14 @@ class Book(models.Model):
     created_at = models.DateTimeField(auto_now_add=True, verbose_name='Создано')
     updated_at = models.DateTimeField(auto_now=True, verbose_name='Обновлено')
 
-    user_id = models.BigIntegerField(verbose_name='ID пользователя', null=True)
+    # user_id = models.BigIntegerField(verbose_name='ID пользователя', null=True)
+    user = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='books',
+        null=True
+    )
     venue = models.ForeignKey(
         'Venue',
         on_delete=models.CASCADE,
@@ -330,7 +337,14 @@ class AdminLog(models.Model):
 class LogError(models.Model):
     id = models.AutoField(primary_key=True, verbose_name="ID")
     created_at = models.DateTimeField( verbose_name="Дата создания")
-    user_id = models.BigIntegerField(verbose_name="ID пользователя")
+    # user_id = models.BigIntegerField(verbose_name="ID пользователя")
+    user = models.ForeignKey(
+        'User',
+        on_delete=models.CASCADE,
+        verbose_name='Пользователь',
+        related_name='log_errors',
+        null=True
+    )
     traceback = models.TextField(verbose_name="Traceback ошибки")
     message = models.TextField(verbose_name="Сообщение об ошибке")
     comment = models.CharField(max_length=255, blank=True, null=True, verbose_name="Комментарий")

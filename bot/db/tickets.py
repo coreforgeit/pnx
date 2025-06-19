@@ -147,7 +147,10 @@ class Ticket(Base):
         query = cls._get_full_ticket_query()
 
         if user_id:
-            query = query.where(cls.user_id == user_id)
+            query = (
+                query.where(cls.user_id == user_id)
+                .where(sa.or_(cls.status == BookStatus.NEW.value, cls.status == BookStatus.CONFIRMED.value))
+            )
 
         if event_id:
             query = query.where(cls.event_id == event_id)
@@ -174,7 +177,7 @@ class Ticket(Base):
                 sa.func.count(cls.id).label("ticket_count")
             )
             .join(Event, cls.event_id == Event.id)
-            .where(cls.is_active.is_(True), Event.is_active.is_(True))
+            .where(Event.is_active.is_(True))
             .group_by(cls.event_id, Event.name)
             .order_by(Event.name)
         )

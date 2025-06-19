@@ -28,15 +28,15 @@ class Config:
         bot_username = 'Ponaexali_bot'
         google_key_path = os.path.join('data', 'cred.json')
 
-        # pay_url = os.getenv('PAY_URL')
-        # application_id = os.getenv('APPLICATION_ID')
-        # pay_secret = os.getenv('PAY_SECRET')
-        # store_id = os.getenv('STORE_ID')
+        pay_url = os.getenv('PAY_URL')
+        application_id = os.getenv('APPLICATION_ID')
+        pay_secret = os.getenv('PAY_SECRET')
+        store_id = os.getenv('STORE_ID')
 
-        pay_url = os.getenv('PAY_URL_TEST')
-        application_id = os.getenv('APPLICATION_ID_TEST')
-        pay_secret = os.getenv('PAY_SECRET_TEST')
-        store_id = os.getenv('STORE_ID_TEST')
+        # pay_url = os.getenv('PAY_URL_TEST')
+        # application_id = os.getenv('APPLICATION_ID_TEST')
+        # pay_secret = os.getenv('PAY_SECRET_TEST')
+        # store_id = os.getenv('STORE_ID_TEST')
 
         # callback_url = os.getenv('CALLBACK_URL')
         callback_url = 'http://62.113.102.141/api/v1/payment/'

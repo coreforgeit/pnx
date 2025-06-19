@@ -21,7 +21,7 @@ class VenueAdmin(ModelAdmin):
 
 @admin.register(Book)
 class BookAdmin(ModelAdmin):
-    list_display = ('date_book', 'time_book', 'people_count', 'venue', 'user_id', 'status', 'is_active')
+    list_display = ('date_book', 'time_book', 'people_count', 'venue', 'user', 'status', 'is_active')
     list_filter = ('venue', 'date_book', 'status', 'is_active')
     search_fields = ('comment', )
     readonly_fields = ('created_at', 'updated_at', 'qr_id')
@@ -38,7 +38,7 @@ class EventOptionInline(TabularInline):
 class TicketInline(TabularInline):
     model = Ticket
     extra = 0
-    fields = ('user', 'option', 'status', 'is_active')
+    fields = ('user', 'option', 'status', 'id', 'is_active')
     readonly_fields = ('created_at', 'updated_at')
     show_change_link = True
 
@@ -62,7 +62,7 @@ class EventOptionAdmin(ModelAdmin):
 
 @admin.register(Ticket)
 class TicketAdmin(ModelAdmin):
-    list_display = ('option', 'event', 'user', 'status', 'is_active')
+    list_display = ('option', 'event', 'user', 'status', 'id', 'is_active')
     list_filter = ('event', 'option', 'status', 'is_active')
     search_fields = ('user__full_name', 'user__username', 'qr_id', 'gs_sheet')
     readonly_fields = ('created_at', 'updated_at', 'pay_id', 'gs_sheet', 'gs_page', 'gs_row', 'qr_id')
@@ -73,14 +73,14 @@ class TicketAdmin(ModelAdmin):
 class AdminLogAdmin(ModelAdmin):
     list_display = ('created_at', 'admin_id', 'user_id', 'action')
     list_filter = ('action',)
-    search_fields = ('admin_id', 'user_id')
+    search_fields = ('admin', 'user')
     ordering = ("-created_at",)
     readonly_fields = ('created_at', 'admin_id', 'user_id', 'action', 'comment')
 
 
 @admin.register(LogError)
 class ErrorJournalAdmin(ModelAdmin):
-    list_display = ("id", "created_at", "user_id", "message", "comment")
+    list_display = ("created_at", "user", "message", "comment")
     search_fields = ("user_id", "message", "traceback")
     list_filter = ("created_at",)
     ordering = ("-created_at",)

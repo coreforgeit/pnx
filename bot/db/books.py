@@ -223,11 +223,7 @@ class Book(Base):
 
         query = cls._get_query_with_venue()
         query = query.where(cls.id == book_id)
-        # query = (
-        #     sa.select(cls)
-        #     .options(joinedload(cls.venue))  # подтягиваем связанную модель
-        #     .where(cls.id == book_id)
-        # )
+
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
@@ -241,6 +237,7 @@ class Book(Base):
             sa.select(cls)
             .options(joinedload(cls.venue))  # подтягиваем связанную модель
             .where(cls.user_id == user_id)
+            .where(sa.or_(cls.status == BookStatus.NEW.value, cls.status == BookStatus.CONFIRMED.value))
         )
 
         async with begin_connection() as conn:

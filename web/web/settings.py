@@ -12,8 +12,8 @@ from zoneinfo import ZoneInfo
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = os.getenv('SECRET_KEY')
-# PAY_SECRET = os.getenv('PAY_SECRET')
-PAY_SECRET = os.getenv('PAY_SECRET_TEST')
+PAY_SECRET = os.getenv('PAY_SECRET')
+# PAY_SECRET = os.getenv('PAY_SECRET_TEST')
 
 DEBUG = bool(int(os.getenv('DEBUG')))
 

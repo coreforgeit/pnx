@@ -8,12 +8,12 @@ import asyncio
 import keyboards as kb
 import utils as ut
 from .user_utils import send_main_settings_msg, send_main_book_msg
-from db import User, Book, Ticket
+from db import User, Book, Ticket, AdminLog
 from settings import conf, log_error
 from init import user_router, bot
 from data import texts_dict
 from google_api import update_book_status_gs
-from enums import UserCB, Key, Action, UserState, BookData, BookStep, BookStatus
+from enums import UserCB, Key, Action, UserState, BookData, BookStep, BookStatus, UserStatus, AdminAction
 
 
 # проверяет подписку, в случае удачи пропускает
@@ -86,6 +86,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
             f'❌ Отмена брони пользователем {cb.from_user.full_name}\n\n'
             f'{book_text}'
         )
+        book_user_id = book.user_id
 
     elif type_qr == Key.QR_TICKET.value:
         """тут ещё нужно добавить возврат средств"""
@@ -110,7 +111,8 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
             f'❌ Возврат билета пользователем {cb.from_user.full_name}\n\n'
             f'{ticket_text}'
         )
-        # await bot.send_message(chat_id=ticket.event.venue.admin_chat_id, text=text)
+        book_user_id = ticket.user_id
+
 
     else:
         await cb.message.answer(f'<b>❌ Ошибка запроса</b>')
@@ -123,6 +125,10 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
 
     await cb.message.edit_text(user_text)
     await bot.send_message(chat_id=admin_chat_id, text=admin_text)
+
+    user = await User.get_by_id(cb.from_user.id)
+    canceled_user = cb.from_user.id if user.status == UserStatus.USER.value else book_user_id
+    await AdminLog.add(admin_id=canceled_user, action=AdminAction.PAY_CANCELED.value, user_id=book_user_id)
 
 
 # проверяет подписку, в случае удачи пропускает
