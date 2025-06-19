@@ -23,13 +23,14 @@ async def start_schedulers():
         replace_existing=True,
     )
 
-    scheduler.add_job(
-        func=print_scheduled_jobs,
-        trigger=IntervalTrigger(hours=1),
-        id='print_scheduled_jobs',
-        replace_existing=True,
-    )
+    # scheduler.add_job(
+    #     func=print_scheduled_jobs,
+    #     trigger=IntervalTrigger(hours=1),
+    #     id='print_scheduled_jobs',
+    #     replace_existing=True,
+    # )
     scheduler.start()
+    await update_pay_token()
     print_scheduled_jobs()
 
 
