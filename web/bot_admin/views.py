@@ -175,6 +175,8 @@ class PaymentView(APIView):
                 # )
 
             # Получение данных из Redis
+            logger.warning(f'sign прошла')
+
             redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
             raw = REDIS_CLIENT.get(redis_key)
 
@@ -201,6 +203,15 @@ class PaymentView(APIView):
                 book_date = ticket.event.date_event
                 book_time = ticket.event.time_event
 
+                # обновляем базу
+                Ticket.update(
+                    ticket_id=ticket_id,
+                    # qr_id=qr_photo_id,
+                    status=BookStatus.CONFIRMED.value,
+                    pay_id=data["uuid"],
+                    is_active=True
+                )
+
                 # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
                 qr_data = f'{BOT_LINK}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
 
@@ -213,21 +224,15 @@ class PaymentView(APIView):
                     caption=text,
                 )
 
+                # обновляем базу добавляем qr
+                Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id,)
+
                 # обновляем таблицу
                 ut.update_book_status_gs(
                     spreadsheet_id=ticket.event.venue.event_gs_id,
                     sheet_name=ticket.event.gs_page,
                     status=BookStatus.CONFIRMED.value,
                     row=ticket.gs_row,
-                )
-
-                # обновляем базу
-                Ticket.update(
-                    ticket_id=ticket_id,
-                    qr_id=qr_photo_id,
-                    status=BookStatus.CONFIRMED.value,
-                    pay_id=data["uuid"],
-                    is_active=True
                 )
 
                 # письмо админам

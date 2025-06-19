@@ -19,7 +19,7 @@ def generate_and_sand_qr(chat_id: int, qr_data: str, caption: str = None) -> str
     qr = segno.make_qr(qr_data, error="H")
 
     buffer = BytesIO()
-    qr.save(buffer, kind="png", scale=12, dark='green')
+    qr.save(buffer, kind="png", scale=4, dark='green')
     buffer.seek(0)
 
     input_file = InputFile(buffer, file_name=f"{qr_data}.png")

@@ -4,7 +4,7 @@ from enums import book_status_dict
 
 
 def get_book_text(book: Book) -> str:
-    print(f'ticket.user: {book.user}')
+    # print(f'ticket.user: {book.user}')
     full_name_row = f'{book.user.full_name} @{book.user.username}' if book.user.username else f'{book.user.full_name}'
 
     return (
@@ -25,7 +25,7 @@ def get_ticket_text(ticket: Ticket) -> str:
             f'{ticket.user.full_name} @{ticket.user.username}' if ticket.user.username else f'{ticket.user.full_name}'
     return (
         f'#{ticket.id}\n'
-        f'{full_name_row}'
+        f'{full_name_row}\n'
         f'<b>{ticket.event.name}\n'
         f'📍 {ticket.event.venue.name}\n'
         f'⏰ {ticket.event.date_str()} {ticket.event.time_str()}\n'
