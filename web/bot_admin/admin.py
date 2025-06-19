@@ -71,11 +71,11 @@ class TicketAdmin(ModelAdmin):
 
 @admin.register(AdminLog)
 class AdminLogAdmin(ModelAdmin):
-    list_display = ('created_at', 'admin_id', 'user_id', 'action')
+    list_display = ('created_at', 'admin', 'user', 'action')
     list_filter = ('action',)
     search_fields = ('admin', 'user')
     ordering = ("-created_at",)
-    readonly_fields = ('created_at', 'admin_id', 'user_id', 'action', 'comment')
+    readonly_fields = ('created_at', 'admin', 'user', 'action', 'comment')
 
 
 @admin.register(LogError)

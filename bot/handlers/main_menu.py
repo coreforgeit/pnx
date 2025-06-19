@@ -21,7 +21,11 @@ from enums import UserCB, MenuCommand, Key, UserStatus
 
 # Команда старт
 @main_router.message(
-    lambda msg: msg.chat.type == ChatType.GROUP.value and msg.text and msg.text.isdigit() and len(msg.text) == 5
+    lambda msg:
+    (msg.chat.type == ChatType.GROUP.value or msg.chat.type == ChatType.SUPERGROUP.value)
+    and msg.text
+    and msg.text.isdigit()
+    and len(msg.text) == 5
 )
 async def group_msg(msg: Message):
     venue = await Venue.get_by_admin_chat(chat_id=int(msg.text))
