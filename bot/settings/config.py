@@ -45,6 +45,7 @@ class Config:
     test_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
 
     bot_link = f'https://t.me/{bot_username}?start='
+
     db_host = os.getenv('DB_HOST')
     db_port = os.getenv('DB_PORT')
     db_name = os.getenv('POSTGRES_DB')
