@@ -11,17 +11,16 @@ class Config:
         bot_username = 'tushchkan_test_3_bot'
         google_key_path = os.path.join('data', 'cred.json')
 
-        pay_url = os.getenv('PAY_URL_TEST')
-        application_id = os.getenv('APPLICATION_ID_TEST')
-        pay_secret = os.getenv('PAY_SECRET_TEST')
-        store_id = os.getenv('STORE_ID_TEST')
-        # callback_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
+        # pay_url = os.getenv('PAY_URL_TEST')
+        # application_id = os.getenv('APPLICATION_ID_TEST')
+        # pay_secret = os.getenv('PAY_SECRET_TEST')
+        # store_id = os.getenv('STORE_ID_TEST')
         callback_url = 'https://webhook.site/e0fd0984-9582-43fe-a126-ed73e2d7791f'
 
-        # pay_url = os.getenv('PAY_URL')
-        # application_id = os.getenv('APPLICATION_ID')
-        # pay_secret = os.getenv('PAY_SECRET')
-        # store_id = os.getenv('STORE_ID')
+        pay_url = os.getenv('PAY_URL')
+        application_id = os.getenv('APPLICATION_ID')
+        pay_secret = os.getenv('PAY_SECRET')
+        store_id = os.getenv('STORE_ID')
 
     else:
         token = os.getenv("TOKEN")

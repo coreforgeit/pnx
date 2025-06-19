@@ -13,8 +13,8 @@ async def get_pay_token() -> t.Optional[str]:
         "application_id": conf.application_id,
         "secret": conf.pay_secret,
     }
-    log_error(url, wt=False)
-    log_error(payload, wt=False)
+    # log_error(url, wt=False)
+    # log_error(payload, wt=False)
 
     async with aiohttp.ClientSession() as session:
         try:
@@ -64,7 +64,7 @@ async def create_invoice(
     async with aiohttp.ClientSession() as session:
         try:
             async with session.post(url, headers=headers, json=payload) as response:
-
+                log_error(f"response:\n{response.text()}", wt=False)
                 data = await response.json()
                 if data.get("success"):
 

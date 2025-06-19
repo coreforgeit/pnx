@@ -6,7 +6,7 @@ import keyboards as kb
 from init import scheduler, bot, redis_client_1
 from settings import log_error, conf
 from .text_utils import get_ticket_text, get_book_text
-from .payment_ut import get_pay_token_redis
+from .payment_ut import get_pay_token
 from .redis_ut import save_pay_token_redis
 from google_api import add_ticket_row_to_registration, update_book_status_gs
 from db import User, Book, Ticket, Event
@@ -30,7 +30,7 @@ async def start_schedulers():
     #     replace_existing=True,
     # )
     scheduler.start()
-    await update_pay_token()
+    # await update_pay_token()
     print_scheduled_jobs()
 
 
@@ -251,7 +251,7 @@ def create_cancel_ticket(user_id: int, ticket_id_list: list[int]):
 
 
 async def update_pay_token():
-    token = get_pay_token_redis()
+    token = await get_pay_token()
     if token:
         save_pay_token_redis(token)
 

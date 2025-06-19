@@ -26,7 +26,6 @@ def save_pay_token_redis(token: str) -> None:
     # redis_client.setex(name=f'{key}-{redis_hash}', time=86400, value=json.dumps(data))
 
 
-
 # возвращает данные
 def get_pay_token_redis() -> str | None:
     raw_token = redis_client.get(Key.PAY_TOKEN.value)
