@@ -58,6 +58,7 @@ async def create_invoice(
         "return_error_url": conf.bot_link,
         "ofd": ofd_items,
     }
+    log_error(f"response:\n{token.text}", wt=False)
 
     # Удаляем None-поля из payload
     payload = {k: v for k, v in payload.items() if v is not None}

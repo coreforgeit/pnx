@@ -30,7 +30,7 @@ async def start_schedulers():
     #     replace_existing=True,
     # )
     scheduler.start()
-    # await update_pay_token()
+    await update_pay_token()
     print_scheduled_jobs()
 
 
@@ -254,6 +254,9 @@ async def update_pay_token():
     token = await get_pay_token()
     if token:
         save_pay_token_redis(token)
+        log_error(f"Токен обновлён при запуске:\n{token}", wt=False)
+    else:
+        log_error(f"Токен не обновлён", wt=False)
 
 
 async def deactivate_event(event_id: int):
