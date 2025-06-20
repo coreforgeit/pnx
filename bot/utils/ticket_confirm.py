@@ -9,8 +9,9 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
     ticket_id = 0
     ticket = None
     for ticket_id in ticket_id_list:
+        await Ticket.update(ticket_id=ticket_id, status=BookStatus.CONFIRMED.value, is_active=True)
+
         ticket = await Ticket.get_full_ticket(ticket_id)
-        # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
         text = ut.get_ticket_text(ticket)
         # сохраняем кр
         qr_photo_id = await ut.generate_and_sand_qr(
@@ -28,7 +29,7 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
             book_type=Key.QR_TICKET.value
         )
 
-        await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id, status=BookStatus.CONFIRMED.value, is_active=True)
+        await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id)
 
         text = f'<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>'
         await bot.send_message(chat_id=ticket.event.venue.admin_chat_id, text=text)
@@ -40,3 +41,12 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
             book_time=ticket.event.time_event,
             book_type=Key.QR_TICKET.value
         )
+
+        # закрывающее сообщение
+        if ticket.event.close_msg:
+            entities = ut.recover_entities(ticket.event.close_msg_entities)
+            await bot.send_message(chat_id=user_id, text=ticket.event.close_msg, entities=entities, parse_mode=None)
+
+
+
+

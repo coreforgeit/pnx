@@ -77,8 +77,19 @@ async def ticket_place(cb: CallbackQuery, state: FSMContext):
 
     data_obj.step = TicketStep.COUNT.value
 
+    # если опция бесплатная, то ограничевам билеты
+    if option.price == 0:
+        await cb.answer(
+            f'⁉️ Обратите внимание, что на бесплатные мероприятия можно взять не более {conf.max_free_ticket} билетов',
+            show_alert=True
+        )
+        users_tickets = await Ticket.get_all(user_id=cb.from_user.id, option_id=option.id)
+        empty_place = conf.max_free_ticket - len(users_tickets)
+    else:
+        empty_place = option.empty_place
+
     await state.update_data(data=asdict(data_obj))
-    await send_main_ticket_msg(state, markup=kb.get_ticket_place_kb(option.empty_place))
+    await send_main_ticket_msg(state, markup=kb.get_ticket_place_kb(empty_place))
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_CONFIRM.value))
@@ -217,13 +228,6 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
     option_selected: EventOption = data_obj.option
     option_actual = await EventOption.get_by_id(option_selected.id)
 
-    # если места закончились, пока шло бронирование
-    # if not option_actual or data_obj.count_place > option_actual.empty_place:
-    #     empty_place = option_actual.empty_place if option_actual else 0
-    #     text = f'❗️ К сожалению осталось только {empty_place} мест'
-    #     await ut.send_text_alert(chat_id=cb.from_user.id, text=text)
-    #     return
-
     amount = option_actual.price * data_obj.count_place
     venue = await Venue.get_by_id(event.venue_id)
 
@@ -236,12 +240,7 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
         user_id=cb.from_user.id,
         full_name=cb.from_user.full_name,
     )
-    # redis_data = {
-    #     'ticket_id_list': data_obj.ticket_id_list,
-    #     'event_id': event.id,
-    #     'user_id': cb.from_user.id,
-    #     'full_name': cb.from_user.full_name,
-    # }
+
     redis_hash = ut.save_redis_data(key=Key.QR_TICKET.value, data=asdict(redis_data))
 
     username_text = f'(@{cb.from_user.username})' if cb.from_user.username else ''

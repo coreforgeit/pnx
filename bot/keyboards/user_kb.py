@@ -120,7 +120,6 @@ def get_ticket_place_kb(empty_pace: int) -> InlineKeyboardMarkup:
     row_len = 4
     for i in range(1, 9):
         if i > empty_pace:
-            # row_len = i / 2 if i % 2 == 0 else math.ceil(i / 2)
             row_len = (i + 1) // 2
             break
         kb.button(text=f'{i}', callback_data=f'{UserCB.TICKET_CONFIRM.value}:{i}')

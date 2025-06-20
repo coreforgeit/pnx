@@ -32,18 +32,11 @@ class Config:
         pay_secret = os.getenv('PAY_SECRET')
         store_id = os.getenv('STORE_ID')
 
-        # pay_url = os.getenv('PAY_URL_TEST')
-        # application_id = os.getenv('APPLICATION_ID_TEST')
-        # pay_secret = os.getenv('PAY_SECRET_TEST')
-        # store_id = os.getenv('STORE_ID_TEST')
 
         # callback_url = os.getenv('CALLBACK_URL')
         callback_url = 'http://62.113.102.141/api/v1/payment/'
 
-        # callback_url = 'https://webhook.site/e0fd0984-9582-43fe-a126-ed73e2d7791f'
-
-    test_url = 'https://webhook.site/ad0a6a49-b151-44ff-8bdc-8e1a4709bbc4'
-
+    max_free_ticket = 3
     bot_link = f'https://t.me/{bot_username}?start='
 
     db_host = os.getenv('DB_HOST')

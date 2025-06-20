@@ -91,15 +91,13 @@ async def send_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup =
     data = await state.get_data()
     data_obj = TicketData(**data)
 
-    data_obj.print_all()
+    if conf.debug:
+        data_obj.print_all()
 
-    # event = Event(**data_obj.event) if data_obj.event else Event()
     event = data_obj.event if data_obj.event else Event()
 
     row_list = [
         f"<b>{event.name}</b>\n",
-        # f"Дата: {data_obj.date_str}\n",
-        # f"Время: {data_obj.time_str}\n",
         f"Категория: {data_obj.option.name if data_obj.option else None}\n",
         f"Количество билетов: {data_obj.count_place}\n",
     ]

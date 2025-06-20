@@ -20,6 +20,7 @@ class BaseData:
     step: str = None
 
     def print_all(self):
+
         print('>>>')
         for key, value in asdict(self).items():
             print(f"{key}: {value}")
@@ -66,6 +67,7 @@ class EventStep(str, Enum):
     VENUE = 'venue'
     NAME = 'name'
     COVER = 'cover'
+    CLOSE_MSG = 'close_msg'
     DATE = 'date'
     TIME = 'time'
     OPTION_NAME = 'option_name'
@@ -79,6 +81,7 @@ event_text_dict = {
     EventStep.VENUE.value: 'Выберите заведение',
     EventStep.NAME.value: 'Отправьте название мероприятия (до 50 символов)',
     EventStep.COVER.value: 'Отправьте обложку мероприятия с текстом и описанием',
+    EventStep.CLOSE_MSG.value: 'Отправьте закрывающее сообщение (только текст)',
     EventStep.DATE.value: 'День проведения\nВыберите из кнопок или отправьте в формате ДД:ММ:ГГГГ',
     EventStep.TIME.value: 'Время проведения\nВыберите из кнопок или отправьте в формате ЧЧ:ММ',
     EventStep.OPTION_NAME.value: 'Название категории билета',
@@ -109,6 +112,9 @@ class EventData(BaseData):
     event_id: int = None
     end: int = 0
     pade_id: int = 0
+
+    close_msg: str = None
+    close_msg_entities: str = None
 
 
 @dataclass

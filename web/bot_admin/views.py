@@ -196,6 +196,7 @@ class PaymentView(APIView):
             # Подтверждение билетов (аналог confirm_tickets)
 
             ticket_id = None
+            ticket = None
             book_date = None
             book_time = None
             for ticket_id in ticket_id_list:
@@ -239,7 +240,6 @@ class PaymentView(APIView):
                     chat_id=ticket.event.venue.admin_chat_id,
                     text=f"<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>",
                 )
-
             # напоминалка
             ut.create_book_notice(
                 book_id=ticket_id,
@@ -267,25 +267,20 @@ class PaymentView(APIView):
             # Можно удалить данные из Redis, если больше не нужны
             REDIS_CLIENT.delete(redis_key)
 
+            # закрывающее сообщение
+            if ticket and ticket.event.close_msg:
+                entities = ut.recover_entities(ticket.event.close_msg_entities)
+                bot.send_message(
+                    chat_id=ticket.user.id,
+                    text=ticket.event.close_msg,
+                    entities=entities,
+                    parse_mode=None
+                )
+                # await bot.send_message(chat_id=user_id, text=ticket.event.close_msg, entities=entities)
+
+
             return Response({"success": True}, status=status.HTTP_200_OK)
         except Exception as e:
             logger.exception(e, exc_info=True)
             return Response({"success": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-# redis_key = f"{Key.PAY_DATA.value}-{data['invoice_id']}"
-#                 redis_data: dict = {
-#                     'user_id': 524275902,
-#                     'full_name': 'Рус',
-#                     'ticket_id_list': [39],
-#                     'data': [
-#                         {
-#                             'vat': 12,
-#                             'price': 100000,
-#                             'qty': 1,
-#                             'name': 'Ticket-39',
-#                             'package_code': '39',
-#                             'mxik': '10202001002000000',
-#                             'total': 100000
-#                         }
-#                     ]
-#                 }

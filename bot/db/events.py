@@ -26,8 +26,10 @@ class Event(Base):
     entities: Mapped[str] = mapped_column(sa.Text(), nullable=True)
     photo_id: Mapped[str] = mapped_column(sa.String(), nullable=True)
     gs_page: Mapped[int] = mapped_column(sa.BigInteger(), nullable=True)
-    # is_come: Mapped[bool] = mapped_column(sa.Boolean(), default=False)
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), server_default=sa.true())
+
+    close_msg: Mapped[str] = mapped_column(sa.Text(), nullable=True)
+    close_msg_entities: Mapped[str] = mapped_column(sa.Text(), nullable=True)
 
     venue: Mapped["Venue"] = relationship("Venue", backref="event")
 
@@ -48,6 +50,8 @@ class Event(Base):
             text: str,
             entities: str,
             photo_id: str,
+            close_msg: str,
+            close_msg_entities: str,
             event_id: int | None = None  # опциональный ID для обновления
     ) -> int:
         """Добавляет или обновляет событие"""
@@ -63,6 +67,8 @@ class Event(Base):
             "text": text,
             "entities": entities,
             "photo_id": photo_id,
+            "close_msg": close_msg,
+            "close_msg_entities": close_msg_entities,
             "created_at": now,
             "updated_at": now,
         }
@@ -85,7 +91,9 @@ class Event(Base):
                     "name": name,
                     "text": text,
                     "entities": entities,
-                    "photo_id": photo_id
+                    "photo_id": photo_id,
+                    "close_msg": close_msg,
+                    "close_msg_entities": close_msg_entities,
                 }
             )
         )

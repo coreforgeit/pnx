@@ -58,6 +58,7 @@ async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMa
         f'{data_obj.name}\n',
         f'Дата: {data_obj.date_str}\n',
         f'Время: {data_obj.time_str}\n',
+        f'Закрывающее сообщение (без разметки):\n {data_obj.close_msg}\n',
     ]
     bottom_text = ''.join(row for row in row_list if 'None' not in row).strip()
 

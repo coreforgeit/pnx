@@ -164,3 +164,17 @@ def update_book_status_gs(
             else:
                 raise  # другие ошибки не глотаем
     raise Exception("Превышен лимит попыток записи в Google Sheets")
+
+
+# восстанавливает сущности
+def recover_entities(entities_str: t.Optional[str]) -> list[MessageEntity]:
+    if not entities_str:
+        return []
+
+    entities_list = []
+    entities: list[dict] = json.loads(entities_str)
+    if entities:
+        for entity in entities:
+            entities_list.append(MessageEntity(**entity))
+
+    return entities_list

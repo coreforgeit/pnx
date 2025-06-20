@@ -43,6 +43,13 @@ def get_event_back_kb(cb: str) -> InlineKeyboardMarkup:
     return kb.adjust(1).as_markup()
 
 
+# пропустить последнее сообщение
+def get_skip_close_msg_kb() -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='Пропустить', callback_data=f'{AdminCB.EVENT_CLOSE_MSG.value}')
+    return kb.adjust(1).as_markup()
+
+
 # Кнопки выбора времени
 def get_event_date_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
@@ -76,6 +83,7 @@ def get_event_end_kb(event_id: int = 0) -> InlineKeyboardMarkup:
     kb.button(text='🗑 Удалить опцию', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.OPTION_DEL.value}')
     kb.button(text='🖍 Изменить место проведения', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.VENUE.value}')
     kb.button(text='🖍 Изменить обложку', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.COVER.value}')
+    kb.button(text='🖍 Изменить закрываеющее сообщение', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.CLOSE_MSG.value}')
     kb.button(text='🖍 Изменить название', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.NAME.value}')
     kb.button(text='🖍 Изменить дату', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.DATE.value}')
     kb.button(text='🖍 Изменить время', callback_data=f'{AdminCB.EVENT_EDIT.value}:{EventStep.TIME.value}')

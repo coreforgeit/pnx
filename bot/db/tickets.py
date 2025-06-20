@@ -131,10 +131,12 @@ class Ticket(Base):
         return max_row + 1 if max_row else 2
 
     @classmethod
-    async def get_all(cls, user_id: int = None) -> t.Optional[list[t.Self]]:
+    async def get_all(cls, user_id: int = None, option_id: int = None) -> t.Optional[list[t.Self]]:
         query = sa.select(cls)
         if user_id:
             query = query.where(cls.user_id == user_id)
+        if option_id:
+            query = query.where(cls.option_id == option_id)
 
         async with begin_connection() as conn:
             result = await conn.execute(query)

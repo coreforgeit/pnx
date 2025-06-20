@@ -77,10 +77,22 @@ async def event_msg_data(msg: Message, state: FSMContext):
         entities = msg.entities or msg.caption_entities
         text = msg.text or msg.caption
 
-        data_obj.step = EventStep.DATE.value
+        data_obj.step = EventStep.CLOSE_MSG.value
         data_obj.photo_id = msg.photo[-1].file_id if msg.photo else None
         data_obj.text = text[:600]
         data_obj.entities = ut.save_entities(entities)
+        markup = kb.get_skip_close_msg_kb()
+
+    elif data_obj.step == EventStep.CLOSE_MSG.value:
+        if msg.content_type != ContentType.TEXT.value:
+            await ut.send_text_alert(chat_id=msg.chat.id, text='❌ Может быть только текст')
+            return
+
+        data_obj.step = EventStep.DATE.value
+        data_obj.close_msg = msg.text
+        data_obj.close_msg_entities = ut.save_entities(msg.entities)
+
+        data_obj.step = EventStep.DATE.value
         markup = kb.get_event_date_kb()
 
     elif data_obj.step == EventStep.DATE.value:
@@ -168,6 +180,19 @@ async def event_msg_data(msg: Message, state: FSMContext):
 
 
 # записывает дату
+@admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_CLOSE_MSG.value))
+async def event_close_msg(cb: CallbackQuery, state: FSMContext):
+    data = await state.get_data()
+    data_obj = EventData(**data)
+
+    data_obj.step = EventStep.DATE.value
+    await state.update_data(data=asdict(data_obj))
+
+    markup = kb.get_event_date_kb()
+    await send_main_manage_event_msg(state, markup=markup)
+
+
+# записывает дату
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_DATE.value))
 async def event_date(cb: CallbackQuery, state: FSMContext):
     _, date_str = cb.data.split(':')
@@ -227,6 +252,9 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
     elif step == EventStep.COVER.value:
         markup = kb.get_event_back_kb(AdminCB.EVENT_START.value)
+
+    elif step == EventStep.CLOSE_MSG.value:
+        markup = kb.get_skip_close_msg_kb()
 
     elif step == EventStep.DATE.value:
         markup = kb.get_event_date_kb()
@@ -345,7 +373,9 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
             text=data_obj.text,
             entities=data_obj.entities,
             photo_id=data_obj.photo_id,
-            event_id=data_obj.event_id
+            event_id=data_obj.event_id,
+            close_msg=data_obj.close_msg,
+            close_msg_entities=data_obj.close_msg_entities,
         )
         # планировцик на отключения ивента
         ut.create_deactivate_event(event_id=event_id, event_date=date_event, event_time=time_event)

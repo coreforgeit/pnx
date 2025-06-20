@@ -75,6 +75,34 @@ class EventOption(Base):
         return result.inserted_primary_key[0]
 
     @classmethod
+    async def update(
+            cls,
+            option_id: int,
+            qr_id: str = None,
+            gs_row: int = None,
+            add_place: int = None,
+            is_active: bool = None,
+    ) -> None:
+        now = datetime.now()
+        query = sa.update(cls).where(cls.id == option_id).values(updated_at=now)
+
+        if qr_id:
+            query = query.values(qr_id=qr_id)
+
+        if gs_row:
+            query = query.values(gs_row=gs_row)
+
+        if add_place:
+            query = query.values(empty_place=cls.empty_place + add_place)
+
+        if is_active is not None:
+            query = query.values(is_active=is_active)
+
+        async with begin_connection() as conn:
+            await conn.execute(query)
+            await conn.commit()
+
+    @classmethod
     async def get_top_names(cls, limit: int = 8) -> list[str]:
         """Возвращает список самых популярных названий опций событий"""
         query = (
@@ -129,30 +157,6 @@ class EventOption(Base):
             result = await conn.execute(query)
         return result.scalars().all()
 
-    @classmethod
-    async def update(
-            cls,
-            option_id: int,
-            qr_id: str = None,
-            gs_row: int = None,
-            add_place: int = None,
-            is_active: bool = None,
-    ) -> None:
-        now = datetime.now()
-        query = sa.update(cls).where(cls.id == option_id).values(updated_at=now)
 
-        if qr_id:
-            query = query.values(qr_id=qr_id)
 
-        if gs_row:
-            query = query.values(gs_row=gs_row)
 
-        if add_place:
-            query = query.values(empty_place=cls.empty_place + add_place)
-
-        if is_active is not None:
-            query = query.values(is_active=is_active)
-
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()

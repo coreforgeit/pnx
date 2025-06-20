@@ -63,6 +63,7 @@ class AdminCB(str, Enum):
     EVENT_VENUE = 'admin_event_venue'
     EVENT_NAME = 'admin_event_name'
     EVENT_COVER = 'admin_event_cover'
+    EVENT_CLOSE_MSG = 'admin_event_close_msg'
     EVENT_DATE = 'admin_event_date'
     EVENT_TIME = 'admin_event_time'
     EVENT_OPTION = 'admin_options'

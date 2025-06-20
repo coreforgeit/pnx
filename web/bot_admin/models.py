@@ -140,6 +140,9 @@ class Event(models.Model):
     gs_page = models.BigIntegerField(null=True, blank=True, verbose_name='Страница Google Sheets')
     is_active = models.BooleanField(default=True, verbose_name='Активно')
 
+    close_msg = models.TextField(null=True, blank=True, verbose_name='Закрывающее сообщение')
+    close_msg_entities = models.TextField(null=True, blank=True, verbose_name='Закрывающее сообщение (разметка)')
+
     objects: models.Manager = models.Manager()
 
     class Meta:
@@ -154,6 +157,10 @@ class Event(models.Model):
     @classmethod
     def get_by_gs_page(cls, gs_page: int) -> t.Optional[t.Self]:
         return cls.objects.filter(gs_page=gs_page).first()
+
+    @classmethod
+    def get_by_id(cls, event_id: int) -> t.Optional[t.Self]:
+        return cls.objects.filter(id=event_id).first()
 
 
 class EventOption(models.Model):
