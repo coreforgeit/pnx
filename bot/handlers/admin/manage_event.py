@@ -79,7 +79,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
 
         data_obj.step = EventStep.CLOSE_MSG.value
         data_obj.photo_id = msg.photo[-1].file_id if msg.photo else None
-        data_obj.text = text[:600]
+        data_obj.text = text[:600] if text else None
         data_obj.entities = ut.save_entities(entities)
         markup = kb.get_skip_close_msg_kb()
 
