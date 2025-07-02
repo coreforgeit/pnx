@@ -277,9 +277,9 @@ class PaymentView(APIView):
                 )
                 # await bot.send_message(chat_id=user_id, text=ticket.event.close_msg, entities=entities)
 
-
             return Response({"success": True}, status=status.HTTP_200_OK)
+
         except Exception as e:
             logger.exception(e, exc_info=True)
-            return Response({"success": False}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+            return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
 
