@@ -1,13 +1,13 @@
-import logging
-
 from gspread.exceptions import APIError
-from telebot.types import InputFile, InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import InputFile, InlineKeyboardMarkup, InlineKeyboardButton, MessageEntity
 from io import BytesIO
 from datetime import datetime, date, time, timedelta
 from time import sleep
+import typing as t
 
+import json
+import logging
 import segno
-import os
 import gspread
 
 from web.settings import bot, scheduler, DATE_FORMAT, TIME_SHORT_FORMAT, GOOGLE_KEY_PATH
