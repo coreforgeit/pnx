@@ -292,12 +292,12 @@ class Payment(models.Model):
         max_length=255, null=True, blank=True, verbose_name='ID плательщика'
     )
     payment_time = models.DateTimeField(verbose_name='Время оплаты')
-    phone = models.CharField(max_length=20, verbose_name='Телефон')
-    card_pan = models.CharField(max_length=20, verbose_name='Маска карты')
-    card_token = models.CharField(max_length=255, verbose_name='Токен карты')
-    ps = models.CharField(max_length=50, verbose_name='Платёжная система')
-    uuid = models.CharField(max_length=255, verbose_name='UUID транзакции')
-    receipt_url = models.URLField(verbose_name='Ссылка на чек')
+    phone = models.CharField(max_length=20, verbose_name='Телефон', null=True, blank=True)
+    card_pan = models.CharField(max_length=20, verbose_name='Маска карты', null=True, blank=True)
+    card_token = models.CharField(max_length=255, verbose_name='Токен карты', null=True, blank=True)
+    ps = models.CharField(max_length=50, verbose_name='Платёжная система', null=True, blank=True)
+    uuid = models.CharField(max_length=255, verbose_name='UUID транзакции', null=True, blank=True)
+    receipt_url = models.URLField(verbose_name='Ссылка на чек', null=True, blank=True)
     tickets = ArrayField(
         base_field=models.IntegerField(),
         default=list,

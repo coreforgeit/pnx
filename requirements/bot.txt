@@ -8,3 +8,4 @@ segno
 pyzbar
 pillow
 gspread-asyncio
+aiocache

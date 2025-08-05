@@ -357,6 +357,10 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
 async def event_end(cb: CallbackQuery, state: FSMContext):
     sent = await cb.message.answer('⏳')
 
+    # удаляем клавиатуру
+    msg_kb = cb.message.reply_markup
+    await cb.message.edit_reply_markup(reply_markup=None)
+
     data = await state.get_data()
     data_obj = EventData(**data)
 
@@ -409,7 +413,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
         await Event.update(event_id=event_id, page_id=page_id, link=link)
 
         #     Отчитываемся об успехе
-        await cb.message.edit_reply_markup(reply_markup=None)
+        # await cb.message.edit_reply_markup(reply_markup=None)
         await state.clear()
 
         await sent.edit_text(text='✅ Мероприятие успешно создано')
@@ -424,4 +428,6 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
     except Exception as e:
         log_error(e)
         await sent.edit_text(text=f'❌ Не удалось сохранить мероприятие\n\nОшибка:\n{e}')
+        await cb.message.edit_reply_markup(reply_markup=msg_kb)
+
 

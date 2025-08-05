@@ -1,6 +1,7 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
+from django.db import transaction
 from datetime import datetime
 
 import logging
@@ -168,10 +169,6 @@ class PaymentView(APIView):
 
             if expected_sign != data["sign"]:
                 logger.warning(f'sign не прошла')
-                # return Response(
-                #     {"success": False, "message": "Подпись не совпадает"},
-                #     status=status.HTTP_400_BAD_REQUEST
-                # )
 
             # Получение данных из Redis
             logger.warning(f'sign прошла')
@@ -198,84 +195,88 @@ class PaymentView(APIView):
             ticket = None
             book_date = None
             book_time = None
-            for ticket_id in ticket_id_list:
-                # обновляем базу
-                Ticket.update(
-                    ticket_id=ticket_id,
-                    status=BookStatus.CONFIRMED.value,
-                    pay_id=data["uuid"],
-                    is_active=True
+
+            ticket_data_dict = {}
+
+            with transaction.atomic():
+                for ticket_id in ticket_id_list:
+                    # обновляем базу
+                    Ticket.update(
+                        ticket_id=ticket_id,
+                        status=BookStatus.CONFIRMED.value,
+                        pay_id=data["uuid"],
+                        is_active=True
+                    )
+
+                    ticket = Ticket.get_by_id(ticket_id)
+                    book_date = ticket.event.date_event
+                    book_time = ticket.event.time_event
+
+                    ticket_data_dict[ticket_id] = f'{BOT_LINK}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
+
+                # Сохраняем платёж
+                Payment.objects.create(
+                    user_id=user_id,
+                    store_id=data.get("store_id"),
+                    amount=data.get("amount"),
+                    invoice_id=data.get("invoice_id"),
+                    invoice_uuid=data.get("uuid"),
+                    billing_id=data.get("billing_id"),
+                    payment_time=data.get("payment_time"),
+                    phone=data.get("phone"),
+                    card_pan=data.get("card_pan"),
+                    card_token=data.get("card_token"),
+                    ps=data.get("ps"),
+                    uuid=data.get("uuid"),
+                    receipt_url=data.get("receipt_url"),
                 )
 
-                ticket = Ticket.get_by_id(ticket_id)
-                book_date = ticket.event.date_event
-                book_time = ticket.event.time_event
+                for ticket_id, qr_data in ticket_data_dict.items():
+                    text = ut.get_ticket_text(ticket)
 
-                # qr_data = f'{Key.QR_TICKET.value}:{user_id}:{ticket_id}'
-                qr_data = f'{BOT_LINK}{Key.QR.value}-{Key.QR_TICKET.value}-{user_id}-{ticket_id}'
+                    # создаём и отправляет qr
+                    qr_photo_id = ut.generate_and_sand_qr(
+                        chat_id=user_id,
+                        qr_data=qr_data,
+                        caption=text,
+                    )
 
-                text = ut.get_ticket_text(ticket)
+                    # обновляем базу добавляем qr
+                    Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id)
 
-                # создаём и отправляет qr
-                qr_photo_id = ut.generate_and_sand_qr(
-                    chat_id=user_id,
-                    qr_data=qr_data,
-                    caption=text,
+                    # обновляем таблицу
+                    ut.update_book_status_gs(
+                        spreadsheet_id=ticket.event.venue.event_gs_id,
+                        sheet_name=ticket.event.gs_page,
+                        status=BookStatus.CONFIRMED.value,
+                        row=ticket.gs_row,
+                    )
+
+                    # письмо админам
+                    bot.send_message(
+                        chat_id=ticket.event.venue.admin_chat_id,
+                        text=f"<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>",
+                    )
+
+                # напоминалка
+                ut.create_book_notice(
+                    book_id=ticket_id,
+                    book_date=book_date,
+                    book_time=book_time,
                 )
 
-                # обновляем базу добавляем qr
-                Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id,)
+                # Можно удалить данные из Redis, если больше не нужны
+                REDIS_CLIENT.delete(redis_key)
 
-                # обновляем таблицу
-                ut.update_book_status_gs(
-                    spreadsheet_id=ticket.event.venue.event_gs_id,
-                    sheet_name=ticket.event.gs_page,
-                    status=BookStatus.CONFIRMED.value,
-                    row=ticket.gs_row,
-                )
-
-                # письмо админам
-                bot.send_message(
-                    chat_id=ticket.event.venue.admin_chat_id,
-                    text=f"<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>",
-                )
-            # напоминалка
-            ut.create_book_notice(
-                book_id=ticket_id,
-                book_date=book_date,
-                book_time=book_time,
-            )
-
-            # Сохраняем платёж
-            Payment.objects.create(
-                user_id=user_id,
-                store_id=data.get("store_id"),
-                amount=data.get("amount"),
-                invoice_id=data.get("invoice_id"),
-                invoice_uuid=data.get("uuid"),
-                billing_id=data.get("billing_id"),
-                payment_time=data.get("payment_time"),
-                phone=data.get("phone"),
-                card_pan=data.get("card_pan"),
-                card_token=data.get("card_token"),
-                ps=data.get("ps"),
-                uuid=data.get("uuid"),
-                receipt_url=data.get("receipt_url"),
-            )
-
-            # Можно удалить данные из Redis, если больше не нужны
-            REDIS_CLIENT.delete(redis_key)
-
-            # закрывающее сообщение
-            if ticket and ticket.event.close_msg:
-                entities = ut.recover_entities(ticket.event.close_msg_entities)
-                bot.send_message(
-                    chat_id=ticket.user.id,
-                    text=ticket.event.close_msg,
-                    entities=entities,
-                    parse_mode=None
-                )
-                # await bot.send_message(chat_id=user_id, text=ticket.event.close_msg, entities=entities)
+                # закрывающее сообщение
+                if ticket and ticket.event.close_msg:
+                    entities = ut.recover_entities(ticket.event.close_msg_entities)
+                    bot.send_message(
+                        chat_id=ticket.user.id,
+                        text=ticket.event.close_msg,
+                        entities=entities,
+                        parse_mode=None
+                    )
 
             return Response({"success": True}, status=status.HTTP_200_OK)
 

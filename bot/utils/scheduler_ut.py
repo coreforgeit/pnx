@@ -16,12 +16,12 @@ from enums import NoticeKey, BookStatus, Key
 
 # запускает планировщики
 async def start_schedulers():
-    scheduler.add_job(
-        func=update_pay_token,
-        trigger=CronTrigger(hour=5),
-        id=Key.PAY_TOKEN.value,
-        replace_existing=True,
-    )
+    # scheduler.add_job(
+    #     func=update_pay_token,
+    #     trigger=CronTrigger(hour=5),
+    #     id=Key.PAY_TOKEN.value,
+    #     replace_existing=True,
+    # )
 
     # scheduler.add_job(
     #     func=print_scheduled_jobs,
@@ -36,7 +36,7 @@ async def start_schedulers():
 
 # тормозит планировщики
 async def shutdown_schedulers():
-    scheduler.remove_job(job_id=Key.PAY_TOKEN.value)
+    # scheduler.remove_job(job_id=Key.PAY_TOKEN.value)
     # scheduler.remove_job(job_id='print_scheduled_jobs')
     scheduler.shutdown()
 
