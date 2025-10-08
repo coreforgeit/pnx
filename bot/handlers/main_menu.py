@@ -42,13 +42,14 @@ async def com_start(msg: Message, state: FSMContext):
 
     # добавляем или обновляем данные пользователя
     await User.add(user_id=msg.from_user.id, full_name=msg.from_user.full_name, username=msg.from_user.username)
-
+    print(f'msg.text: {msg.text}')
     payloads = msg.text.split(maxsplit=1)[1] if len(msg.text.split()) > 1 else None
     # print(msg.text)
     # print(payloads)
 
     if payloads:
         try:
+            # print(f'msg.text: {msg.text}')
             print(f'payloads: {payloads}')
             # payloads: qr-book-5772948261-20
             payloads_list = payloads.split('-')
