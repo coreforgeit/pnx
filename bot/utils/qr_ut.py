@@ -106,9 +106,19 @@ async def qr_checking(user_id: int, key: str, entry_id_str: str):
             await bot.send_message(user_id, "❌ Билет не найден")
             return
 
-        if ticket.status != BookStatus.CONFIRMED.value:
+        if ticket.status == BookStatus.NEW.value:
+            # await msg.answer("❌ Уже была использована")
+            await bot.send_message(user_id, "❌ QR не оплачен")
+            return
+
+        if ticket.status == BookStatus.VISITED.value:
             # await msg.answer("❌ Уже была использована")
             await bot.send_message(user_id, "❌ Уже был использован")
+            return
+
+        if ticket.status == BookStatus.CANCELED.value:
+            # await msg.answer("❌ Уже была использована")
+            await bot.send_message(user_id, "❌ QR отозван")
             return
 
         if not ticket.is_active:
