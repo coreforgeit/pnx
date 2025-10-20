@@ -175,6 +175,22 @@ async def book_comment(msg: Message, state: FSMContext):
         book_time = ut.hand_time_format(msg.text)
         if book_time:
             data_obj.time_str = book_time
+            now = datetime.now(conf.tz)
+
+            # Формируем datetime из строки даты и времени
+            book_dt = datetime.strptime(
+                f"{data_obj.date_str} {book_time}",
+                "%d.%m.%Y %H:%M"
+            ).replace(tzinfo=conf.tz)
+
+            # Проверка: нельзя бронировать на прошедшее время
+            if book_dt < now:
+                await ut.send_text_alert(
+                    chat_id=msg.from_user.id,
+                    text= "⚠️ Нельзя забронировать столик на прошедшее время.\n"
+                    "Пожалуйста, выберите другое время ⏰"
+                )
+                return
 
             is_full = await check_available_tables(chat_id=msg.from_user.id, data_obj=data_obj)
             if is_full:
@@ -222,7 +238,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         date_book=date_book,
         time_book=time_book,
         comment=data_obj.comment,
-        status=BookStatus.NEW.value,
+        status=BookStatus.CONFIRMED.value,
         people_count=data_obj.people_count,
         book_id=data_obj.book_id
     )
@@ -246,15 +262,19 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
     else:
         pre_text = f'<b>Новая бронь!</b>\n\n'
 
+    full_name = f'{cb.from_user.full_name} @{cb.from_user.username}' if cb.from_user.username else f'{cb.from_user.full_name}'
     text = (
         f'{pre_text}'
         f'#{book_id}\n'
-        f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {cb.from_user.full_name}'
+        f'{data_obj.date_str} {data_obj.time_str} на {data_obj.people_count} чел. {full_name}'
         f'{comment}'
     )
 
     venue = await Venue.get_by_id(data_obj.venue_id)
-    await bot.send_message(chat_id=venue.admin_chat_id, text=text)
+    await bot.send_message(
+        chat_id=venue.admin_chat_id,
+        text=text
+    )
 
     #     отправляем в таблицу
     last_day_book = await Book.get_last_book_day(date_book=date_book)

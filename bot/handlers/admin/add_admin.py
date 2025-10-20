@@ -53,6 +53,8 @@ async def add_status(cb: CallbackQuery, state: FSMContext):
         data={"venue_id": venue_id, "user_status": user_status}
     )
 
+    print(f'access_id: {access_id}')
+
     # Формируем ссылку
     link = f"{conf.bot_link}{Key.ADD_ADMIN.value}-{access_id}"
 

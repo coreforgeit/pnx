@@ -205,3 +205,10 @@ def get_ticket_pay_confirm_kb(ticket_id: int, redis_key: str) -> InlineKeyboardM
     kb.button(text='✅ Подтвердить оплату', callback_data=f'{AdminCB.ALTER_PAY.value}:{Action.CONF.value}:{redis_key}')
     kb.button(text='❌ Удалить билеты', callback_data=f'{AdminCB.ALTER_PAY.value}:{Action.DEL.value}:{redis_key}')
     return kb.adjust(1).as_markup()
+
+
+# отменяет бронь в группе
+def get_confirm_group_book(book_type: str, book_id: int) -> InlineKeyboardMarkup:
+    kb = InlineKeyboardBuilder()
+    kb.button(text='🗑 Отменить бронь', callback_data=f'{AdminCB.SETTINGS_REMOVE_1.value}:{book_type}:{book_id}')
+    return kb.adjust(1).as_markup()
