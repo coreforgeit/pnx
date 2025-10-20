@@ -247,12 +247,17 @@ class Book(Base):
     @classmethod
     async def get_book_stats_by_date(cls, venue_id: int | None = None) -> list[BookStatRow]:
 
+        today = datetime.now().date()
+
         query = (
             sa.select(
                 cls.date_book.label("date"),
                 sa.func.count(cls.id).label("book_count")
             )
-            .where(cls.is_active.is_(True))
+            .where(
+                cls.is_active.is_(True),
+                cls.date_book >= today
+            )
             .group_by(cls.date_book)
             .order_by(cls.date_book)
         )

@@ -172,6 +172,7 @@ class Ticket(Base):
 
     @classmethod
     async def get_active_event_ticket_stats(cls, venue_id: int | None = None) -> list[TicketStatRow]:
+
         query = (
             sa.select(
                 cls.event_id,
