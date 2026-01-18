@@ -101,10 +101,10 @@ async def com_book(msg: Message, state: FSMContext):
     await state.clear()
     user = await User.get_by_id(msg.from_user.id)
 
-    if user.status == UserStatus.USER.value:
-        await ut.get_start_book_msg(user=msg.from_user)
-    else:
+    if user and user.status == UserStatus.ADMIN.value:
         await send_start_view_msg(chat_id=msg.from_user.id, book_type=Key.QR_BOOK.value, admin=user)
+    else:
+        await ut.get_start_book_msg(user=msg.from_user)
 
 
 # Команда старт
@@ -113,10 +113,10 @@ async def com_ticket(msg: Message, state: FSMContext):
     await state.clear()
     user = await User.get_by_id(msg.from_user.id)
 
-    if user.status == UserStatus.USER.value:
-        await send_start_ticket_msg(chat_id=msg.from_user.id)
-    else:
+    if user.status == UserStatus.ADMIN.value:
         await send_start_view_msg(chat_id=msg.from_user.id, book_type=Key.QR_TICKET.value, admin=user)
+    else:
+        await send_start_ticket_msg(chat_id=msg.from_user.id)
 
 
 # Команда мои брони

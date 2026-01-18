@@ -34,7 +34,7 @@ def get_book_main_kb(venues: list[Venue]) -> InlineKeyboardMarkup:
     return kb.adjust(1).as_markup()
 
 
-# Кнопки выбора времени
+# Кнопки выбора даты
 def get_book_date_kb() -> InlineKeyboardMarkup:
     kb = InlineKeyboardBuilder()
 
@@ -106,7 +106,7 @@ def get_ticket_options_kb(options: list[EventOption]) -> InlineKeyboardMarkup:
             continue
 
         kb.button(
-            text=f'{option.name} ({option.empty_place})',
+            text=f'{option.name}',
             callback_data=f'{UserCB.TICKET_PLACE.value}:{option.id}'
         )
 
