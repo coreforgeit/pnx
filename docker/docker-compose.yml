@@ -41,7 +41,6 @@ services:
     depends_on:
       - web
 
-
   redis:
     image: redis:latest
     container_name: redis_pnx
@@ -54,7 +53,6 @@ services:
     restart: unless-stopped
     volumes:
       - redis_data:/data
-
 
   web:
     build:
@@ -76,7 +74,6 @@ services:
     env_file:
       - .env
 
-
   bot:
     build:
       context: ..
@@ -87,6 +84,7 @@ services:
 #    network_mode: "host"
     container_name: bot_pnx
     volumes:
+      - ../bot:/app
       - ../bot:/app
       - ../logs/bot:/app/logs
     restart: unless-stopped

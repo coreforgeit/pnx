@@ -1,4 +1,5 @@
 aiogram
+alembic
 apscheduler
 asyncpg
 redis

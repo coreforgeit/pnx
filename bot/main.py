@@ -8,7 +8,7 @@ from datetime import datetime
 import db
 from init import set_main_menu, bot
 from settings import conf, log_error
-from db.base import init_models
+# from db.base import init_models
 from utils.scheduler_ut import start_schedulers, shutdown_schedulers
 # from utils.payment_ut import get_pay_token
 from handlers import main_router
@@ -21,7 +21,7 @@ dp = Dispatcher()
 
 
 async def main() -> None:
-    await init_models()
+    # await init_models()
     await set_main_menu()
     await db.close_old()
     # await get_pay_token()

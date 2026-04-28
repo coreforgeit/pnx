@@ -23,10 +23,10 @@ from enums import MenuCommand
 
 
 asyncio.set_event_loop_policy(uvloop.EventLoopPolicy())
-loop = asyncio.get_event_loop()
+# loop = asyncio.get_event_loop()
 bot = Bot(
     token=conf.token,
-    loop=loop,
+    # loop=loop,
     default=DefaultBotProperties(parse_mode=ParseMode.HTML)
 )
 

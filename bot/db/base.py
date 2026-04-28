@@ -15,9 +15,9 @@ METADATA = sa.MetaData ()
 begin_connection = sessionmaker(bind=ENGINE, class_=AsyncSession, expire_on_commit=False)
 
 
-async def init_models():
-    async with ENGINE.begin () as conn:
-        await conn.run_sync (METADATA.create_all)
+# async def init_models():
+#     async with ENGINE.begin () as conn:
+#         await conn.run_sync (METADATA.create_all)
 
 
 class Base(DeclarativeBase):
