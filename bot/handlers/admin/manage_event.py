@@ -9,13 +9,12 @@ from datetime import datetime
 
 import asyncio
 
+import db
+from settings import conf, log_error
+from init import bot, admin_router, tickets_google_client
 from .admin_utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
-from db import User, AdminLog, EventOption, Event, Venue
-from settings import conf, log_error
-from init import bot, admin_router
-from data import texts_dict
 from google_api import create_event_sheet
 from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, AdminAction
 
@@ -33,7 +32,7 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
         content_type=ContentType.TEXT.value
     )
 
-    venues = await Venue.get_all()
+    venues = await db.Venue.get_all()
     await state.update_data(data=asdict(data_obj))
     await send_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
 
@@ -49,7 +48,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
     if venue_id_str != Action.BACK.value:
         venue_id = int(venue_id_str)
 
-        venue = await Venue.get_by_id(venue_id)
+        venue = await db.Venue.get_by_id(venue_id)
         data_obj.venue_id = venue_id
         data_obj.venue_name = venue.name
         data_obj.sheet_id = venue.event_gs_id
@@ -105,7 +104,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.date_str = date_str
 
         if not data_obj.times_list:
-            data_obj.times_list = await Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times()
         markup = kb.get_event_time_kb(data_obj.times_list)
 
     elif data_obj.step == EventStep.TIME.value:
@@ -119,7 +118,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.step = EventStep.OPTION_NAME.value
 
         if not data_obj.top_name:
-            data_obj.top_name = await EventOption.get_top_names()
+            data_obj.top_name = await db.EventOption.get_top_names()
 
         markup = kb.get_event_option_select_kb(data_obj.top_name)
 
@@ -134,7 +133,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if data_obj.top_place:
-            data_obj.top_place = await EventOption.get_top_place()
+            data_obj.top_place = await db.EventOption.get_top_place()
 
         markup = kb.get_event_option_select_kb(data_obj.top_place)
 
@@ -150,7 +149,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if data_obj.top_price:
-            data_obj.top_price = await EventOption.get_top_price()
+            data_obj.top_price = await db.EventOption.get_top_price()
 
         markup = kb.get_event_option_select_kb(data_obj.top_price)
 
@@ -204,7 +203,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
         data_obj.date_str = date_str
 
         if not data_obj.times_list:
-            data_obj.times_list = await Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times()
 
     data_obj.step = EventStep.TIME.value
     await state.update_data(data=asdict(data_obj))
@@ -224,7 +223,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.time_str = time_str
 
     if not data_obj.top_name:
-        data_obj.top_name = await EventOption.get_top_names()
+        data_obj.top_name = await db.EventOption.get_top_names()
 
     data_obj.step = EventStep.OPTION_NAME.value
     await state.update_data(data=asdict(data_obj))
@@ -244,7 +243,7 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
     # Роутинг по шагам
     if step == EventStep.VENUE.value:
-        venues = await Venue.get_all()
+        venues = await db.Venue.get_all()
         markup = kb.get_event_venue_kb(venues)
 
     elif step == EventStep.NAME.value:
@@ -261,12 +260,12 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
     elif step == EventStep.TIME.value:
         if not data_obj.times_list:
-            data_obj.times_list = await Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times()
         markup = kb.get_event_time_kb(data_obj.times_list)
 
     elif step == EventStep.OPTION_NAME.value:
         if not data_obj.top_name:
-            data_obj.top_name = await EventOption.get_top_names()
+            data_obj.top_name = await db.EventOption.get_top_names()
         markup = kb.get_event_option_select_kb(data_obj.top_name)
 
     # elif step == EventStep.OPTION_PLACE.value:
@@ -311,7 +310,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if not data_obj.top_place:
-            data_obj.top_place = await EventOption.get_top_place()
+            data_obj.top_place = await db.EventOption.get_top_place()
 
         markup = kb.get_event_option_select_kb(data_obj.top_place)
 
@@ -321,7 +320,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if not data_obj.top_price:
-            data_obj.top_price = await EventOption.get_top_price()
+            data_obj.top_price = await db.EventOption.get_top_price()
 
         markup = kb.get_event_option_select_kb(data_obj.top_price)
 
@@ -368,7 +367,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
         #     сохраняем ивент
         time_event = datetime.strptime(data_obj.time_str, conf.time_format).time()
         date_event = datetime.strptime(data_obj.date_str, conf.date_format).date()
-        event_id = await Event.add(
+        event = await db.Event.add(
             creator_id=cb.from_user.id,  # например, из Telegram user.id
             venue_id=data_obj.venue_id,  # передаётся отдельно
             time_event=time_event,
@@ -382,15 +381,15 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
             close_msg_entities=data_obj.close_msg_entities,
         )
         # планировцик на отключения ивента
-        ut.create_deactivate_event(event_id=event_id, event_date=date_event, event_time=time_event)
+        ut.create_deactivate_event(event_id=event.id, event_date=date_event, event_time=time_event)
         #     сохраняем опции
         updated_options = []
 
         for option_dict in data_obj.options or []:
             option = OptionData(**option_dict)  # преобразуем словарь в dataclass
 
-            option_id = await EventOption.add(
-                event_id=event_id,
+            option_id = await db.EventOption.add(
+                event_id=event.id,
                 name=option.name,
                 all_place=option.place,
                 price=option.price if option.price is not None else 0,
@@ -398,19 +397,27 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
             )
 
             option.id = option_id
-            updated_options.append(asdict(option))
+            updated_options.append(option)
 
     #     сохраняем записывем в таблицу
         page_name = f'{data_obj.date_str[:-5]} {data_obj.name}'[:100]
-        page_id = await create_event_sheet(
+
+        page_id = await tickets_google_client.create_event_sheet(
             spreadsheet_id=data_obj.sheet_id,
-            sheet_name=page_name,
+            # sheet_name=page_name,
+            event=event,
             options=updated_options,
-            page_id=data_obj.pade_id
         )
 
-        link = f'{conf.bot_link}{Key.QR_TICKET.value}:{event_id}'
-        await Event.update(event_id=event_id, page_id=page_id, link=link)
+        # page_id = await create_event_sheet(
+        #     spreadsheet_id=data_obj.sheet_id,
+        #     sheet_name=page_name,
+        #     options=updated_options,
+        #     page_id=data_obj.pade_id
+        # )
+
+        link = f'{conf.bot_link}{Key.QR_TICKET.value}:{event.id}'
+        await db.Event.update(event_id=event.id, page_id=page_id, link=link)
 
         #     Отчитываемся об успехе
         # await cb.message.edit_reply_markup(reply_markup=None)
@@ -419,7 +426,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
         await sent.edit_text(text='✅ Мероприятие успешно создано')
 
         # запись в журнал
-        await AdminLog.add(
+        await db.AdminLog.add(
             admin_id=cb.from_user.id,
             action=AdminAction.EDIT.value if data_obj.event_id else AdminAction.ADD.value,
             comment=data_obj.name
@@ -427,7 +434,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
 
     except Exception as e:
         log_error(e)
-        await sent.edit_text(text=f'❌ Не удалось сохранить мероприятие\n\nОшибка:\n{e}')
+        await sent.edit_text(text=f'❌ Не удалось сохранить мероприятие\n\nОшибка:\n{str(e)}')
         await cb.message.edit_reply_markup(reply_markup=msg_kb)
 
 

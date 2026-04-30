@@ -53,7 +53,7 @@ class Event(Base):
             close_msg: str,
             close_msg_entities: str,
             event_id: int | None = None  # опциональный ID для обновления
-    ) -> int:
+    ) -> t.Optional[t.Self]:
         """Добавляет или обновляет событие"""
         now = datetime.now()
 
@@ -96,13 +96,14 @@ class Event(Base):
                     "close_msg_entities": close_msg_entities,
                 }
             )
+            .returning(cls)
         )
 
         async with begin_connection() as conn:
             result = await conn.execute(query)
             await conn.commit()
 
-        return result.inserted_primary_key[0]
+        return result.scalars().first()
 
     @classmethod
     async def get_top_times(cls, limit: int = 8) -> list[str]:

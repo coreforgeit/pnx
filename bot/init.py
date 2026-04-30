@@ -7,18 +7,15 @@ from aiogram.client.default import DefaultBotProperties
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.executors.asyncio import AsyncIOExecutor
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
-# from apscheduler.schedulers.asyncio import AsyncIOScheduler
-from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-# from apscheduler.executors.asyncio import AsyncIOExecutor
-
+from sqlalchemy.ext.asyncio import create_async_engine
 
 import asyncio
 import redis
 from redis.asyncio import Redis
 import uvloop
 
-from sqlalchemy.ext.asyncio import create_async_engine
 from settings import conf
+from google_api.objects import TicketsGoogleClient
 from enums import MenuCommand
 
 
@@ -57,6 +54,7 @@ scheduler = AsyncIOScheduler(
 
 ENGINE = create_async_engine(url=conf.db_url)
 
+tickets_google_client = TicketsGoogleClient(google_key_path=conf.google_key_path)
 
 async def set_main_menu():
     await bot.set_my_commands([

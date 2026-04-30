@@ -49,12 +49,14 @@ async def update_event_start(cb: CallbackQuery, state: FSMContext):
 
     # Преобразуем опции в словари
     options_data = [
-        asdict(OptionData(
+        asdict(
+            OptionData(
             id=opt.id,
             name=opt.name,
             place=opt.all_place,
             price=opt.price if opt.price else 0
-        )) for opt in options
+            )
+        ) for opt in options
     ]
 
     # Формируем EventData
