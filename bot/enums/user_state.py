@@ -1,10 +1,10 @@
 from dataclasses import dataclass, asdict
-from enum import Enum
+from enum import Enum, StrEnum
 
 import typing as t
 
 
-class UserState(str, Enum):
+class UserState(StrEnum):
     BOOK = 'book'
     EVENT = 'event'
     TICKET = 'ticket'
@@ -28,7 +28,7 @@ class BaseData:
         print('---')
 
 
-class BookStep(str, Enum):
+class BookStep(StrEnum):
     VENUE = 'venue'
     DATE = 'date'
     TIME = 'time'
@@ -52,18 +52,18 @@ class BookData(BaseData):
 
 
 book_text_dict = {
-    BookStep.VENUE.value: '<b>Где бы вы хотели забронировать столик?</b>',
-    BookStep.DATE.value: '<b>В какой день?</b>',
-    BookStep.TIME.value: '<b>В какое время?</b>\n\n'
+    BookStep.VENUE: '<b>Где бы вы хотели забронировать столик?</b>',
+    BookStep.DATE: '<b>В какой день?</b>',
+    BookStep.TIME: '<b>В какое время?</b>\n\n'
                          '<i>Выберите из указанных вариантов или отправьте время в формате ЧЧ:ММ</i>',
-    BookStep.PEOPLE.value: '<b>Сколько человек вас будет?</b>',
-    BookStep.COMMENT.value: '<b>Можете оставить комментарий или пожелание (до 200 символов)</b>',
-    BookStep.CHECK.value: '<b>Проверьте данные брони, если всё верно нажмите "Забронировать"</b>',
-    BookStep.END.value: '<b>Бронь подтверждена</b>',
+    BookStep.PEOPLE: '<b>Сколько человек вас будет?</b>',
+    BookStep.COMMENT: '<b>Можете оставить комментарий или пожелание (до 200 символов)</b>',
+    BookStep.CHECK: '<b>Проверьте данные брони, если всё верно нажмите "Забронировать"</b>',
+    BookStep.END: '<b>Бронь подтверждена</b>',
 }
 
 
-class EventStep(str, Enum):
+class EventStep(StrEnum):
     VENUE = 'venue'
     NAME = 'name'
     COVER = 'cover'
@@ -126,7 +126,7 @@ class OptionData:
 
 
 # Шаги покупки
-class TicketStep(str, Enum):
+class TicketStep(StrEnum):
     EVENT = 'event'
     OPTION = 'option'
     COUNT = 'count'

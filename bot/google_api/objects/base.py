@@ -2,10 +2,12 @@ import logging
 import asyncio
 import gspread_asyncio
 import typing as t
+import re
 
 from gspread_asyncio import AsyncioGspreadWorksheet, AsyncioGspreadSpreadsheet
 from google.oauth2.service_account import Credentials
 from gspread.exceptions import GSpreadException, SpreadsheetNotFound, WorksheetNotFound, APIError
+from gspread.utils import a1_range_to_grid_range
 
 
 logger = logging.getLogger('google_api')
@@ -112,6 +114,22 @@ class GoogleSheetsClient:
     ):
         return await worksheet.batch_clear([cell_range])
 
+    @staticmethod
+    def _extract_updated_row(response: dict | None) -> int | None:
+        if not response:
+            return None
+
+        updated_range = response.get("updates", {}).get("updatedRange")
+        logger.warning(f'updated_range: {updated_range}')
+
+        if not updated_range:
+            return None
+
+        # Google возвращает диапазон вида "'Sheet 1'!D12:H12"; берём номер первой строки.
+        row_range = updated_range.split("!", 1)[-1]
+        match = re.search(r"\$?[A-Z]+\$?(\d+)", row_range)
+        return int(match.group(1)) if match else None
+
     async def _safe_update(
         self,
         worksheet: AsyncioGspreadWorksheet,
@@ -161,3 +179,85 @@ class GoogleSheetsClient:
                 else:
                     raise  # другие ошибки не глотаем
         raise Exception("Превышен лимит попыток записи в Google Sheets")
+
+    async def _safe_add_dropdown(
+        self,
+        worksheet: AsyncioGspreadWorksheet,
+        cell_range: str,
+        values: list[str],
+        input_message: str | None = None,
+        strict: bool = True,
+        show_custom_ui: bool = True,
+        max_retries: int = 10,
+        pause_sec: int = 2,
+    ) -> dict | None:
+
+        logger.warning(f'values: {values}')
+        if not values:
+            return None
+
+        rule = {
+            "condition": {
+                "type": "ONE_OF_LIST",
+                "values": [
+                    {"userEnteredValue": str(value)}
+                    for value in values
+                ],
+            },
+            "strict": strict,
+            "showCustomUi": show_custom_ui,
+        }
+
+        if input_message:
+            rule["inputMessage"] = input_message
+
+        body = {
+            "requests": [
+                {
+                    "setDataValidation": {
+                        "range": a1_range_to_grid_range(cell_range, sheet_id=worksheet.id),
+                        "rule": rule,
+                    }
+                }
+            ]
+        }
+        logger.warning(f'attempt')
+        for attempt in range(1, max_retries + 1):
+            try:
+                return await worksheet.agcm._call(
+                    worksheet.ws.client.batch_update,
+                    worksheet.ws.spreadsheet_id,
+                    body,
+                )
+            except APIError as e:
+                if "Quota exceeded" in str(e):
+                    print(f"Превышена квота, попытка {attempt}/{max_retries}, жду {pause_sec} сек...")
+                    if attempt < max_retries:
+                        await asyncio.sleep(pause_sec)
+                else:
+                    return None
+
+        return None
+
+
+    async def _safe_add_row(
+        self,
+        worksheet: AsyncioGspreadWorksheet,
+        row: list,
+        cell_range: str,
+        max_retries: int = 10,
+        pause_sec: int = 2
+    ) -> dict | None:
+        for attempt in range(1, max_retries + 1):
+            try:
+                return await worksheet.append_row(values=row, table_range=cell_range)
+
+            except APIError as e:
+                if "Quota exceeded" in str(e):
+                    print(f"Превышена квота, попытка {attempt}/{max_retries}, жду {pause_sec} сек...")
+                    if attempt < max_retries:
+                        await asyncio.sleep(pause_sec)
+                else:
+                    return None
+
+        return None

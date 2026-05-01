@@ -127,76 +127,76 @@ async def update_book_status_gs(
 
 
 # --- Основная функция ---
-async def create_event_sheet(
-        spreadsheet_id: str,
-        sheet_name: str,
-        options: list[dict],
-        page_id: int = None
-) -> int:
-    agc = await agcm.authorize()
-    spreadsheet = await agc.open_by_key(spreadsheet_id)
-
-    if page_id:
-        worksheet = await spreadsheet.get_worksheet_by_id(page_id)
-    else:
-        worksheet = await spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=10)
-
-    # Заголовки опций
-    # await safe_update(worksheet, "A1:D1", [["ID", "Название", "Места", "Стоимость"]])
-
-    option_rows = [["ID", "Название", "Места", "Стоимость"]]
-    for option in options:
-        opt_obj = OptionData(**option)
-        option_rows.append([opt_obj.id, opt_obj.name, opt_obj.place, opt_obj.price])
-
-    await safe_update(worksheet, f"A1:D{len(option_rows)}", option_rows)
-
-    # Таблица регистрации
-    await safe_update(worksheet, "F1:K1", [["ID", "Опция", "Имя", "Статус", "В базе", "Ошибка"]])
-
-    return worksheet.id
+# async def create_event_sheet(
+#         spreadsheet_id: str,
+#         sheet_name: str,
+#         options: list[dict],
+#         page_id: int = None
+# ) -> int:
+#     agc = await agcm.authorize()
+#     spreadsheet = await agc.open_by_key(spreadsheet_id)
+#
+#     if page_id:
+#         worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+#     else:
+#         worksheet = await spreadsheet.add_worksheet(title=sheet_name, rows=100, cols=10)
+#
+#     # Заголовки опций
+#     # await safe_update(worksheet, "A1:D1", [["ID", "Название", "Места", "Стоимость"]])
+#
+#     option_rows = [["ID", "Название", "Места", "Стоимость"]]
+#     for option in options:
+#         opt_obj = OptionData(**option)
+#         option_rows.append([opt_obj.id, opt_obj.name, opt_obj.place, opt_obj.price])
+#
+#     await safe_update(worksheet, f"A1:D{len(option_rows)}", option_rows)
+#
+#     # Таблица регистрации
+#     await safe_update(worksheet, "F1:K1", [["ID", "Опция", "Имя", "Статус", "В базе", "Ошибка"]])
+#
+#     return worksheet.id
 
 
 # --- Добавить билет в первую свободную строку таблицы регистрации ---
-async def add_ticket_row_to_registration(
-        spreadsheet_id: str,
-        page_id: str,
-        ticket_id: int,
-        option_name: str,
-        user_name: str,
-        start_row: int = 2,
-        ticket_row: int = None,
-        status: str = BookStatus.CONFIRMED.value
-) -> int:
-    max_rows: int = 50
-    agc = await agcm.authorize()
-    spreadsheet = await agc.open_by_key(spreadsheet_id)
-    worksheet = await spreadsheet.get_worksheet_by_id(page_id)
-
-    # если запись существует просто её обновляем
-    if ticket_row:
-        cell_range = f"F{ticket_row}:J{ticket_row}"
-
-        new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
-        await safe_update(worksheet, cell_range, new_row)
-        return ticket_row
-
-    for row in range(start_row, start_row + max_rows):
-        cell_range = f"F{row}:J{row}"
-        try:
-            existing = await worksheet.get(cell_range)
-        except APIError as e:
-            if "Quota exceeded" in str(e):
-                print(f"Quota hit on row {row}, sleeping...")
-                await asyncio.sleep(2)
-                continue
-            else:
-                raise
-
-        # если все ячейки пусты
-        if not any(cell.strip() for cell in existing[0] if cell):
-            new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
-            await safe_update(worksheet, cell_range, new_row)
-            return row
-
-    raise Exception("Не удалось найти пустую строку в диапазоне регистрации")
+# async def add_ticket_row_to_registration(
+#         spreadsheet_id: str,
+#         page_id: str,
+#         ticket_id: int,
+#         option_name: str,
+#         user_name: str,
+#         start_row: int = 2,
+#         ticket_row: int = None,
+#         status: str = BookStatus.CONFIRMED.value
+# ) -> int:
+#     max_rows: int = 50
+#     agc = await agcm.authorize()
+#     spreadsheet = await agc.open_by_key(spreadsheet_id)
+#     worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+#
+#     # если запись существует просто её обновляем
+#     if ticket_row:
+#         cell_range = f"F{ticket_row}:J{ticket_row}"
+#
+#         new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
+#         await safe_update(worksheet, cell_range, new_row)
+#         return ticket_row
+#
+#     for row in range(start_row, start_row + max_rows):
+#         cell_range = f"F{row}:J{row}"
+#         try:
+#             existing = await worksheet.get(cell_range)
+#         except APIError as e:
+#             if "Quota exceeded" in str(e):
+#                 print(f"Quota hit on row {row}, sleeping...")
+#                 await asyncio.sleep(2)
+#                 continue
+#             else:
+#                 raise
+#
+#         # если все ячейки пусты
+#         if not any(cell.strip() for cell in existing[0] if cell):
+#             new_row = [[ticket_id, option_name, user_name, book_status_dict.get(status), "✅"]]
+#             await safe_update(worksheet, cell_range, new_row)
+#             return row
+#
+#     raise Exception("Не удалось найти пустую строку в диапазоне регистрации")

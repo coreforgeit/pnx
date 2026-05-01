@@ -16,7 +16,6 @@ from db import User, Book, EventOption, Event, Venue
 from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
-from google_api import create_event_sheet
 from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, event_text_dict
 
 

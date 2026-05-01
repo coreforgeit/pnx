@@ -1,15 +1,24 @@
+import logging
+
 from gspread_asyncio import AsyncioGspreadWorksheet
+from aiogram.types import User
 
 # import db
 # from db import Event
 from .base import GoogleSheetsClient
-from enums import OptionData
+from enums import OptionData, BookStatus, book_status_dict
+
+
+logger = logging.getLogger('google_api')
 
 
 class TicketsGoogleClient(GoogleSheetsClient):
 
     event_info_range = 'B1:B4'
     close_msg_range = 'F1:K3'
+    ticket_start_cell = 'D11'
+    status_column = 'K'
+    status_list_range = 'K11:k200'
 
     async def _update_event_info(
         self,
@@ -83,29 +92,31 @@ class TicketsGoogleClient(GoogleSheetsClient):
             options: list[OptionData],
             # page_id: int | None = None,
     ) -> int:
-        # spreadsheet = await self.open_spreadsheet(spreadsheet_id)
-        spreadsheet = await self.open_spreadsheet('1iSB7AK7erwnvURjWmUWSFLlDu-LpHE2b_99AXkU3d90')
+        spreadsheet = await self.open_spreadsheet(spreadsheet_id)
+        # spreadsheet = await self.open_spreadsheet('1iSB7AK7erwnvURjWmUWSFLlDu-LpHE2b_99AXkU3d90')
 
         sheet_name = f'{event.date_str()[:-5]} {event.name}'[:100]
 
-        # TODO:
-        worksheet = await self.create_worksheet(
-            spreadsheet=spreadsheet,
-            worksheet_name=sheet_name,
-        )
+        # worksheet = await self.create_worksheet(
+        #     spreadsheet=spreadsheet,
+        #     worksheet_name=sheet_name,
+        # )
 
-        # if event.gs_page:
-        #     worksheet: AsyncioGspreadWorksheet = await spreadsheet.get_worksheet_by_id(event.gs_page)
-        # else:
-        #     worksheet = await self.create_worksheet(
-        #         spreadsheet=spreadsheet,
-        #         worksheet_name=sheet_name,
-        #         rows=100,
-        #         cols=10,
-        #     )
-        #
-        #     if worksheet is None:
-        #         raise RuntimeError("Не удалось создать вкладку Google Sheets")
+        if event.gs_page:
+            worksheet: AsyncioGspreadWorksheet = await spreadsheet.get_worksheet_by_id(event.gs_page)
+        else:
+            worksheet = await self.create_worksheet(
+                spreadsheet=spreadsheet,
+                worksheet_name=sheet_name,
+            )
+
+            if not worksheet:
+                raise RuntimeError("Не удалось создать вкладку Google Sheets")
+
+            # заполняем список
+        await self._safe_add_dropdown(
+            worksheet=worksheet, cell_range=self.status_list_range, values=book_status_dict.values()
+        )
 
         # обновляем основные данные мероприятия
         await self._update_event_info(worksheet=worksheet, event=event)
@@ -113,27 +124,64 @@ class TicketsGoogleClient(GoogleSheetsClient):
         # обновляем опции
         await self._update_options(worksheet=worksheet, options=options)
 
-        # option_rows = [["ID", "Название", "Места", "Стоимость"]]
-
-        # for option in options:
-        #     opt_obj = OptionData(**option)
-        #     option_rows.append([
-        #         opt_obj.id,
-        #         opt_obj.name,
-        #         opt_obj.place,
-        #         opt_obj.price,
-        #     ])
-        #
-        # await self._safe_update(
-        #     worksheet=worksheet,
-        #     cell_range=f"A1:D{len(option_rows)}",
-        #     values=option_rows,
-        # )
-        #
-        # await self._safe_update(
-        #     worksheet=worksheet,
-        #     cell_range="F1:K1",
-        #     values=[["ID", "Опция", "Имя", "Статус", "В базе", "Ошибка"]],
-        # )
-
         return worksheet.id
+
+
+    async def add_or_update_ticket_row(
+            self,
+            spreadsheet_id: str,
+            ticket: 'Ticket',
+            page_id: str,
+            option_name: str,
+            user: 'User',
+            ticket_row: int = None,
+            status: BookStatus = BookStatus.NEW,
+    ) -> int:
+
+        logger.warning(f'add_ticket_row_to_registration')
+
+        spreadsheet = await self.open_spreadsheet(spreadsheet_id)
+        # spreadsheet = await self.open_spreadsheet('1iSB7AK7erwnvURjWmUWSFLlDu-LpHE2b_99AXkU3d90')
+
+        worksheet = await spreadsheet.get_worksheet_by_id(page_id)
+        user_link = f'https://t.me/{user.username}' if user.username else '-'
+        # ID, Мест, Опции, Имя, Username, Телефон, Ссылка, Оплатил, Примечание, Откуда
+        row = [ticket.id, 1, option_name, user.full_name, user.username, 'user.phone', user_link, book_status_dict.get(status)]
+
+        # если запись существует просто её обновляем
+        if ticket_row:
+            cell_range = f"F{ticket_row}:J{ticket_row}"
+            new_row = [row]
+
+            await self._safe_update(worksheet=worksheet, cell_range=cell_range, values=new_row)
+            # return ticket_row
+
+        else:
+            response = await self._safe_add_row(worksheet=worksheet, row=row, cell_range=self.ticket_start_cell)
+            # получает номер строки
+            ticket_row = self._extract_updated_row(response)
+
+        # ставим галочку, чтоб не летел повторный запрос на апи
+        mark_ok_cell = f'N{ticket_row}'
+        await self._safe_update(worksheet=worksheet, cell_range=mark_ok_cell, values=[['✅']])
+
+        return ticket_row
+
+    async def update_book_status(
+            self,
+            spreadsheet_id: str,
+            sheet_name: str,
+            status: str,
+            row: int,
+    ) -> None:
+        spreadsheet = await self.open_spreadsheet(spreadsheet_id)
+
+        if str(sheet_name).isdigit():
+            worksheet = spreadsheet.get_worksheet_by_id(int(sheet_name))
+        else:
+            worksheet = spreadsheet.worksheet(sheet_name)
+
+        cell_range = f"I{row}"
+        new_values = [[book_status_dict.get(status)]]
+
+        await self._safe_update(worksheet=worksheet, cell_range=cell_range, values=new_values)

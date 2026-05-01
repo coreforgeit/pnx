@@ -1,6 +1,6 @@
 import utils as ut
 from db import Ticket
-from init import user_router, bot
+from init import user_router, bot, tickets_google_client
 from google_api import update_book_status_gs
 from enums import UserCB, BookStatus, TicketData, TicketStep, ticket_text_dict, UserState, Action, Key
 
@@ -21,13 +21,21 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
             caption=text
         )
 
-        await update_book_status_gs(
+        await tickets_google_client.update_book_status(
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
             status=BookStatus.CONFIRMED.value,
             row=ticket.gs_row,
-            book_type=Key.QR_TICKET.value
+            # book_type=Key.QR_TICKET.value,
+
         )
+        # await update_book_status_gs(
+        #     spreadsheet_id=ticket.event.venue.event_gs_id,
+        #     sheet_name=ticket.event.gs_page,
+        #     status=BookStatus.CONFIRMED.value,
+        #     row=ticket.gs_row,
+        #     book_type=Key.QR_TICKET.value
+        # )
 
         await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id)
 

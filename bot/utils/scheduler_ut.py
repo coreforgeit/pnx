@@ -8,7 +8,7 @@ from settings import log_error, conf
 from .text_utils import get_ticket_text, get_book_text
 from .payment_ut import get_pay_token
 from .redis_ut import save_pay_token_redis
-from google_api import add_ticket_row_to_registration, update_book_status_gs
+from google_api import update_book_status_gs
 from db import User, Book, Ticket, Event
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key

@@ -31,6 +31,7 @@ user_status_choice = (
 class BookStatus(str, Enum):
     NEW = 'new'
     CONFIRMED = 'confirmed'
+    # ACTIVE = 'active'
     VISITED = 'visited'
     CANCELED = 'canceled'
 

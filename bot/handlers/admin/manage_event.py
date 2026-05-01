@@ -15,7 +15,6 @@ from init import bot, admin_router, tickets_google_client
 from .admin_utils import send_main_manage_event_msg
 import keyboards as kb
 import utils as ut
-from google_api import create_event_sheet
 from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionData, AdminAction
 
 

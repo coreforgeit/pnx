@@ -4,18 +4,22 @@ from aiogram.filters.command import Command
 from uuid import uuid4
 from dataclasses import asdict
 
-import asyncio
+import logging
 
+import db
 import keyboards as kb
 import utils as ut
 from .user_utils import send_main_ticket_msg, send_start_ticket_msg, send_selected_event_msg
 from db import Ticket, Event, EventOption, Venue, AdminLog
 from settings import conf, log_error
-from init import user_router, bot
-from google_api import add_ticket_row_to_registration, update_book_status_gs
+from init import user_router, bot, tickets_google_client
+from google_api import update_book_status_gs
 from enums import (
     UserCB, AdminCB, BookStatus, TicketData, TicketStep, UserState, Action, Key, AdminAction, TicketRedisData
 )
+
+
+logger = logging.getLogger(__name__)
 
 
 # старт билеты
@@ -133,39 +137,53 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
     last_row = await Ticket.get_max_event_row(event.id)
     venue = await Venue.get_by_id(event.venue_id)
 
+    user = await db.User.get_by_id(cb.from_user.id)
+
     # сохраняем билеты
     ofd_items = []
+    logger.info(f'data_obj.count_place: {data_obj.count_place}')
     for i in range(0, data_obj.count_place):
+        logger.info(f'range: {i}')
         try:
             await cb.message.edit_text(
                 f'<b>⏳ Обрабатываем заявку, нам нужно немного времени</b>\n'
                 f'<i>🔹Осталось: {data_obj.count_place - i}</i>'
             )
         except Exception as e:
+            logger.warning(f'e: {e}')
             pass
 
-        ticket_id = await Ticket.add(
+        ticket = await Ticket.add(
             event_id=event.id,
             user_id=cb.from_user.id,
             option_id=option_actual.id,
             status=BookStatus.NEW.value,
             is_active=False
         )
-        ticket_id_list.append(ticket_id)
+        ticket_id_list.append(ticket.id)
 
-        row = await add_ticket_row_to_registration(
+        # запись в гугл таблицу
+        row = await tickets_google_client.add_or_update_ticket_row(
             spreadsheet_id=venue.event_gs_id,
             page_id=event.gs_page,
-            ticket_id=ticket_id,
+            ticket=ticket,
             option_name=option_actual.name,
-            user_name=cb.from_user.full_name,
-            start_row=last_row,
-            status=BookStatus.NEW.value
+            user=user
         )
+        # TODO: uncomment this block later.
+        # # row = await add_ticket_row_to_registration(
+        # #     spreadsheet_id=venue.event_gs_id,
+        # #     page_id=event.gs_page,
+        # #     ticket_id=ticket_id,
+        # #     option_name=option_actual.name,
+        # #     user_name=cb.from_user.full_name,
+        # #     start_row=last_row,
+        # #     status=BookStatus.NEW.value
+        # # )
 
-        last_row = row + 1
+        # last_row = row + 1
         await Ticket.update(
-            ticket_id=ticket_id,
+            ticket_id=ticket.id,
             gs_sheet=venue.event_gs_id,
             gs_page=event.gs_page,
             gs_row=row
@@ -177,13 +195,14 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
                 "vat": 12,
                 "price": price_tian,
                 "qty": 1,
-                "name": f"Ticket-{ticket_id}",
-                "package_code": f'{ticket_id}',
+                "name": f"Ticket-{ticket.id}",
+                "package_code": f'{ticket.id}',
                 "mxik": "10202001002000000",
                 "total": price_tian
             }
         )
 
+    logger.info(f'конец цикла')
     # уменьшить количество мест
     await EventOption.update(option_id=option_actual.id, add_place=0 - data_obj.count_place)
     # возвращение статуса по таймеру

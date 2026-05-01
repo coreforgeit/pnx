@@ -59,23 +59,27 @@ class Ticket(Base):
             option_id: int,
             status: str,
             is_active: bool = True,
-    ) -> int:
+    ) -> t.Self:
         """Добавляет билет к событию"""
         now = datetime.now()
-        query = sa.insert(cls).values(
-            event_id=event_id,
-            user_id=user_id,
-            option_id=option_id,
-            status=status,
-            is_active=is_active,
-            created_at=now,
-            updated_at=now,
+        query = (
+            sa.insert(cls).values(
+                event_id=event_id,
+                user_id=user_id,
+                option_id=option_id,
+                status=status,
+                is_active=is_active,
+                created_at=now,
+                updated_at=now,
+            )
+            .returning(cls)
         )
         async with begin_connection() as conn:
             result = await conn.execute(query)
             await conn.commit()
 
-        return result.inserted_primary_key[0]
+        return result.scalars().first()
+        # return result.inserted_primary_key[0]
 
     @classmethod
     async def update(
