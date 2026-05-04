@@ -17,5 +17,9 @@ COPY /requirements/bot.txt .
 RUN pip install --no-cache-dir -r bot.txt
 
 COPY /bot .
+COPY /shared/db ./db
+COPY /shared/settings ./settings
+COPY /shared/data ./data
+COPY /shared/enums ./enums
 
 CMD ["sh", "-c", "python main.py"]

@@ -15,6 +15,10 @@ COPY /requirements/api.txt .
 RUN pip install --no-cache-dir -r api.txt
 
 COPY /api .
+COPY /shared/db ./db
+COPY /shared/settings ./settings
+COPY /shared/data ./data
+COPY /shared/enums ./enums
 
 EXPOSE 8001
 

@@ -1,3 +1,0 @@
-
-
-texts_dict: dict = {}
