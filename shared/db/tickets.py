@@ -35,7 +35,9 @@ class Ticket(Base):
     gs_sheet: Mapped[int] = mapped_column(sa.String(), nullable=True)
     gs_page: Mapped[int] = mapped_column(sa.BigInteger(), nullable=True)
     gs_row: Mapped[int] = mapped_column(sa.Integer(), nullable=True)
+
     status: Mapped[str] = mapped_column(sa.String())
+    phone: Mapped[str | None] = mapped_column(sa.String(), nullable=True)
     is_active: Mapped[bool] = mapped_column(sa.Boolean(), server_default=sa.true())
 
     event: Mapped["Event"] = relationship("Event", backref="ticket")

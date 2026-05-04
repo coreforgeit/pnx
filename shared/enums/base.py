@@ -1,4 +1,4 @@
-from enum import Enum
+from enum import Enum, StrEnum
 
 
 # Команды меню
@@ -28,7 +28,7 @@ user_status_choice = (
 
 
 # Команды меню
-class BookStatus(str, Enum):
+class BookStatus(StrEnum):
     NEW = 'new'
     CONFIRMED = 'confirmed'
     # ACTIVE = 'active'

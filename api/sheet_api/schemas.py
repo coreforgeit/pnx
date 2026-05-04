@@ -2,6 +2,7 @@ from datetime import date, datetime, time
 import typing as t
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+from enums import book_status_inverted_dict
 
 
 class BaseSchema(BaseModel):
@@ -65,24 +66,20 @@ class MainSheetRequest(BaseSchema):
         raise ValueError("четвёртое значение data должно быть временем в формате ЧЧ:ММ")
 
 
-class SheetRequest(BaseSchema):
-    page_id: int
-    sheet_name: str = Field(alias="sheetName")
-    data: t.Any
-
-
 class TextsSheetRequest(BaseSchema):
     page_id: int
     sheet_name: str = Field(alias="sheetName")
-    data: tuple[str]
+    data: tuple[str | None]
 
     @field_validator("data", mode="before")
     @classmethod
-    def validate_data(cls, value: t.Any) -> tuple[str]:
+    def validate_data(cls, value: t.Any) -> tuple[str | None]:
         if not isinstance(value, list | tuple) or len(value) != 1:
             raise ValueError("data должен содержать 1 текстовое значение")
 
         text = value[0]
+        if text is None or text == "":
+            return (None,)
 
         if not isinstance(text, str):
             raise ValueError("текст должен быть строкой")
@@ -96,11 +93,34 @@ class OptionData(BaseSchema):
     option_id: int
 
     @classmethod
-    def from_row(cls, row: t.Any) -> "OptionData":
+    def from_row(cls, row: t.Any) -> t.Self | None:
         if not isinstance(row, list | tuple) or len(row) != 3:
-            raise ValueError("каждая опция должна содержать название, количество мест и id")
+            return None
 
-        return cls(name=row[0], place_count=row[1], option_id=row[2])
+        name, place_count, option_id = row
+
+        if not isinstance(name, str) or not name.strip():
+            return None
+
+        place_count = cls._parse_int(place_count)
+        option_id = cls._parse_int(option_id)
+        if place_count is None or option_id is None:
+            return None
+
+        return cls(name=name.strip(), place_count=place_count, option_id=option_id)
+
+    @staticmethod
+    def _parse_int(value: t.Any) -> int | None:
+        if isinstance(value, bool):
+            return None
+
+        if isinstance(value, int):
+            return value
+
+        if isinstance(value, str) and value.strip().isdigit():
+            return int(value.strip())
+
+        return None
 
 
 class OptionsSheetRequest(BaseSchema):
@@ -114,7 +134,16 @@ class OptionsSheetRequest(BaseSchema):
         if not isinstance(value, list):
             raise ValueError("data должен быть списком опций")
 
-        return [OptionData.from_row(row) for row in value]
+        options = []
+        for row in value:
+            option = OptionData.from_row(row)
+            if option:
+                options.append(option)
+
+        if not options:
+            raise ValueError("data не содержит валидных опций")
+
+        return options
 
 
 class TicketData(BaseSchema):
@@ -152,6 +181,10 @@ class TicketSheetRequest(BaseSchema):
         if not isinstance(value, list | tuple) or len(value) != 8:
             raise ValueError("data должен содержать 8 значений билета")
 
+        status = book_status_inverted_dict.get(value[7])
+        if not status:
+            raise ValueError("Некорректный статус")
+
         return TicketData(
             ticket_id=value[0],
             place_count=value[1],
@@ -160,7 +193,7 @@ class TicketSheetRequest(BaseSchema):
             username=value[4] or None,
             phone=value[5],
             link=value[6] or None,
-            status=value[7],
+            status=status,
         )
 
 

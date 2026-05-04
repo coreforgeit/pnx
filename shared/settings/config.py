@@ -58,7 +58,7 @@ class Config:
 
     api_title = 'Ponaexali API'
     api_version = '0.1.0'
-    sheet_api_prefix = '/sheet-api'
+    sheet_api_prefix = '/api/v2/sheet-api'
 
 
 conf = Config()

@@ -158,6 +158,14 @@ class EventOption(Base):
         result = await session.execute(query)
         return result.scalars().all()
 
+    @classmethod
+    async def get_by_name_and_event_id(cls, session: AsyncSession, name: str, event_id: int) -> t.Self | None:
+        query = sa.select(cls).where(cls.name == name, cls.event_id == event_id)
+
+        result = await session.execute(query)
+        return result.scalars().first()
+
+
 
 
 

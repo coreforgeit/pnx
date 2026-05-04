@@ -227,9 +227,10 @@ class Ticket(models.Model):
 
     qr_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='QR ID')
     gs_sheet = models.CharField(max_length=255, null=True, blank=True, verbose_name='ID таблицы')
+    phone = models.CharField(max_length=255, null=True, blank=True, verbose_name='Телефон')
     gs_page = models.BigIntegerField(null=True, blank=True, verbose_name='Страница')
     gs_row = models.IntegerField(null=True, blank=True, verbose_name='Строка')
-    status = models.CharField(max_length=50, verbose_name='Статус')
+    status = models.CharField(max_length=50, verbose_name='Статус', choices=book_status_choice)
     is_active = models.BooleanField(default=True, verbose_name='Активен')
 
     objects: models.Manager = models.Manager()
