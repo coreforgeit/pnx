@@ -14,6 +14,8 @@ from db import User, Book, Ticket, Venue
 from settings import conf, log_error
 from init import main_router, bot, redis_client
 from data import texts_dict
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from handlers.user.user_utils import send_start_ticket_msg, send_main_settings_msg, send_selected_event_msg
 from .admin.admin_utils import send_start_view_msg
 from enums import UserCB, MenuCommand, Key, UserStatus
@@ -27,7 +29,7 @@ from enums import UserCB, MenuCommand, Key, UserStatus
     and msg.text.isdigit()
     and len(msg.text) == 5
 )
-async def group_msg(msg: Message):
+async def group_msg(msg: Message, session: AsyncSession):
     venue = await Venue.get_by_admin_chat(chat_id=int(msg.text))
     if venue:
         await Venue.update(venue_id=venue.id, chat_id=msg.chat.id)

@@ -16,8 +16,14 @@ from handlers.admin.manage_event import admin_router
 from handlers.user import user_router
 from handlers.exceptions import error_router
 
+from middlewares import DBSessionMiddleware
+
 
 dp = Dispatcher()
+
+dp.message.outer_middleware(DBSessionMiddleware())
+dp.callback_query.outer_middleware(DBSessionMiddleware())
+dp.error.outer_middleware(DBSessionMiddleware())
 
 
 async def main() -> None:
