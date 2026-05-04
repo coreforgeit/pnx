@@ -56,5 +56,9 @@ class Config:
     time_format = '%H:%M'
     datetime_format = '%H:%M %d.%m.%Y'
 
+    api_title = 'Ponaexali API'
+    api_version = '0.1.0'
+    sheet_api_prefix = '/sheet-api'
+
 
 conf = Config()
