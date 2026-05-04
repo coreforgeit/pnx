@@ -2,6 +2,7 @@ import segno
 import os
 import random
 from aiogram.types import FSInputFile, BufferedInputFile
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from PIL import Image
 from io import BytesIO
@@ -48,12 +49,12 @@ def decode_qr_from_bytes(data: bytes) -> str | None:
     return None
 
 
-async def qr_checking(user_id: int, key: str, entry_id_str: str):
+async def qr_checking(user_id: int, key: str, entry_id_str: str, session: AsyncSession = None):
 
     if key == Key.QR_BOOK.value:
         ticket_id = int(entry_id_str)
 
-        book = await db.Book.get_booking_with_venue(ticket_id)
+        book = await db.Book.get_booking_with_venue(book_id=ticket_id, session=session)
 
         if not book:
             # await msg.answer("❌ Бронь не найдена")
@@ -81,7 +82,7 @@ async def qr_checking(user_id: int, key: str, entry_id_str: str):
             chat_id=book.user_id, text=f'✅ Ваша бронь подтверждена\n\n{book_text}\n\nДобро пожаловать!'
         )
 
-        await db.Book.update(book_id=book.id, status=BookStatus.VISITED.value, is_active=False)
+        await db.Book.update(book_id=book.id, status=BookStatus.VISITED.value, is_active=False, session=session)
 
         await update_book_status_gs(
             spreadsheet_id=book.venue.book_gs_id,
@@ -93,13 +94,17 @@ async def qr_checking(user_id: int, key: str, entry_id_str: str):
 
         # запись в журнал
         await db.AdminLog.add(
-            admin_id=user_id, action=AdminAction.BOOK.value, user_id=book.user_id, comment=book_text
+            admin_id=user_id,
+            action=AdminAction.BOOK.value,
+            user_id=book.user_id,
+            comment=book_text,
+            session=session,
         )
 
     if key == Key.QR_TICKET.value:
         ticket_id = int(entry_id_str)
 
-        ticket = await db.Ticket.get_full_ticket(ticket_id)
+        ticket = await db.Ticket.get_full_ticket(ticket_id=ticket_id, session=session)
 
         if not ticket:
             # await msg.answer("❌ Билет не найдена")
@@ -133,7 +138,7 @@ async def qr_checking(user_id: int, key: str, entry_id_str: str):
             chat_id=ticket.user_id, text=f'✅ Ваш билет подтвержден\n\n{ticket_text}\nДобро пожаловать!'
         )
 
-        await db.Ticket.update(ticket_id=ticket.id, status=BookStatus.VISITED.value)
+        await db.Ticket.update(ticket_id=ticket.id, status=BookStatus.VISITED.value, session=session)
 
         await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,
@@ -145,5 +150,9 @@ async def qr_checking(user_id: int, key: str, entry_id_str: str):
 
         # запись в журнал
         await db.AdminLog.add(
-            admin_id=user_id, action=AdminAction.TICKET.value, user_id=ticket.user_id, comment=ticket_text
+            admin_id=user_id,
+            action=AdminAction.TICKET.value,
+            user_id=ticket.user_id,
+            comment=ticket_text,
+            session=session,
         )

@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, timedelta, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from settings import conf
 from enums import UserStatus
 
@@ -29,12 +30,14 @@ class EventOption(Base):
     @classmethod
     async def add(
             cls,
+            session: AsyncSession,
             event_id: int,
             name: str,
             all_place: int,
             price: int,
             is_active: bool = True,
-            option_id: int | None = None
+            option_id: int | None = None,
+            auto_commit: bool = True,
     ) -> int:
         """Добавляет или обновляет опцию (категорию мест) к событию"""
         now = datetime.now()
@@ -68,20 +71,22 @@ class EventOption(Base):
             )
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
         return result.inserted_primary_key[0]
 
     @classmethod
     async def update(
             cls,
+            session: AsyncSession,
             option_id: int,
             qr_id: str = None,
             gs_row: int = None,
             add_place: int = None,
             is_active: bool = None,
+            auto_commit: bool = True,
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == option_id).values(updated_at=now)
@@ -98,12 +103,12 @@ class EventOption(Base):
         if is_active is not None:
             query = query.values(is_active=is_active)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
     @classmethod
-    async def get_top_names(cls, limit: int = 8) -> list[str]:
+    async def get_top_names(cls, session: AsyncSession, limit: int = 8) -> list[str]:
         """Возвращает список самых популярных названий опций событий"""
         query = (
             sa.select(cls.name, sa.func.count(cls.name).label("count"))
@@ -112,13 +117,12 @@ class EventOption(Base):
             .limit(limit)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return [row.name for row in result.all()]
 
     @classmethod
-    async def get_top_place(cls, limit: int = 8) -> list[int]:
+    async def get_top_place(cls, session: AsyncSession, limit: int = 8) -> list[int]:
         """Возвращает список самых популярных названий опций событий"""
         query = (
             sa.select(cls.all_place, sa.func.count(cls.all_place).label("count"))
@@ -127,13 +131,12 @@ class EventOption(Base):
             .limit(limit)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return [row.all_place for row in result.all()]
 
     @classmethod
-    async def get_top_price(cls, limit: int = 8) -> list[int]:
+    async def get_top_price(cls, session: AsyncSession, limit: int = 8) -> list[int]:
         """Возвращает список самых популярных названий опций событий"""
         query = (
             sa.select(cls.price, sa.func.count(cls.price).label("count"))
@@ -142,19 +145,17 @@ class EventOption(Base):
             .limit(limit)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return [row.price for row in result.all()]
 
     @classmethod
-    async def get_all(cls, event_id: int = None) -> t.Optional[list[t.Self]]:
+    async def get_all(cls, session: AsyncSession, event_id: int = None) -> t.Optional[list[t.Self]]:
         query = sa.select(cls)
         if event_id:
             query = query.where(cls.event_id == event_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().all()
 
 

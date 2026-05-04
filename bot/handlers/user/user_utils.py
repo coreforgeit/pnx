@@ -1,6 +1,7 @@
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
+from sqlalchemy.ext.asyncio import AsyncSession
 from dataclasses import asdict
 from datetime import datetime
 
@@ -46,9 +47,9 @@ async def send_main_book_msg(state: FSMContext, markup: InlineKeyboardMarkup = N
 
 
 # показываем ивент
-async def send_selected_event_msg(chat_id: int, event_id: int):
-    event = await Event.get_by_id(event_id)
-    options = await EventOption.get_all(event_id=event_id)
+async def send_selected_event_msg(chat_id: int, event_id: int, session: AsyncSession = None):
+    event = await Event.get_by_id(entry_id=event_id, session=session)
+    options = await EventOption.get_all(event_id=event_id, session=session)
 
     markup = kb.get_ticket_options_kb(options)
     entities = ut.recover_entities(event.entities)
@@ -74,11 +75,11 @@ async def send_selected_event_msg(chat_id: int, event_id: int):
         )
 
 
-async def send_start_ticket_msg(chat_id: int, msg_id: int = None):
+async def send_start_ticket_msg(chat_id: int, msg_id: int = None, session: AsyncSession = None):
     if msg_id:
         await bot.delete_message(chat_id=chat_id, message_id=msg_id)
 
-    events = await Event.get_all()
+    events = await Event.get_all(session=session)
     if events:
         text = '<b>Предстоящие мероприятия:</b>'
     else:
@@ -123,9 +124,9 @@ async def send_main_ticket_msg(state: FSMContext, markup: InlineKeyboardMarkup =
 
 
 # Основное сообщение по настройкам
-async def send_main_settings_msg(user_id: int):
-    books = await Book.get_all_user_booking(user_id=user_id)
-    tickets = await Ticket.get_all_tickets(user_id=user_id)
+async def send_main_settings_msg(user_id: int, session: AsyncSession = None):
+    books = await Book.get_all_user_booking(user_id=user_id, session=session)
+    tickets = await Ticket.get_all_tickets(user_id=user_id, session=session)
 
     all_book_count = len(books) + len(tickets)
 

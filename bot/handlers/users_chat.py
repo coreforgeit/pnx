@@ -4,6 +4,7 @@ from aiogram.filters.state import StateFilter
 from aiogram.filters.command import CommandStart
 from aiogram import Router
 from aiogram.enums.content_type import ContentType
+from sqlalchemy.ext.asyncio import AsyncSession
 from dataclasses import asdict
 from datetime import datetime
 
@@ -19,20 +20,20 @@ from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, AdminAc
 
 # начало переписки
 @main_router.callback_query(lambda cb: cb.data.startswith(AdminCB.SEND_MESSAGE_START.value))
-async def send_message_start(cb: CallbackQuery, state: FSMContext):
+async def send_message_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, book_type, entry_id_str, user_id_str = cb.data.split(':')
     entry_id = int(entry_id_str)
     user_id = int(user_id_str)
 
     if book_type == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
-        user = await User.get_by_id(book.user_id)
+        book = await Book.get_booking_with_venue(book_id=entry_id, session=session)
+        user = await User.get_by_id(user_id=book.user_id, session=session)
         text_book = f'{ut.get_book_text(book)}'
         pre_text = f'🪑 Бронь:\n'
 
     elif book_type == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(ticket_id=entry_id)
-        user = await User.get_by_id(ticket.user_id)
+        ticket = await Ticket.get_full_ticket(ticket_id=entry_id, session=session)
+        user = await User.get_by_id(user_id=ticket.user_id, session=session)
         text_book = f'{ut.get_ticket_text(ticket)}'
         pre_text = f'🎫 Билет:\n'
 
@@ -41,7 +42,7 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
         await cb.message.edit_text(text=text, reply_markup=kb.get_back_start_kb())
         return
 
-    sender_info = await User.get_by_id(cb.from_user.id)
+    sender_info = await User.get_by_id(user_id=cb.from_user.id, session=session)
     await state.set_state(UserState.SEND_MSG.value)
     data_obj = SendData(
         from_user_id=cb.from_user.id,
@@ -75,7 +76,7 @@ async def send_message_start(cb: CallbackQuery, state: FSMContext):
 # @main_router.message(
 #     lambda msg: msg.chat.type == ChatType.GROUP.value and msg.text and msg.text.isdigit() and len(msg.text) == 5
 # )
-async def mailing_preview(msg: Message, state: FSMContext):
+async def mailing_preview(msg: Message, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
     data_obj = SendData(**data)
     data_obj.print_all()
@@ -119,13 +120,15 @@ async def mailing_preview(msg: Message, state: FSMContext):
             admin_id=data_obj.for_user_id,
             user_id=msg.from_user.id,
             action=AdminAction.USER_SEND.value,
-            comment=text
+            comment=text,
+            session=session,
         )
     else:
         await AdminLog.add(
             admin_id=msg.from_user.id,
             user_id=data_obj.for_user_id,
             action=AdminAction.ADMIN_SEND.value,
-            comment=text
+            comment=text,
+            session=session,
         )
 

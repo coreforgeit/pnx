@@ -4,6 +4,7 @@ from aiogram.filters.state import StateFilter
 from aiogram.filters.command import CommandStart
 from aiogram import Router
 from aiogram.enums.content_type import ContentType
+from sqlalchemy.ext.asyncio import AsyncSession
 from dataclasses import asdict
 from datetime import datetime
 
@@ -147,7 +148,13 @@ async def sent_mailing_preview(
     await state.update_data(data=asdict(data_obj))
 
 
-async def send_start_view_msg(chat_id: int, book_type: str, admin: User, msg_id: int = None):
+async def send_start_view_msg(
+        chat_id: int,
+        book_type: str,
+        admin: User,
+        msg_id: int = None,
+        session: AsyncSession = None,
+):
     if (not admin or
             admin.status == UserStatus.USER.value or
             (admin.status == UserStatus.STAFF.value and not admin.venue_id)
@@ -156,13 +163,13 @@ async def send_start_view_msg(chat_id: int, book_type: str, admin: User, msg_id:
         return
 
     if book_type == Key.QR_TICKET.value:
-        ticket_stat = await Ticket.get_active_event_ticket_stats(admin.venue_id)
+        ticket_stat = await Ticket.get_active_event_ticket_stats(venue_id=admin.venue_id, session=session)
         text = f'<b>Выберите мероприятие:</b>'
         markup = kb.get_ticket_state_kb(ticket_stat)
         # await cb.message.edit_text(text=text, reply_markup=kb.get_ticket_state_kb(ticket_stat))
 
     elif book_type == Key.QR_BOOK.value:
-        book_stat = await Book.get_book_stats_by_date(admin.venue_id)
+        book_stat = await Book.get_book_stats_by_date(venue_id=admin.venue_id, session=session)
         text = f'<b>Выберите дату:</b>'
         markup = kb.get_book_state_kb(book_stat)
         # await cb.message.edit_text(text=text, reply_markup=kb.get_book_state_kb(book_stat))

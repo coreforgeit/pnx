@@ -2,6 +2,7 @@ from aiogram.types import Message, CallbackQuery, InputMediaPhoto, ReplyKeyboard
 from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
 from dataclasses import asdict
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -18,22 +19,22 @@ from enums import UserCB, Key, Action, UserState, BookData, BookStep, BookStatus
 
 # проверяет подписку, в случае удачи пропускает
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.SETTINGS_START.value))
-async def settings_start(cb: CallbackQuery, state: FSMContext):
+async def settings_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.clear()
 
-    await send_main_settings_msg(cb.from_user.id)
+    await send_main_settings_msg(user_id=cb.from_user.id, session=session)
 
 
 # проверяет подписку, в случае удачи пропускает
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.SETTINGS_REMOVE_1.value))
-async def settings_remove(cb: CallbackQuery, state: FSMContext):
+async def settings_remove(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, type_qr, entry_id_str = cb.data.split(':')
     entry_id = int(entry_id_str)
 
     markup = kb.get_cancel_book_kb(type_qr, entry_id, cb.message.message_id)
 
     if type_qr == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await Book.get_booking_with_venue(book_id=entry_id, session=session)
         book_text = ut.get_book_text(book)
         text = (
             f'<b>❓ Вы уверены, что хотите отменить бронь?</b>\n\n'
@@ -43,7 +44,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
         await cb.message.answer(text=text, reply_markup=markup)
 
     elif type_qr == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(entry_id)
+        ticket = await Ticket.get_full_ticket(ticket_id=entry_id, session=session)
         ticket_text = ut.get_ticket_text(ticket)
 
         text = (
@@ -56,7 +57,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
 
 # проверяет подписку, в случае удачи пропускает
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.SETTINGS_REMOVE_2.value))
-async def settings_remove(cb: CallbackQuery, state: FSMContext):
+async def settings_remove(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, type_qr, entry_id_str, source_msg_id_str = cb.data.split(':')
     entry_id = int(entry_id_str)
     source_msg_id = int(source_msg_id_str)
@@ -66,7 +67,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
         return
 
     elif type_qr == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await Book.get_booking_with_venue(book_id=entry_id, session=session)
 
         await update_book_status_gs(
             spreadsheet_id=book.venue.gs_id,
@@ -75,7 +76,7 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
             row=book.gs_row,
             book_type=type_qr
         )
-        await Book.update(book_id=entry_id, status=BookStatus.CANCELED.value, is_active=False)
+        await Book.update(book_id=entry_id, status=BookStatus.CANCELED.value, is_active=False, session=session)
 
         user_text = f'✅ Бронь успешно отменена'
 
@@ -90,10 +91,17 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
 
     elif type_qr == Key.QR_TICKET.value:
         """тут ещё нужно добавить возврат средств"""
-        ticket = await Ticket.get_full_ticket(entry_id)
+        ticket = await Ticket.get_full_ticket(ticket_id=entry_id, session=session)
+        # возвращаем деньги, платных билетов
+        if ticket.pay_id:
+            await ut.refund_payment(uuid=ticket.pay_id)
 
-        await ut.refund_payment(uuid=ticket.pay_id)
-        await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
+        await Ticket.update(
+            ticket_id=ticket.id,
+            status=BookStatus.CANCELED.value,
+            is_active=False,
+            session=session,
+        )
         await update_book_status_gs(
             spreadsheet_id=ticket.event.venue.event_gs_id,
             sheet_name=ticket.event.gs_page,
@@ -126,19 +134,24 @@ async def settings_remove(cb: CallbackQuery, state: FSMContext):
     await cb.message.edit_text(user_text)
     await bot.send_message(chat_id=admin_chat_id, text=admin_text)
 
-    user = await User.get_by_id(cb.from_user.id)
+    user = await User.get_by_id(user_id=cb.from_user.id, session=session)
     canceled_user = cb.from_user.id if user.status == UserStatus.USER.value else book_user_id
-    await AdminLog.add(admin_id=canceled_user, action=AdminAction.PAY_CANCELED.value, user_id=book_user_id)
+    await AdminLog.add(
+        admin_id=canceled_user,
+        action=AdminAction.PAY_CANCELED.value,
+        user_id=book_user_id,
+        session=session,
+    )
 
 
 # проверяет подписку, в случае удачи пропускает
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.SETTINGS_EDIT.value))
-async def settings_start(cb: CallbackQuery, state: FSMContext):
+async def settings_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, book_type, book_id_str, book_id_str = cb.data.split(':')
     book_id = int(book_id_str)
     await state.clear()
 
-    book = await Book.get_booking_with_venue(book_id)
+    book = await Book.get_booking_with_venue(book_id=book_id, session=session)
 
     await state.set_state(UserState.BOOK.value)
     data_obj = BookData()

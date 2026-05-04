@@ -7,6 +7,7 @@ from aiogram.enums.content_type import ContentType
 from dataclasses import asdict
 from datetime import datetime
 from uuid import uuid4
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -20,11 +21,11 @@ from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, AdminAc
 
 # старт просмотра броней
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.ADD_START.value))
-async def add_start(cb: CallbackQuery, state: FSMContext):
+async def add_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.clear()
 
     text = f'<b>Выберите заведение:</b>'
-    venues = await Venue.get_all()
+    venues = await Venue.get_all(session=session)
 
     await cb.message.edit_text(text=text, reply_markup=kb.get_event_venue_kb(
         venues=venues,
@@ -44,7 +45,7 @@ async def add_venue(cb: CallbackQuery, state: FSMContext):
 
 # старт просмотра броней
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.ADD_STATUS.value))
-async def add_status(cb: CallbackQuery, state: FSMContext):
+async def add_status(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, venue_id_str, user_status = cb.data.split(':')
     venue_id = int(venue_id_str)
 
@@ -60,4 +61,4 @@ async def add_status(cb: CallbackQuery, state: FSMContext):
 
     await cb.message.edit_text(text=f"<b>🔗 Ссылка для подключения пользователя:</b>\n\n{link}")
 
-    await AdminLog.add(admin_id=cb.from_user.id, action=AdminAction.LINK.value, comment=link)
+    await AdminLog.add(admin_id=cb.from_user.id, action=AdminAction.LINK.value, comment=link, session=session)

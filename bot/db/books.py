@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, timedelta, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from settings import conf
 from enums import BookStatus
 
@@ -55,6 +56,7 @@ class Book(Base):
     @classmethod
     async def add(
             cls,
+            session: AsyncSession,
             user_id: int,
             venue_id: int,
             time_book: time,
@@ -62,7 +64,8 @@ class Book(Base):
             comment: str,
             status: str,
             people_count: int,
-            book_id: int | None = None
+            book_id: int | None = None,
+            auto_commit: bool = True,
     ) -> int:
         """Добавляет или обновляет бронь столика"""
         now = datetime.now()
@@ -101,14 +104,14 @@ class Book(Base):
             )
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
         return result.inserted_primary_key[0]
 
     @classmethod
-    async def get_top_times(cls, limit: int = 8) -> list[str]:
+    async def get_top_times(cls, session: AsyncSession, limit: int = 8) -> list[str]:
         query = (
             sa.select(cls.time_book, sa.func.count(cls.time_book).label("count"))
             .group_by(cls.time_book)
@@ -116,19 +119,20 @@ class Book(Base):
             .limit(limit)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return [str(row.time_book)[:-3] for row in result.all()]
 
     @classmethod
     async def update(
             cls,
+            session: AsyncSession,
             book_id: int,
             qr_id: str = None,
             gs_row: int = None,
             status: str = None,
-            is_active: bool = None
+            is_active: bool = None,
+            auto_commit: bool = True,
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == book_id).values(updated_at=now)
@@ -145,17 +149,18 @@ class Book(Base):
         if is_active is not None:
             query = query.values(is_active=is_active)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
     @classmethod
     async def get_booking(
             cls,
+            session: AsyncSession,
             venue_id: int,
             user_id: int,
             date_book: date,
-            status: str = BookStatus.CONFIRMED.value
+            status: str = BookStatus.CONFIRMED.value,
     ) -> t.Optional[t.Self]:
         """Находим бронь пользователя"""
 
@@ -167,12 +172,11 @@ class Book(Base):
             cls.status == status,
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().first()
 
     @classmethod
-    async def get_books_by_date(cls, date_book: date) -> list[t.Self]:
+    async def get_books_by_date(cls, session: AsyncSession, date_book: date) -> list[t.Self]:
         """Находим брони на дату"""
 
         # query = sa.select(cls).where(cls.date_book == date_book)
@@ -180,22 +184,26 @@ class Book(Base):
         query = cls._get_query_with_venue()
         query = query.where(cls.date_book == date_book, cls.is_active == True)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().all()
 
     @classmethod
-    async def get_last_book_day(cls, date_book: date) -> t.Optional[t.Self]:
+    async def get_last_book_day(cls, session: AsyncSession, date_book: date) -> t.Optional[t.Self]:
         """Находим бронь пользователя"""
 
         query = sa.select(cls).where(cls.date_book == date_book).order_by(sa.desc(cls.gs_row))
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().first()
 
     @classmethod
-    async def get_booking_count(cls, venue_id: int, date_book: date, time_book: time) -> int:
+    async def get_booking_count(
+            cls,
+            session: AsyncSession,
+            venue_id: int,
+            date_book: date,
+            time_book: time,
+    ) -> int:
         """Возвращает количество броней в заведении за 3 часа до и после указанного времени"""
 
         # Определяем границы временного интервала
@@ -212,25 +220,23 @@ class Book(Base):
             )
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return result.scalar() or 0  # Если нет броней, возвращаем 0
 
     @classmethod
-    async def get_booking_with_venue(cls, book_id: int) -> t.Optional[t.Self]:
+    async def get_booking_with_venue(cls, session: AsyncSession, book_id: int) -> t.Optional[t.Self]:
         """Получает бронь по ID вместе с данными о заведении"""
 
         query = cls._get_query_with_venue()
         query = query.where(cls.id == book_id)
 
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().first()
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
-    async def get_all_user_booking(cls, user_id: int) -> t.Optional[list[t.Self]]:
+    async def get_all_user_booking(cls, session: AsyncSession, user_id: int) -> t.Optional[list[t.Self]]:
         """Получает бронь по ID вместе с данными о заведении"""
 
         query = (
@@ -240,12 +246,15 @@ class Book(Base):
             .where(sa.or_(cls.status == BookStatus.NEW.value, cls.status == BookStatus.CONFIRMED.value))
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().all()
+        result = await session.execute(query)
+        return result.scalars().all()
 
     @classmethod
-    async def get_book_stats_by_date(cls, venue_id: int | None = None) -> list[BookStatRow]:
+    async def get_book_stats_by_date(
+            cls,
+            session: AsyncSession,
+            venue_id: int | None = None,
+    ) -> list[BookStatRow]:
 
         today = datetime.now().date()
 
@@ -265,20 +274,18 @@ class Book(Base):
         if venue_id:
             query = query.where(cls.venue_id == venue_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return result.all()
 
     @classmethod
-    async def close_old(cls) -> None:
+    async def close_old(cls, session: AsyncSession) -> None:
         today = datetime.now(tz=conf.tz).date()
         query = (
             sa.update(cls).
             where(cls.date_book < today, cls.status == BookStatus.CONFIRMED.value).
             values(status=BookStatus.CANCELED.value)
         )
-        async with begin_connection() as conn:
-            await conn.execute(query)
+        await session.execute(query)
 
 

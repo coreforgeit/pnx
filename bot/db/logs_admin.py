@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, timedelta, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from settings import conf
 
 
@@ -25,10 +26,12 @@ class AdminLog(Base):
     @classmethod
     async def add(
             cls,
+            session: AsyncSession,
             admin_id: int,
             action: str,
             user_id: int = None,
             comment: str = None,
+            auto_commit: bool = True,
     ) -> int:
         now = datetime.now()
         query = sa.insert(cls).values(
@@ -39,8 +42,8 @@ class AdminLog(Base):
             comment=comment,
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
         return result.inserted_primary_key[0]

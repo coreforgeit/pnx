@@ -3,6 +3,7 @@ import typing as t
 
 from aiogram.types import Message, User as AgUser
 from aiogram.enums.content_type import ContentType
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import keyboards as kb
 from init import bot
@@ -11,8 +12,8 @@ from enums import UserStatus
 
 
 # команда старт
-async def get_start_msg(user: AgUser, msg_id: int = None) -> None:
-    user_info = await User.get_by_id(user.id)
+async def get_start_msg(user: AgUser, msg_id: int = None, session: AsyncSession = None) -> None:
+    user_info = await User.get_by_id(user_id=user.id, session=session)
 
     if user_info.status == UserStatus.USER.value:
         text = (
@@ -32,9 +33,9 @@ async def get_start_msg(user: AgUser, msg_id: int = None) -> None:
 
 
 # начать бронирование
-async def get_start_book_msg(user: AgUser, msg_id: int = None) -> None:
+async def get_start_book_msg(user: AgUser, msg_id: int = None, session: AsyncSession = None) -> None:
     text = f'<b>Где бы вы хотели забронировать столик?</b>'
-    venues = await Venue.get_all()
+    venues = await Venue.get_all(session=session)
     markup = kb.get_book_main_kb(venues)
 
     if msg_id:

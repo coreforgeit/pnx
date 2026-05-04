@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.enums.content_type import ContentType
 from dataclasses import asdict
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -20,21 +21,27 @@ from enums import AdminCB, UserState, Action, Key, SendData, UserStatus, Mailing
 
 # старт просмотра броней
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.VIEW_START.value))
-async def manage_event_start(cb: CallbackQuery, state: FSMContext):
+async def manage_event_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, book_type = cb.data.split(':')
     await state.clear()
 
-    admin = await User.get_admin(cb.from_user.id)
+    admin = await User.get_admin(user_id=cb.from_user.id, session=session)
 
-    await send_start_view_msg(chat_id=cb.from_user.id, book_type=book_type, admin=admin, msg_id=cb.message.message_id)
+    await send_start_view_msg(
+        chat_id=cb.from_user.id,
+        book_type=book_type,
+        admin=admin,
+        msg_id=cb.message.message_id,
+        session=session,
+    )
 
 
 # просмотра броней за день
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.VIEW_BOOK.value))
-async def view_book(cb: CallbackQuery, state: FSMContext):
+async def view_book(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, book_type, value = cb.data.split(':')
 
-    admin = await User.get_admin(cb.from_user.id)
+    admin = await User.get_admin(user_id=cb.from_user.id, session=session)
     if (not admin or
             admin.status == UserStatus.USER.value or
             (admin.status == UserStatus.STAFF.value and not admin.venue_id)
@@ -44,7 +51,7 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
 
     if book_type == Key.QR_BOOK.value:
         date_book = datetime.strptime(value, conf.date_format)
-        books = await Book.get_books_by_date(date_book)
+        books = await Book.get_books_by_date(date_book=date_book, session=session)
         for book in books:
             text = ut.get_book_text(book)
             await cb.message.answer(text=text, reply_markup=kb.get_book_manage_kb(book.id, book_type=book_type))
@@ -52,7 +59,7 @@ async def view_book(cb: CallbackQuery, state: FSMContext):
 
     elif book_type == Key.QR_TICKET.value:
         event_id = int(value)
-        tickets = await Ticket.get_all_tickets(event_id=event_id)
+        tickets = await Ticket.get_all_tickets(event_id=event_id, session=session)
         for ticket in tickets:
             text = ut.get_ticket_text(ticket)
             await cb.message.answer(text=text, reply_markup=kb.get_book_manage_kb(ticket.id, book_type=book_type))

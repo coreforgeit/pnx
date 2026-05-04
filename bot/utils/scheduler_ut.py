@@ -4,7 +4,7 @@ from datetime import datetime, date, time, timedelta
 
 import keyboards as kb
 from init import scheduler, bot, redis_client_1
-from settings import log_error, conf
+from settings import async_session_factory, log_error, conf
 from .text_utils import get_ticket_text, get_book_text
 from .payment_ut import get_pay_token
 from .redis_ut import save_pay_token_redis
@@ -12,6 +12,16 @@ from google_api import update_book_status_gs
 from db import User, Book, Ticket, Event
 from data import texts_dict
 from enums import NoticeKey, BookStatus, Key
+
+
+async def _get_book_with_venue(entry_id: int):
+    async with async_session_factory() as session:
+        return await Book.get_booking_with_venue(session=session, book_id=entry_id)
+
+
+async def _get_full_ticket(entry_id: int):
+    async with async_session_factory() as session:
+        return await Ticket.get_full_ticket(session=session, ticket_id=entry_id)
 
 
 # запускает планировщики
@@ -63,14 +73,14 @@ def print_scheduled_jobs():
 # предупреждаем за день
 async def notice_book_for_day(entry_id: int, book_type: str):
     if book_type == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await _get_book_with_venue(entry_id)
 
         if book and book.is_active:
             text = f'Напоминаем о брони {book.date_str()} в {book.time_str()} в {book.venue.name}'
             await bot.send_message(chat_id=book.user_id, text=text)
 
     elif book_type == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(entry_id)
+        ticket = await _get_full_ticket(entry_id)
 
         if ticket and ticket.is_active:
             text = f'Напоминаем о мероприятии {ticket.event.name} завтра в {ticket.event.time_str()} в {ticket.event.venue.name}'
@@ -80,7 +90,7 @@ async def notice_book_for_day(entry_id: int, book_type: str):
 # предупреждаем за 3 часа
 async def notice_book_for_2_hours(entry_id: int, book_type: str):
     if book_type == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await _get_book_with_venue(entry_id)
 
         if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
             text = f'Ждём вас через 2 часа в {book.venue.name}'
@@ -91,7 +101,7 @@ async def notice_book_for_2_hours(entry_id: int, book_type: str):
             )
 
     elif book_type == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(entry_id)
+        ticket = await _get_full_ticket(entry_id)
 
         if ticket and ticket.is_active:
             text = f'Ждём вас через 2 часа в {ticket.event.venue.name} на {ticket.event.name}'
@@ -104,7 +114,7 @@ async def notice_book_for_2_hours(entry_id: int, book_type: str):
 # предупреждаем об опоздании
 async def notice_book_for_now(entry_id: int, book_type: str):
     if book_type == Key.QR_BOOK.value:
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await _get_book_with_venue(entry_id)
 
         if book and book.is_active and book.status == BookStatus.CONFIRMED.value:
             text = f'Ваша бронь активна, мы будем ждать вас ещё 30 минут в {book.venue.name}'
@@ -115,7 +125,7 @@ async def notice_book_for_now(entry_id: int, book_type: str):
             )
 
     elif book_type == Key.QR_TICKET.value:
-        ticket = await Ticket.get_full_ticket(entry_id)
+        ticket = await _get_full_ticket(entry_id)
 
         if ticket and ticket.is_active:
             text = f'Мы уже начали!! Ждём вас в {ticket.event.venue.name} на {ticket.event.name}'
@@ -129,12 +139,18 @@ async def notice_book_for_now(entry_id: int, book_type: str):
 async def notice_book_for_close(entry_id: int, book_type: str):
     if book_type == Key.QR_BOOK.value:
 
-        book = await Book.get_booking_with_venue(entry_id)
+        book = await _get_book_with_venue(entry_id)
         if book and book.is_active and not book.status == BookStatus.CONFIRMED.value:
             text = f'Мы не дождались вас 😔 Простите, но бронь была снята.'
             await bot.send_message(chat_id=book.user_id, text=text)
 
-            await Book.update(book_id=entry_id, is_active=False, status=BookStatus.CANCELED.value)
+            async with async_session_factory() as session:
+                await Book.update(
+                    session=session,
+                    book_id=entry_id,
+                    is_active=False,
+                    status=BookStatus.CANCELED.value,
+                )
 
             await update_book_status_gs(
                 spreadsheet_id=book.venue.book_gs_id,
@@ -214,10 +230,16 @@ book_dt_for_close 2025-05-27 15:30:00
 # обнуляет старые билеты
 async def cancel_unpaid_tickets(user_id: int, ticket_id_list: list[int]) -> None:
     for ticket_id in ticket_id_list:
-        ticket = await Ticket.get_full_ticket(ticket_id)
+        ticket = await _get_full_ticket(ticket_id)
         # user = await User.get_by_id(user_id)
         if ticket.status == BookStatus.NEW.value:
-            await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
+            async with async_session_factory() as session:
+                await Ticket.update(
+                    session=session,
+                    ticket_id=ticket.id,
+                    status=BookStatus.CANCELED.value,
+                    is_active=False,
+                )
 
             ticket_text = get_ticket_text(ticket)
 
@@ -260,7 +282,8 @@ async def update_pay_token():
 
 
 async def deactivate_event(event_id: int):
-    await Event.update(event_id=event_id, is_active=False)
+    async with async_session_factory() as session:
+        await Event.update(session=session, event_id=event_id, is_active=False)
 
 
 # создаём уведомления для каждого напоминания

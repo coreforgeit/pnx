@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.enums.content_type import ContentType
 from dataclasses import asdict
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -20,7 +21,7 @@ from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionD
 
 # старт брони столиков
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_START.value))
-async def manage_event_start(cb: CallbackQuery, state: FSMContext):
+async def manage_event_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.clear()
     await state.set_state(UserState.EVENT.value)
 
@@ -31,14 +32,14 @@ async def manage_event_start(cb: CallbackQuery, state: FSMContext):
         content_type=ContentType.TEXT.value
     )
 
-    venues = await db.Venue.get_all()
+    venues = await db.Venue.get_all(session=session)
     await state.update_data(data=asdict(data_obj))
     await send_main_manage_event_msg(state, markup=kb.get_event_venue_kb(venues))
 
 
 # записывает дату
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_VENUE.value))
-async def event_date(cb: CallbackQuery, state: FSMContext):
+async def event_date(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, venue_id_str = cb.data.split(':')
 
     data = await state.get_data()
@@ -47,7 +48,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
     if venue_id_str != Action.BACK.value:
         venue_id = int(venue_id_str)
 
-        venue = await db.Venue.get_by_id(venue_id)
+        venue = await db.Venue.get_by_id(entry_id=venue_id, session=session)
         data_obj.venue_id = venue_id
         data_obj.venue_name = venue.name
         data_obj.sheet_id = venue.event_gs_id
@@ -60,7 +61,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
 
 # принимает текстовые поля
 @admin_router.message(StateFilter(UserState.EVENT.value))
-async def event_msg_data(msg: Message, state: FSMContext):
+async def event_msg_data(msg: Message, state: FSMContext, session: AsyncSession):
     await msg.delete()
 
     data = await state.get_data()
@@ -103,7 +104,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.date_str = date_str
 
         if not data_obj.times_list:
-            data_obj.times_list = await db.Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times(session=session)
         markup = kb.get_event_time_kb(data_obj.times_list)
 
     elif data_obj.step == EventStep.TIME.value:
@@ -117,7 +118,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.step = EventStep.OPTION_NAME.value
 
         if not data_obj.top_name:
-            data_obj.top_name = await db.EventOption.get_top_names()
+            data_obj.top_name = await db.EventOption.get_top_names(session=session)
 
         markup = kb.get_event_option_select_kb(data_obj.top_name)
 
@@ -132,7 +133,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if data_obj.top_place:
-            data_obj.top_place = await db.EventOption.get_top_place()
+            data_obj.top_place = await db.EventOption.get_top_place(session=session)
 
         markup = kb.get_event_option_select_kb(data_obj.top_place)
 
@@ -148,7 +149,7 @@ async def event_msg_data(msg: Message, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if data_obj.top_price:
-            data_obj.top_price = await db.EventOption.get_top_price()
+            data_obj.top_price = await db.EventOption.get_top_price(session=session)
 
         markup = kb.get_event_option_select_kb(data_obj.top_price)
 
@@ -192,7 +193,7 @@ async def event_close_msg(cb: CallbackQuery, state: FSMContext):
 
 # записывает дату
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_DATE.value))
-async def event_date(cb: CallbackQuery, state: FSMContext):
+async def event_date(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, date_str = cb.data.split(':')
 
     data = await state.get_data()
@@ -202,7 +203,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
         data_obj.date_str = date_str
 
         if not data_obj.times_list:
-            data_obj.times_list = await db.Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times(session=session)
 
     data_obj.step = EventStep.TIME.value
     await state.update_data(data=asdict(data_obj))
@@ -211,7 +212,7 @@ async def event_date(cb: CallbackQuery, state: FSMContext):
 
 # записывает время
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_TIME.value))
-async def event_time(cb: CallbackQuery, state: FSMContext):
+async def event_time(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, time_str = cb.data.split(':')
 
     time_str = time_str.replace(' ', ':')
@@ -222,7 +223,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.time_str = time_str
 
     if not data_obj.top_name:
-        data_obj.top_name = await db.EventOption.get_top_names()
+        data_obj.top_name = await db.EventOption.get_top_names(session=session)
 
     data_obj.step = EventStep.OPTION_NAME.value
     await state.update_data(data=asdict(data_obj))
@@ -231,7 +232,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
 
 # обновляет данные
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_EDIT.value))
-async def event_edit(cb: CallbackQuery, state: FSMContext):
+async def event_edit(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, step = cb.data.split(':')
 
     data = await state.get_data()
@@ -242,7 +243,7 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
     # Роутинг по шагам
     if step == EventStep.VENUE.value:
-        venues = await db.Venue.get_all()
+        venues = await db.Venue.get_all(session=session)
         markup = kb.get_event_venue_kb(venues)
 
     elif step == EventStep.NAME.value:
@@ -259,12 +260,12 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
     elif step == EventStep.TIME.value:
         if not data_obj.times_list:
-            data_obj.times_list = await db.Event.get_top_times()
+            data_obj.times_list = await db.Event.get_top_times(session=session)
         markup = kb.get_event_time_kb(data_obj.times_list)
 
     elif step == EventStep.OPTION_NAME.value:
         if not data_obj.top_name:
-            data_obj.top_name = await db.EventOption.get_top_names()
+            data_obj.top_name = await db.EventOption.get_top_names(session=session)
         markup = kb.get_event_option_select_kb(data_obj.top_name)
 
     # elif step == EventStep.OPTION_PLACE.value:
@@ -289,7 +290,7 @@ async def event_edit(cb: CallbackQuery, state: FSMContext):
 
 # записывает опции
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_OPTION.value))
-async def event_time(cb: CallbackQuery, state: FSMContext):
+async def event_time(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, cb_value = cb.data.split(':')
 
     data = await state.get_data()
@@ -309,7 +310,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if not data_obj.top_place:
-            data_obj.top_place = await db.EventOption.get_top_place()
+            data_obj.top_place = await db.EventOption.get_top_place(session=session)
 
         markup = kb.get_event_option_select_kb(data_obj.top_place)
 
@@ -319,7 +320,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
         data_obj.current_option = asdict(option_obj)
 
         if not data_obj.top_price:
-            data_obj.top_price = await db.EventOption.get_top_price()
+            data_obj.top_price = await db.EventOption.get_top_price(session=session)
 
         markup = kb.get_event_option_select_kb(data_obj.top_price)
 
@@ -352,7 +353,7 @@ async def event_time(cb: CallbackQuery, state: FSMContext):
 
 # сохраняет ивент
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_END.value))
-async def event_end(cb: CallbackQuery, state: FSMContext):
+async def event_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     sent = await cb.message.answer('⏳')
 
     # удаляем клавиатуру
@@ -378,6 +379,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
             event_id=data_obj.event_id,
             close_msg=data_obj.close_msg,
             close_msg_entities=data_obj.close_msg_entities,
+            session=session,
         )
         # планировцик на отключения ивента
         ut.create_deactivate_event(event_id=event.id, event_date=date_event, event_time=time_event)
@@ -392,7 +394,8 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
                 name=option.name,
                 all_place=option.place,
                 price=option.price if option.price is not None else 0,
-                option_id=option.id
+                option_id=option.id,
+                session=session,
             )
 
             option.id = option_id
@@ -416,7 +419,7 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
         # )
 
         link = f'{conf.bot_link}{Key.QR_TICKET.value}:{event.id}'
-        await db.Event.update(event_id=event.id, page_id=page_id, link=link)
+        await db.Event.update(event_id=event.id, page_id=page_id, link=link, session=session)
 
         #     Отчитываемся об успехе
         # await cb.message.edit_reply_markup(reply_markup=None)
@@ -428,7 +431,8 @@ async def event_end(cb: CallbackQuery, state: FSMContext):
         await db.AdminLog.add(
             admin_id=cb.from_user.id,
             action=AdminAction.EDIT.value if data_obj.event_id else AdminAction.ADD.value,
-            comment=data_obj.name
+            comment=data_obj.name,
+            session=session,
         )
 
     except Exception as e:

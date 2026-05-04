@@ -3,15 +3,26 @@ from db import Ticket
 from init import user_router, bot, tickets_google_client
 from google_api import update_book_status_gs
 from enums import UserCB, BookStatus, TicketData, TicketStep, ticket_text_dict, UserState, Action, Key
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
-async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int]):
+async def confirm_tickets(
+        user_id: int,
+        full_name: str,
+        ticket_id_list: list[int],
+        session: AsyncSession = None,
+):
     ticket_id = 0
     ticket = None
     for ticket_id in ticket_id_list:
-        await Ticket.update(ticket_id=ticket_id, status=BookStatus.CONFIRMED.value, is_active=True)
+        await Ticket.update(
+            ticket_id=ticket_id,
+            status=BookStatus.CONFIRMED.value,
+            is_active=True,
+            session=session,
+        )
 
-        ticket = await Ticket.get_full_ticket(ticket_id)
+        ticket = await Ticket.get_full_ticket(ticket_id=ticket_id, session=session)
         text = ut.get_ticket_text(ticket)
         # сохраняем кр
         qr_photo_id = await ut.generate_and_sand_qr(
@@ -37,7 +48,7 @@ async def confirm_tickets(user_id: int, full_name: str, ticket_id_list: list[int
         #     book_type=Key.QR_TICKET.value
         # )
 
-        await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id)
+        await Ticket.update(ticket_id=ticket_id, qr_id=qr_photo_id, session=session)
 
         text = f'<b>Подтверждён билета на {ticket.event.name} пользователь {full_name}</b>'
         await bot.send_message(chat_id=ticket.event.venue.admin_chat_id, text=text)

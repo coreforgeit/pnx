@@ -1,12 +1,13 @@
 from sqlalchemy.orm import Mapped, mapped_column
 from datetime import datetime, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 import random
 
-from .base import Base, begin_connection
+from .base import Base
 from enums import UserStatus
 
 
@@ -27,22 +28,27 @@ class Venue(Base):
     is_active: Mapped[bool] = mapped_column(sa.Boolean, nullable=True)
 
     @classmethod
-    async def get_by_admin_chat(cls, chat_id: int) -> t.Optional[t.Self]:
+    async def get_by_admin_chat(cls, session: AsyncSession, chat_id: int) -> t.Optional[t.Self]:
         query = sa.select(cls).where(cls.admin_chat_id == chat_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().first()
 
     @classmethod
-    async def update(cls, venue_id: int, chat_id: int) -> None:
+    async def update(
+            cls,
+            session: AsyncSession,
+            venue_id: int,
+            chat_id: int,
+            auto_commit: bool = True,
+    ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == venue_id).values(updated_at=now)
 
         if chat_id:
             query = query.values(admin_chat_id=chat_id)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
 
+        if auto_commit:
+            await session.commit()

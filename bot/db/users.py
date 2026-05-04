@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from enums import UserStatus
 
 
@@ -24,7 +25,14 @@ class User(Base):
     venue: Mapped["Venue"] = relationship("Venue", backref="user")
 
     @classmethod
-    async def add(cls, user_id: int, full_name: str, username: str) -> None:
+    async def add(
+            cls,
+            session: AsyncSession,
+            user_id: int,
+            full_name: str,
+            username: str,
+            auto_commit: bool = True,
+    ) -> int:
         """Добавляет новую запись в таблицу users"""
         now = datetime.now()
         query = (
@@ -41,18 +49,22 @@ class User(Base):
             )
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+
+        if auto_commit:
+            await session.commit()
+
         return result.inserted_primary_key[0]
 
     @classmethod
     async def update(
             cls,
+            session: AsyncSession,
             user_id: int,
             mailing: bool = None,
             status: str = None,
             venue_id: int = None,
+            auto_commit: bool = True,
     ) -> None:
 
         query = sa.update(cls).where(cls.id == user_id)
@@ -66,12 +78,20 @@ class User(Base):
         if venue_id:
             query = query.values(venue_id=venue_id)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
+
+        if auto_commit:
+            await session.commit()
 
     @classmethod
-    async def get_admin(cls, user_id: int) -> t.Optional[t.Self]:
+    async def get_by_id(cls, session: AsyncSession, user_id: int) -> t.Optional[t.Self]:
+        query = sa.select(cls).where(cls.id == user_id)
+
+        result = await session.execute(query)
+        return result.scalars().first()
+
+    @classmethod
+    async def get_admin(cls, session: AsyncSession, user_id: int) -> t.Optional[t.Self]:
 
         query = (
             sa.select(cls)
@@ -79,18 +99,16 @@ class User(Base):
             .where(cls.id == user_id)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().first()
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
-    async def get_all_users(cls, for_mailing: bool = False) -> list[t.Self]:
+    async def get_all_users(cls, session: AsyncSession, for_mailing: bool = False) -> list[t.Self]:
 
         query = sa.select(cls).where(cls.status == UserStatus.USER.value)
 
         if for_mailing:
             query = query.where(cls.mailing == True)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().all()

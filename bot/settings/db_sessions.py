@@ -9,4 +9,4 @@ import logging
 logging.getLogger("sqlalchemy.engine").setLevel(logging.WARNING)
 
 ENGINE = create_async_engine(url=conf.db_url, echo=False, pool_pre_ping=True)
-sessions = sessionmaker(bind=ENGINE, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = sessionmaker(bind=ENGINE, class_=AsyncSession, expire_on_commit=False)

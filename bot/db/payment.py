@@ -5,7 +5,7 @@ from sqlalchemy.dialects import postgresql as psql
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from settings import conf
 from enums import UserStatus
 

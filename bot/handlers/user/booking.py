@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters.state import StateFilter
 from dataclasses import asdict
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -20,18 +21,19 @@ from enums import UserCB, BookData, UserState, BookStep, book_text_dict, Action,
 
 # старт брони столиков
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_START.value))
-async def book_start(cb: CallbackQuery, state: FSMContext):
+async def book_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.clear()
 
-    await ut.get_start_book_msg(user=cb.from_user, msg_id=cb.message.message_id)
+    await ut.get_start_book_msg(user=cb.from_user, msg_id=cb.message.message_id, session=session)
 
 
 # проверяем наличие столиков
-async def check_available_tables(chat_id: int, data_obj: BookData):
+async def check_available_tables(chat_id: int, data_obj: BookData, session: AsyncSession = None):
     available_tables_count = await db.get_available_tables(
         venue_id=data_obj.venue_id,
         book_date=datetime.strptime(data_obj.date_str, conf.date_format).date(),
         book_time=datetime.strptime(data_obj.time_str, conf.time_format).time(),
+        session=session,
     )
 
     if available_tables_count == 0:
@@ -45,7 +47,7 @@ async def check_available_tables(chat_id: int, data_obj: BookData):
 
 # записывет заведение, запрашивает время
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_VENUE.value))
-async def book_date(cb: CallbackQuery, state: FSMContext):
+async def book_date(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, venue_id_str = cb.data.split(':')
 
     current_state = await state.get_state()
@@ -55,7 +57,7 @@ async def book_date(cb: CallbackQuery, state: FSMContext):
         await state.set_state(UserState.BOOK.value)
         data_obj = BookData()
 
-        venue = await Venue.get_by_id(venue_id)
+        venue = await Venue.get_by_id(entry_id=venue_id, session=session)
 
         data_obj.user_id = cb.from_user.id
         data_obj.msg_id = cb.message.message_id
@@ -76,7 +78,7 @@ async def book_date(cb: CallbackQuery, state: FSMContext):
 
 # записывает дату, запрашивает время
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_DATE.value))
-async def book_time(cb: CallbackQuery, state: FSMContext):
+async def book_time(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, date_str = cb.data.split(':')
 
     data = await state.get_data()
@@ -86,7 +88,8 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
         exist_book = await Book.get_booking(
             venue_id=data_obj.venue_id,
             user_id=cb.from_user.id,
-            date_book=datetime.strptime(date_str, conf.date_format).date()
+            date_book=datetime.strptime(date_str, conf.date_format).date(),
+            session=session,
         )
 
         # print(f'>>>>>>>>>> {type(exist_book)}')
@@ -103,7 +106,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 
         data_obj.date_str = date_str
 
-        data_obj.times_list = await Book.get_top_times()
+        data_obj.times_list = await Book.get_top_times(session=session)
 
     data_obj.step = BookStep.TIME.value
     await state.update_data(data=asdict(data_obj))
@@ -113,7 +116,7 @@ async def book_time(cb: CallbackQuery, state: FSMContext):
 
 # записывает время, запрашивает количество мест
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_PEOPLE.value))
-async def book_people(cb: CallbackQuery, state: FSMContext):
+async def book_people(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, time_str = cb.data.split(':')
 
     time_str = time_str.replace(' ', ':')
@@ -123,7 +126,7 @@ async def book_people(cb: CallbackQuery, state: FSMContext):
     if time_str != Action.BACK.value:
         data_obj.time_str = time_str
 
-        is_full = await check_available_tables(chat_id=cb.from_user.id, data_obj=data_obj)
+        is_full = await check_available_tables(chat_id=cb.from_user.id, data_obj=data_obj, session=session)
         if is_full:
             return
 
@@ -165,7 +168,7 @@ async def book_skip_comment(cb: CallbackQuery, state: FSMContext):
 
 # принимает комментарий
 @user_router.message(StateFilter(UserState.BOOK.value))
-async def book_comment(msg: Message, state: FSMContext):
+async def book_comment(msg: Message, state: FSMContext, session: AsyncSession):
     await msg.delete()
 
     data = await state.get_data()
@@ -192,7 +195,7 @@ async def book_comment(msg: Message, state: FSMContext):
                 )
                 return
 
-            is_full = await check_available_tables(chat_id=msg.from_user.id, data_obj=data_obj)
+            is_full = await check_available_tables(chat_id=msg.from_user.id, data_obj=data_obj, session=session)
             if is_full:
                 return
 
@@ -220,12 +223,12 @@ async def book_comment(msg: Message, state: FSMContext):
 
 # заканчиваем бронирование
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.BOOK_END.value))
-async def book_end(cb: CallbackQuery, state: FSMContext):
+async def book_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
     data_obj = BookData(**data)
     await state.clear()
 
-    is_full = await check_available_tables(chat_id=cb.from_user.id, data_obj=data_obj)
+    is_full = await check_available_tables(chat_id=cb.from_user.id, data_obj=data_obj, session=session)
     if is_full:
         return
 
@@ -240,7 +243,8 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         comment=data_obj.comment,
         status=BookStatus.CONFIRMED.value,
         people_count=data_obj.people_count,
-        book_id=data_obj.book_id
+        book_id=data_obj.book_id,
+        session=session,
     )
 
     #     создаём и отправляем кр-код
@@ -270,14 +274,14 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         f'{comment}'
     )
 
-    venue = await Venue.get_by_id(data_obj.venue_id)
+    venue = await Venue.get_by_id(entry_id=data_obj.venue_id, session=session)
     await bot.send_message(
         chat_id=venue.admin_chat_id,
         text=text
     )
 
     #     отправляем в таблицу
-    last_day_book = await Book.get_last_book_day(date_book=date_book)
+    last_day_book = await Book.get_last_book_day(date_book=date_book, session=session)
     gs_row = await add_or_update_book_gs(
         spreadsheet_id=venue.book_gs_id,
         sheet_name=data_obj.date_str,
@@ -291,4 +295,10 @@ async def book_end(cb: CallbackQuery, state: FSMContext):
         row_num=data_obj.book_row
     )
 
-    await Book.update(book_id, qr_id=qr_id, gs_row=gs_row, status=BookStatus.CONFIRMED.value)
+    await Book.update(
+        session=session,
+        book_id=book_id,
+        qr_id=qr_id,
+        gs_row=gs_row,
+        status=BookStatus.CONFIRMED.value,
+    )

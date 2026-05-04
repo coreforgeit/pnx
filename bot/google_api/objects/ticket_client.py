@@ -177,9 +177,9 @@ class TicketsGoogleClient(GoogleSheetsClient):
         spreadsheet = await self.open_spreadsheet(spreadsheet_id)
 
         if str(sheet_name).isdigit():
-            worksheet = spreadsheet.get_worksheet_by_id(int(sheet_name))
+            worksheet = await spreadsheet.get_worksheet_by_id(int(sheet_name))
         else:
-            worksheet = spreadsheet.worksheet(sheet_name)
+            worksheet = await spreadsheet.worksheet(sheet_name)
 
         cell_range = f"I{row}"
         new_values = [[book_status_dict.get(status)]]

@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.enums.content_type import ContentType
 from dataclasses import asdict
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 import random
@@ -51,9 +52,9 @@ async def mailing_preview(msg: Message, state: FSMContext):
 
 # подтверждение рассылки
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.MAILING_1.value))
-async def mailing_1(cb: CallbackQuery, state: FSMContext):
+async def mailing_1(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
 
-    users = await User.get_all_users(for_mailing=True)
+    users = await User.get_all_users(for_mailing=True, session=session)
     text = (
         f'Будет отправлено {len(users)} сообщений\n\n'
         f'Нажмите "📲 Подтвердить отправку", чтоб начать рассылку'
@@ -65,7 +66,7 @@ async def mailing_1(cb: CallbackQuery, state: FSMContext):
 
 # рассылка
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.MAILING_2.value))
-async def mailing_2(cb: CallbackQuery, state: FSMContext):
+async def mailing_2(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, action = cb.data.split(':')
     await state.clear()
 
@@ -74,7 +75,7 @@ async def mailing_2(cb: CallbackQuery, state: FSMContext):
         await ut.get_start_msg(user=cb.from_user)
         return
 
-    users = await User.get_all_users(for_mailing=True)
+    users = await User.get_all_users(for_mailing=True, session=session)
     count_users = len(users)
 
     text = (
@@ -113,5 +114,5 @@ async def mailing_2(cb: CallbackQuery, state: FSMContext):
     if not text:
         text = cb.message.content_type
     await AdminLog.add(
-        admin_id=cb.from_user.id, action=AdminAction.MAILING.value, comment=text
+        admin_id=cb.from_user.id, action=AdminAction.MAILING.value, comment=text, session=session
     )

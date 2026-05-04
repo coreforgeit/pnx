@@ -1,11 +1,12 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, timedelta, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
-from .base import Base, begin_connection
+from .base import Base
 from settings import conf
 from enums import UserStatus
 
@@ -42,6 +43,7 @@ class Event(Base):
     @classmethod
     async def add(
             cls,
+            session: AsyncSession,
             creator_id: int,
             venue_id: int,
             time_event: time,
@@ -52,7 +54,8 @@ class Event(Base):
             photo_id: str,
             close_msg: str,
             close_msg_entities: str,
-            event_id: int | None = None  # опциональный ID для обновления
+            event_id: int | None = None,
+            auto_commit: bool = True,
     ) -> t.Optional[t.Self]:
         """Добавляет или обновляет событие"""
         now = datetime.now()
@@ -99,14 +102,14 @@ class Event(Base):
             .returning(cls)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
         return result.scalars().first()
 
     @classmethod
-    async def get_top_times(cls, limit: int = 8) -> list[str]:
+    async def get_top_times(cls, session: AsyncSession, limit: int = 8) -> list[str]:
         query = (
             sa.select(cls.time_event, sa.func.count(cls.time_event).label("count"))
             .group_by(cls.time_event)
@@ -114,18 +117,19 @@ class Event(Base):
             .limit(limit)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return [str(row.time_event)[:-3] for row in result.all()]
 
     @classmethod
     async def update(
             cls,
+            session: AsyncSession,
             event_id: int,
             page_id: int = None,
             link: str = None,
-            is_active: bool = None
+            is_active: bool = None,
+            auto_commit: bool = True,
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == event_id).values(updated_at=now)
@@ -139,12 +143,12 @@ class Event(Base):
         if is_active is not None:
             query = query.values(is_active=is_active)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
     @classmethod
-    async def get_event_with_venue(cls, event_id: int) -> t.Optional[t.Self]:
+    async def get_event_with_venue(cls, session: AsyncSession, event_id: int) -> t.Optional[t.Self]:
         """Получает бронь по ID вместе с данными о заведении"""
 
         query = (
@@ -153,12 +157,11 @@ class Event(Base):
             .where(cls.id == event_id)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().first()
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
-    async def close_old(cls) -> None:
+    async def close_old(cls, session: AsyncSession) -> None:
         today = datetime.now(tz=conf.tz).date()
         print(f'event today: {today}')
         query = (
@@ -166,5 +169,4 @@ class Event(Base):
             where(cls.date_event < today, cls.is_active == True).
             values(is_active=False)
         )
-        async with begin_connection() as conn:
-            await conn.execute(query)
+        await session.execute(query)

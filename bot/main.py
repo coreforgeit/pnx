@@ -7,7 +7,7 @@ from datetime import datetime
 
 import db
 from init import set_main_menu, bot
-from settings import conf, log_error
+from settings import async_session_factory, conf, log_error
 # from db.base import init_models
 from utils.scheduler_ut import start_schedulers, shutdown_schedulers
 # from utils.payment_ut import get_pay_token
@@ -29,7 +29,8 @@ dp.error.outer_middleware(DBSessionMiddleware())
 async def main() -> None:
     # await init_models()
     await set_main_menu()
-    await db.close_old()
+    async with async_session_factory() as session:
+        await db.close_old(session=session)
     # await get_pay_token()
     if not conf.debug:
         await start_schedulers()

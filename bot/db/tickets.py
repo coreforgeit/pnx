@@ -1,12 +1,13 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship, joinedload
 from datetime import datetime, timedelta, date, time
 from sqlalchemy.dialects import postgresql as psql
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import sqlalchemy as sa
 import typing as t
 
 from settings import conf
-from .base import Base, begin_connection
+from .base import Base
 from .events import Event
 from enums import BookStatus
 
@@ -54,11 +55,13 @@ class Ticket(Base):
     @classmethod
     async def add(
             cls,
+            session: AsyncSession,
             event_id: int,
             user_id: int,
             option_id: int,
             status: str,
             is_active: bool = True,
+            auto_commit: bool = True,
     ) -> t.Self:
         """Добавляет билет к событию"""
         now = datetime.now()
@@ -74,9 +77,9 @@ class Ticket(Base):
             )
             .returning(cls)
         )
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            await conn.commit()
+        result = await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
         return result.scalars().first()
         # return result.inserted_primary_key[0]
@@ -84,6 +87,7 @@ class Ticket(Base):
     @classmethod
     async def update(
             cls,
+            session: AsyncSession,
             ticket_id: int,
             qr_id: str = None,
             gs_sheet: str = None,
@@ -92,6 +96,7 @@ class Ticket(Base):
             status: str = None,
             pay_id: int = None,
             is_active: bool = None,
+            auto_commit: bool = True,
     ) -> None:
         now = datetime.now()
         query = sa.update(cls).where(cls.id == ticket_id).values(updated_at=now)
@@ -117,37 +122,45 @@ class Ticket(Base):
         if is_active is not None:
             query = query.values(is_active=is_active)
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
-            await conn.commit()
+        await session.execute(query)
+        if auto_commit:
+            await session.commit()
 
     @classmethod
-    async def get_max_event_row(cls, event_id: int) -> int:
+    async def get_max_event_row(cls, session: AsyncSession, event_id: int) -> int:
         query = (
             sa.select(sa.func.max(cls.gs_row))
             .where(cls.event_id == event_id)
         )
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            max_row = result.scalar()
+        result = await session.execute(query)
+        max_row = result.scalar()
 
         return max_row + 1 if max_row else 2
 
     @classmethod
-    async def get_all(cls, user_id: int = None, option_id: int = None) -> t.Optional[list[t.Self]]:
+    async def get_all(
+            cls,
+            session: AsyncSession,
+            user_id: int = None,
+            option_id: int = None,
+    ) -> t.Optional[list[t.Self]]:
         query = sa.select(cls)
         if user_id:
             query = query.where(cls.user_id == user_id)
         if option_id:
             query = query.where(cls.option_id == option_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
         return result.scalars().all()
 
     @classmethod
-    async def get_all_tickets(cls, user_id: int = None, event_id: int = None) -> t.Optional[list[t.Self]]:
+    async def get_all_tickets(
+            cls,
+            session: AsyncSession,
+            user_id: int = None,
+            event_id: int = None,
+    ) -> t.Optional[list[t.Self]]:
         """Получает все билеты пользователя с подгрузкой event, venue и option"""
 
         query = cls._get_full_ticket_query()
@@ -161,21 +174,23 @@ class Ticket(Base):
         if event_id:
             query = query.where(cls.event_id == event_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().all()
+        result = await session.execute(query)
+        return result.scalars().all()
 
     @classmethod
-    async def get_full_ticket(cls, ticket_id: int) -> t.Optional[t.Self]:
+    async def get_full_ticket(cls, session: AsyncSession, ticket_id: int) -> t.Optional[t.Self]:
         """Получает один билет с подгрузкой event, venue и option"""
         query = cls._get_full_ticket_query().where(cls.id == ticket_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
-            return result.scalars().first()
+        result = await session.execute(query)
+        return result.scalars().first()
 
     @classmethod
-    async def get_active_event_ticket_stats(cls, venue_id: int | None = None) -> list[TicketStatRow]:
+    async def get_active_event_ticket_stats(
+            cls,
+            session: AsyncSession,
+            venue_id: int | None = None,
+    ) -> list[TicketStatRow]:
 
         query = (
             sa.select(
@@ -193,13 +208,12 @@ class Ticket(Base):
         if venue_id:
             query = query.where(Event.venue_id == venue_id)
 
-        async with begin_connection() as conn:
-            result = await conn.execute(query)
+        result = await session.execute(query)
 
         return result.all()
 
     @classmethod
-    async def close_old(cls) -> None:
+    async def close_old(cls, session: AsyncSession) -> None:
         today = datetime.now(tz=conf.tz).date()
 
         query = (
@@ -212,8 +226,7 @@ class Ticket(Base):
             .values(status=BookStatus.CANCELED.value)
         )
 
-        async with begin_connection() as conn:
-            await conn.execute(query)
+        await session.execute(query)
 
 
 

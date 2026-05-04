@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.enums.content_type import ContentType
 from io import BytesIO
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import os
 
@@ -19,8 +20,8 @@ from google_api import update_book_status_gs
 
 # Команда старт
 @admin_router.message(lambda msg: msg.content_type == ContentType.PHOTO.value)
-async def qr_check(msg: Message, state: FSMContext):
-    user = await User.get_by_id(msg.from_user.id)
+async def qr_check(msg: Message, state: FSMContext, session: AsyncSession):
+    user = await User.get_by_id(user_id=msg.from_user.id, session=session)
     if user.status == UserStatus.USER.value and not conf.debug:
         await msg.answer('❌ Доступно только администраторам')
         return
@@ -45,5 +46,5 @@ async def qr_check(msg: Message, state: FSMContext):
     else:
         key, user_id_str, entry_id_str = qr_content.split(':')
 
-    await ut.qr_checking(user_id=msg.from_user.id, key=key, entry_id_str=entry_id_str)
+    await ut.qr_checking(user_id=msg.from_user.id, key=key, entry_id_str=entry_id_str, session=session)
 

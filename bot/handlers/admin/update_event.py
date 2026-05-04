@@ -6,6 +6,7 @@ from aiogram import Router
 from aiogram.enums.content_type import ContentType
 from dataclasses import asdict
 from datetime import datetime
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import asyncio
 
@@ -27,22 +28,22 @@ from enums import AdminCB, UserState, Action, Key, EventData, EventStep, OptionD
 
 # старт обновления евента
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_UPDATE_1.value))
-async def update_event_start(cb: CallbackQuery, state: FSMContext):
+async def update_event_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     await state.clear()
 
-    events = await Event.get_all()
+    events = await Event.get_all(session=session)
     await cb.message.edit_text(f'Выберите мероприятие для изменения', reply_markup=kb.get_update_event_kb(events))
 
 
 # обновление
 @admin_router.callback_query(lambda cb: cb.data.startswith(AdminCB.EVENT_UPDATE_2.value))
-async def update_event_start(cb: CallbackQuery, state: FSMContext):
+async def update_event_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, event_id_str = cb.data.split(':')
     event_id = int(event_id_str)
 
     # Получаем событие и его опции
-    event = await Event.get_event_with_venue(event_id)
-    options = await EventOption.get_all(event_id=event_id)
+    event = await Event.get_event_with_venue(event_id=event_id, session=session)
+    options = await EventOption.get_all(event_id=event_id, session=session)
 
     await state.set_state(UserState.EVENT.value)
 

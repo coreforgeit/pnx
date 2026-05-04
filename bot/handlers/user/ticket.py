@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.filters.command import Command
 from uuid import uuid4
 from dataclasses import asdict
+from sqlalchemy.ext.asyncio import AsyncSession
 
 import logging
 
@@ -24,7 +25,7 @@ logger = logging.getLogger(__name__)
 
 # старт билеты
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_START.value))
-async def ticket_start(cb: CallbackQuery, state: FSMContext):
+async def ticket_start(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, action = cb.data.split(':')
 
     await state.clear()
@@ -32,12 +33,13 @@ async def ticket_start(cb: CallbackQuery, state: FSMContext):
         chat_id=cb.from_user.id,
         # msg_id=cb.message.message_id if action == Action.BACK.value else None,
         msg_id=cb.message.message_id,
+        session=session,
     )
 
 
 # сохраняем ивент, спрашиваем опции
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_EVENT.value))
-async def ticket_event(cb: CallbackQuery, state: FSMContext):
+async def ticket_event(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, event_id_str = cb.data.split(':')
 
     if event_id_str != Action.BACK.value:
@@ -49,11 +51,11 @@ async def ticket_event(cb: CallbackQuery, state: FSMContext):
         event_id = event.id
 
     await cb.message.delete()
-    await send_selected_event_msg(chat_id=cb.from_user.id, event_id=event_id)
+    await send_selected_event_msg(chat_id=cb.from_user.id, event_id=event_id, session=session)
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_PLACE.value))
-async def ticket_place(cb: CallbackQuery, state: FSMContext):
+async def ticket_place(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, option_id_str = cb.data.split(':')
 
     data = await state.get_data()
@@ -65,8 +67,8 @@ async def ticket_place(cb: CallbackQuery, state: FSMContext):
         await state.set_state(UserState.TICKET.value)
         # data_obj = TicketData()
 
-        option = await EventOption.get_by_id(option_id)
-        event = await Event.get_by_id(option.event_id)
+        option = await EventOption.get_by_id(entry_id=option_id, session=session)
+        event = await Event.get_by_id(entry_id=option.event_id, session=session)
         data_obj.option = option
         data_obj.event = event
 
@@ -87,7 +89,7 @@ async def ticket_place(cb: CallbackQuery, state: FSMContext):
             f'⁉️ Обратите внимание, что на бесплатные мероприятия можно взять не более {conf.max_free_ticket} билетов',
             show_alert=True
         )
-        users_tickets = await Ticket.get_all(user_id=cb.from_user.id, option_id=option.id)
+        users_tickets = await Ticket.get_all(user_id=cb.from_user.id, option_id=option.id, session=session)
         empty_place = conf.max_free_ticket - len(users_tickets)
     else:
         empty_place = option.empty_place
@@ -115,13 +117,13 @@ async def ticket_check(cb: CallbackQuery, state: FSMContext):
 
 
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_END.value))
-async def ticket_end(cb: CallbackQuery, state: FSMContext):
+async def ticket_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
 
     data_obj = TicketData(**data)
     event: Event = data_obj.event
     option_selected: EventOption = data_obj.option
-    option_actual = await EventOption.get_by_id(option_selected.id)
+    option_actual = await EventOption.get_by_id(entry_id=option_selected.id, session=session)
 
     # если места закончились, пока шло бронирование
     if not option_actual or data_obj.count_place > option_actual.empty_place:
@@ -134,10 +136,10 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
     amount = option_actual.price * data_obj.count_place
 
     ticket_id_list = []
-    last_row = await Ticket.get_max_event_row(event.id)
-    venue = await Venue.get_by_id(event.venue_id)
+    last_row = await Ticket.get_max_event_row(event_id=event.id, session=session)
+    venue = await Venue.get_by_id(entry_id=event.venue_id, session=session)
 
-    user = await db.User.get_by_id(cb.from_user.id)
+    user = await db.User.get_by_id(user_id=cb.from_user.id, session=session)
 
     # сохраняем билеты
     ofd_items = []
@@ -158,7 +160,8 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
             user_id=cb.from_user.id,
             option_id=option_actual.id,
             status=BookStatus.NEW.value,
-            is_active=False
+            is_active=False,
+            session=session,
         )
         ticket_id_list.append(ticket.id)
 
@@ -186,7 +189,8 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
             ticket_id=ticket.id,
             gs_sheet=venue.event_gs_id,
             gs_page=event.gs_page,
-            gs_row=row
+            gs_row=row,
+            session=session,
         )
 
         price_tian = option_actual.price * 100
@@ -204,7 +208,11 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
 
     logger.info(f'конец цикла')
     # уменьшить количество мест
-    await EventOption.update(option_id=option_actual.id, add_place=0 - data_obj.count_place)
+    await EventOption.update(
+        option_id=option_actual.id,
+        add_place=0 - data_obj.count_place,
+        session=session,
+    )
     # возвращение статуса по таймеру
     ut.create_cancel_ticket(user_id=cb.from_user.id, ticket_id_list=ticket_id_list)
 
@@ -232,23 +240,26 @@ async def ticket_end(cb: CallbackQuery, state: FSMContext):
     else:
         await state.clear()
         await ut.confirm_tickets(
-            user_id=cb.from_user.id, full_name=cb.from_user.full_name, ticket_id_list=ticket_id_list
+            user_id=cb.from_user.id,
+            full_name=cb.from_user.full_name,
+            ticket_id_list=ticket_id_list,
+            session=session,
         )
 
 
 # альтернативная оплата
 @user_router.callback_query(lambda cb: cb.data.startswith(UserCB.TICKET_ALTER_PAY_1.value))
-async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
+async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     data = await state.get_data()
     await state.clear()
 
     data_obj = TicketData(**data)
     event: Event = data_obj.event
     option_selected: EventOption = data_obj.option
-    option_actual = await EventOption.get_by_id(option_selected.id)
+    option_actual = await EventOption.get_by_id(entry_id=option_selected.id, session=session)
 
     amount = option_actual.price * data_obj.count_place
-    venue = await Venue.get_by_id(event.venue_id)
+    venue = await Venue.get_by_id(entry_id=event.venue_id, session=session)
 
     # напоминалки
     # ut.create_cancel_ticket(cb.from_user.id, data_obj.ticket_id_list)
@@ -283,7 +294,7 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
 
 # альтернативная оплата
 @user_router.callback_query(lambda cb: cb.data.startswith(AdminCB.ALTER_PAY.value))
-async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
+async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     _, action, redis_hash = cb.data.split(':')
 
     redis_key = f'{Key.QR_TICKET.value}-{redis_hash}'
@@ -299,6 +310,7 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
             user_id=redis_data.user_id,
             full_name=redis_data.full_name,
             ticket_id_list=redis_data.ticket_id_list,
+            session=session,
         )
         action_text = '✅ Подтвердил'
         admin_action = AdminAction.PAY_CONFIRMED.value
@@ -309,9 +321,14 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
         admin_action = AdminAction.PAY_CANCELED.value
 
         for ticket_id in redis_data.ticket_id_list:
-            ticket = await Ticket.get_full_ticket(ticket_id)
+            ticket = await Ticket.get_full_ticket(ticket_id=ticket_id, session=session)
             if ticket.status == BookStatus.NEW.value:
-                await Ticket.update(ticket_id=ticket.id, status=BookStatus.CANCELED.value, is_active=False)
+                await Ticket.update(
+                    ticket_id=ticket.id,
+                    status=BookStatus.CANCELED.value,
+                    is_active=False,
+                    session=session,
+                )
 
                 await update_book_status_gs(
                     spreadsheet_id=ticket.event.venue.event_gs_id,
@@ -325,7 +342,11 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
                 text = f'<b>❌ Билет аннулирован администратором</b>\n{ticket_text}'
                 await bot.send_message(chat_id=redis_data.user_id, text=text)
                 
-        await EventOption.update(option_id=redis_data.option_id, add_place=len(redis_data.ticket_id_list))
+        await EventOption.update(
+            option_id=redis_data.option_id,
+            add_place=len(redis_data.ticket_id_list),
+            session=session,
+        )
 
     else:
         await cb.message.answer(f'<b>❌ Ошибка запроса</b>')
@@ -339,6 +360,7 @@ async def ticket_alter_pay(cb: CallbackQuery, state: FSMContext):
         admin_id=cb.from_user.id,
         user_id=redis_data.user_id,
         action=admin_action,
-        comment=cb.message.text
+        comment=cb.message.text,
+        session=session,
     )
 
