@@ -149,7 +149,7 @@ def update_book_status_gs(
 
     new_values = [[book_status_dict.get(status)]]
 
-    cell_range = f"I{row}"
+    cell_range = f"K{row}"
 
     max_retries = 10
     pause_sec = 2

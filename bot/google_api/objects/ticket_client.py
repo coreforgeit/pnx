@@ -18,6 +18,7 @@ class TicketsGoogleClient(GoogleSheetsClient):
     close_msg_range = 'F1:K3'
     ticket_start_cell = 'D11'
     status_column = 'K'
+    mark_ok_column = 'O'
     status_list_range = 'K11:k200'
 
     async def _update_event_info(
@@ -46,10 +47,15 @@ class TicketsGoogleClient(GoogleSheetsClient):
         start_row: int = 5
     ):
         values = []
+        cancel_status = book_status_dict.get(BookStatus.CANCELED, '-')
+        status_range = f'{self.status_column}:{self.status_column}'
 
         for option in options:
             row_num = start_row + len(values)
-            formula = f'={option.place}-SUMIFS(E:E; F:F; A{row_num})'
+            # formula = f'={option.place}-SUMIFS(E:E; F:F; A{row_num})'
+            # формула считает свободные места кроме статуса Отменён
+            formula = f'={option.place}-SUMIFS(E:E; F:F; A{row_num}; {status_range}; "<>"&"{cancel_status}")'
+
             # formula = (
             #     f'=IFERROR('
             #     f'{option.place}-SUMIF(F:F, B{row_num}, E:E), '
@@ -66,23 +72,6 @@ class TicketsGoogleClient(GoogleSheetsClient):
             raw=False
         )
 
-    async def insert_ticket_row(
-        self,
-        worksheet: AsyncioGspreadWorksheet,
-        row_values: list[str | int | float | bool | None],
-    ):
-        # TODO:
-        # 1. Найти первую пустую строку в диапазоне D:J, начиная с 11 строки
-        # 2. Собрать cell_range вида D{row}:J{row}
-        # 3. Передать данные в _safe_update
-
-        cell_range = "D11:J11"
-
-        return await self._safe_update(
-            worksheet=worksheet,
-            cell_range=cell_range,
-            values=[row_values],
-        )
 
     async def create_event_sheet(
             self,
@@ -146,7 +135,10 @@ class TicketsGoogleClient(GoogleSheetsClient):
         worksheet = await spreadsheet.get_worksheet_by_id(page_id)
         user_link = f'https://t.me/{user.username}' if user.username else '-'
         # ID, Мест, Опции, Имя, Username, Телефон, Ссылка, Оплатил, Примечание, Откуда
-        row = [ticket.id, 1, option_name, user.full_name, user.username, 'user.phone', user_link, book_status_dict.get(status)]
+        status_str = book_status_dict.get(status)
+        row = [
+            ticket.id,  1,  option_name, user.full_name, user.username, 'user.phone', user_link, status_str
+        ]
 
         # если запись существует просто её обновляем
         if ticket_row:
@@ -162,7 +154,7 @@ class TicketsGoogleClient(GoogleSheetsClient):
             ticket_row = self._extract_updated_row(response)
 
         # ставим галочку, чтоб не летел повторный запрос на апи
-        mark_ok_cell = f'N{ticket_row}'
+        mark_ok_cell = f'{self.mark_ok_column}{ticket_row}'
         await self._safe_update(worksheet=worksheet, cell_range=mark_ok_cell, values=[['✅']])
 
         return ticket_row
@@ -181,7 +173,7 @@ class TicketsGoogleClient(GoogleSheetsClient):
         else:
             worksheet = await spreadsheet.worksheet(sheet_name)
 
-        cell_range = f"I{row}"
+        cell_range = f"{self.status_column}{row}"
         new_values = [[book_status_dict.get(status)]]
 
         await self._safe_update(worksheet=worksheet, cell_range=cell_range, values=new_values)
