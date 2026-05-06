@@ -2,7 +2,6 @@ from pathlib import Path
 
 import os
 import redis
-import telebot
 from zoneinfo import ZoneInfo
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -30,9 +29,6 @@ else:
     BOT_TOKEN = os.getenv('TOKEN')
     GOOGLE_KEY_PATH = os.path.join('data', 'cred.json')
     BOT_USERNAME = 'Ponaexali_bot'
-
-bot = telebot.TeleBot(BOT_TOKEN, parse_mode='html')
-BOT_LINK = f'https://t.me/{BOT_USERNAME}?start='
 
 # Application definition
 INSTALLED_APPS = [

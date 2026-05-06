@@ -11,7 +11,8 @@ import json
 from . import utils as ut
 from .serializers import BookSerializer, TicketSerializer, PaymentSerializer
 from .models import Book, Venue, Event, EventOption, Ticket, User, Payment
-from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIENT, bot, DEBUG, BOT_LINK
+from web.settings import DATE_FORMAT, PAY_SECRET, TIME_SHORT_FORMAT, REDIS_CLIENT, DEBUG
+from .telegram_bot import BOT_LINK, bot
 from enums import Key, book_status_inverted_dict, BookStatus
 
 
@@ -283,4 +284,3 @@ class PaymentView(APIView):
         except Exception as e:
             logger.exception(e, exc_info=True)
             return Response({"success": False}, status=status.HTTP_400_BAD_REQUEST)
-
