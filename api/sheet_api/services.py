@@ -65,6 +65,7 @@ class SheetService:
 
         # обнавление записей
         for option in payload.data:
+            logger.warning(f'>> {option}')
             query = (
                 sa.update(EventOption)
                 .where(
