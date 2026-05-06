@@ -18,7 +18,7 @@ class Venue(models.Model):
     table_count = models.IntegerField(verbose_name='Количество столов')
     book_len = models.IntegerField(default=180, verbose_name='Длительность брони (мин)')
     book_gs_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='Google Sheets ID (бронь)')
-    event_gs_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='Google Sheets ID (ивенты)')
+    event_gs_id = models.CharField(max_length=255, null=True, blank=True, verbose_name='Google Sheets ID (билеты)')
     admin_chat_id = models.BigIntegerField(default=random.randint(10000, 99999), verbose_name='Chat ID администратора')
     is_active = models.BooleanField(null=True, blank=True, verbose_name='Активен')
 

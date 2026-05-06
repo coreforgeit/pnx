@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from dataclasses import asdict
 from datetime import datetime
 
-import asyncio
+import logging
 
 import db
 import keyboards as kb
@@ -18,6 +18,9 @@ from settings import conf, log_error
 from init import bot, admin_router
 from data import texts_dict
 from enums import AdminCB, UserStatus, Action, Key, EventData, EventStep, OptionData, event_text_dict, MailingData
+
+
+logger = logging.getLogger(__name__)
 
 
 # сообщение для изменения ивента
@@ -58,7 +61,7 @@ async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMa
         f'{data_obj.name}\n',
         f'Дата: {data_obj.date_str}\n',
         f'Время: {data_obj.time_str}\n',
-        f'Закрывающее сообщение (без разметки):\n {data_obj.close_msg}\n',
+        f'Закрывающее сообщение (без разметки):\n{data_obj.close_msg}\n',
     ]
     bottom_text = ''.join(row for row in row_list if 'None' not in row).strip()
 
@@ -76,6 +79,9 @@ async def send_main_manage_event_msg(state: FSMContext, markup: InlineKeyboardMa
         )
 
     elif data_obj.content_type == ContentType.TEXT.value and data_obj.photo_id:
+        logger.warning(f'len(text): {len(text)}')
+        logger.warning(f'entities: {entities}')
+
         await bot.delete_message(chat_id=data_obj.user_id, message_id=data_obj.msg_id)
 
         sent = await bot.send_photo(

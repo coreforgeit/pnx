@@ -61,7 +61,7 @@ class SheetService:
     async def update_options(session: AsyncSession, payload: OptionsSheetRequest) -> bool:
         event_id_query = sa.select(Event.id).where(Event.gs_page == payload.page_id).scalar_subquery()
         updated_count = 0
-        updated_row_ids = [o.id for o in payload.data]
+        updated_row_ids = [o.option_id for o in payload.data]
 
         # обнавление записей
         for option in payload.data:
