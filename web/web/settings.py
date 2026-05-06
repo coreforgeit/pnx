@@ -1,9 +1,5 @@
 from pathlib import Path
 
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.jobstores.redis import RedisJobStore
-from apscheduler.executors.pool import ThreadPoolExecutor
-
 import os
 import redis
 import telebot
@@ -38,22 +34,6 @@ else:
 bot = telebot.TeleBot(BOT_TOKEN, parse_mode='html')
 BOT_LINK = f'https://t.me/{BOT_USERNAME}?start='
 
-# Настройка планировщика
-jobstores = {
-    'default': RedisJobStore(host=REDIS_HOST, port=REDIS_PORT, db=1)
-}
-executors = {
-    'default': ThreadPoolExecutor(10)
-}
-job_defaults = {
-    'coalesce': True,
-    'max_instances': 3
-}
-
-scheduler = BackgroundScheduler(jobstores=jobstores, executors=executors, job_defaults=job_defaults)
-scheduler.start()
-
-
 # Application definition
 INSTALLED_APPS = [
     'unfold',
@@ -65,7 +45,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'django.contrib.postgres',
-    'bot_admin',
+    'bot_admin.apps.BotAdminConfig',
 ]
 
 MIDDLEWARE = [
@@ -112,20 +92,6 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT'),
     }
 }
-
-jobstores = {
-    'default': RedisJobStore(host=REDIS_HOST, port=REDIS_PORT, db=1)
-}
-executors = {
-    'default': ThreadPoolExecutor(10)
-}
-job_defaults = {
-    'coalesce': True,
-    'max_instances': 3
-}
-
-scheduler = BackgroundScheduler(jobstores=jobstores, executors=executors, job_defaults=job_defaults)
-scheduler.start()
 
 # Password validation
 # https://docs.djangoproject.com/en/5.1/ref/settings/#auth-password-validators

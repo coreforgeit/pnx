@@ -7,3 +7,8 @@ class BotAdminConfig(AppConfig):
 
     verbose_name = 'Бот'
     verbose_name_plural = 'Бот'
+
+    def ready(self):
+        from .scheduler import start_scheduler
+
+        start_scheduler()

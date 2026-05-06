@@ -10,7 +10,8 @@ import logging
 import segno
 import gspread
 
-from web.settings import bot, scheduler, DATE_FORMAT, TIME_SHORT_FORMAT, GOOGLE_KEY_PATH
+from web.settings import bot, DATE_FORMAT, TIME_SHORT_FORMAT, GOOGLE_KEY_PATH
+from .scheduler import scheduler
 from .models import Ticket
 from enums import NoticeKey, Key, UserCB, book_status_dict
 
