@@ -65,12 +65,13 @@ class SheetService:
 
         # обнавление записей
         for option in payload.data:
+            # >> name='Фри 5' place_count=50 option_id=2
             logger.warning(f'>> {option}')
             query = (
                 sa.update(EventOption)
                 .where(
                     EventOption.id == option.option_id,
-                    EventOption.event_id == event_id_query,
+                    # EventOption.event_id == event_id_query,
                 )
                 .values(
                     name=option.name,
