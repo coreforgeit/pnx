@@ -90,6 +90,10 @@ class SheetService:
                 EventOption.id.not_in(updated_row_ids),
                 EventOption.event_id == event_id_query,
             )
+            .values(
+                is_active=False,
+                updated_at=datetime.now(),
+            )
         )
         await session.execute(query)
 
