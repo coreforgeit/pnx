@@ -22,4 +22,6 @@ COPY /shared/settings ./settings
 COPY /shared/data ./data
 COPY /shared/enums ./enums
 
-CMD ["sh", "-c", "python main.py"]
+#CMD ["sh", "-c", "python main.py"]
+CMD ["sh", "-c", "alembic upgrade head && python main.py"]
+
