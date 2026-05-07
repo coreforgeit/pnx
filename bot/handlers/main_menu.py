@@ -30,6 +30,7 @@ from enums import UserCB, MenuCommand, Key, UserStatus
     and len(msg.text) == 5
 )
 async def group_msg(msg: Message, session: AsyncSession):
+    print(f'{msg.chat.title} {msg.chat.id}')
     venue = await Venue.get_by_admin_chat(session=session, chat_id=int(msg.text))
     if venue:
         await Venue.update(session=session, venue_id=venue.id, chat_id=msg.chat.id)

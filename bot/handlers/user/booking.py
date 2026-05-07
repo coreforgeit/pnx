@@ -275,10 +275,6 @@ async def book_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
     )
 
     venue = await Venue.get_by_id(entry_id=data_obj.venue_id, session=session)
-    await bot.send_message(
-        chat_id=venue.admin_chat_id,
-        text=text
-    )
 
     #     отправляем в таблицу
     last_day_book = await Book.get_last_book_day(date_book=date_book, session=session)
@@ -290,7 +286,7 @@ async def book_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
         full_name=cb.from_user.full_name,
         count_place=data_obj.people_count,
         comment=data_obj.comment,
-        status=BookStatus.CONFIRMED.value,
+        status=BookStatus.CONFIRMED,
         start_row=last_day_book.gs_row + 1 if last_day_book else 2,
         row_num=data_obj.book_row
     )
@@ -300,5 +296,10 @@ async def book_end(cb: CallbackQuery, state: FSMContext, session: AsyncSession):
         book_id=book_id,
         qr_id=qr_id,
         gs_row=gs_row,
-        status=BookStatus.CONFIRMED.value,
+        status=BookStatus.CONFIRMED,
+    )
+
+    await bot.send_message(
+        chat_id=venue.admin_chat_id,
+        text=text
     )
